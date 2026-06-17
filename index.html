@@ -440,9 +440,26 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .rx-chev { color: var(--paper-low); transition: transform 220ms ease; display: flex; align-items: center; justify-content: center; }
 .today-block[aria-expanded="true"] .rx-chev { transform: rotate(90deg); }
 .ex-panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 340ms ease, opacity 240ms ease; }
-.ex-panel.open { max-height: 1600px; opacity: 1; margin-top: 10px; }
-.ex-card { display: grid; grid-template-columns: 60px 1fr; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 10px; margin-bottom: 8px; }
-.ex-card .fig { width: 60px; height: 60px; background: var(--surface-1); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ex-panel.open { max-height: 4000px; opacity: 1; margin-top: 10px; }
+.ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 8px; }
+.ex-card { display: grid; grid-template-columns: 46px 1fr 32px; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 10px; }
+.ex-card.done { opacity: 0.5; }
+.ex-card .fig { width: 46px; height: 46px; background: var(--surface-1); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ex-check { width: 30px; height: 30px; min-width: 0; padding: 0; border-radius: 50%; border: 2px solid var(--rule); background: var(--surface-1); color: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; align-self: center; }
+.ex-check svg { width: 16px; height: 16px; }
+.ex-card.done .ex-check { background: var(--mobility); border-color: var(--mobility); color: var(--ink); }
+.ex-done-label { display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mobility); margin: 12px 0 6px; }
+.ex-done-label svg { width: 14px; height: 14px; }
+.markall { width: 100%; height: 44px; margin-top: 8px; background: var(--surface-1); color: var(--paper); border: 1px solid var(--rule); border-radius: 12px; font-size: 14px; font-weight: 600; }
+.rx-count { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--mobility); white-space: nowrap; }
+/* body map (injury) */
+.bodymap { width: clamp(150px, 48vw, 210px); height: auto; display: block; margin: 0 auto 12px; }
+.bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
+.bm-seg:hover { fill: var(--surface-2); }
+.bm-seg.sel { fill: var(--strength); stroke: var(--strength); }
+.bm-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.bm-chip { height: 38px; padding: 0 14px; min-width: 0; width: auto; border-radius: 20px; border: 1px solid var(--rule); background: var(--surface-1); color: var(--paper-dim); font-size: 14px; font-weight: 500; }
+.bm-chip.sel { background: var(--strength); border-color: var(--strength); color: var(--paper); }
 .ex-card .meta .name { font-size: 17px; font-weight: 600; color: var(--paper); }
 .ex-card .meta .rx { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
 .ex-card .meta .cue { font-size: 14px; color: var(--paper-dim); margin-top: 6px; line-height: 1.4; }
@@ -587,31 +604,29 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
   </symbol>
   <!-- PT Shin -->
   <symbol id="ic-calf-raise" viewBox="0 0 50 60">
-    <circle cx="25" cy="7" r="3.5" fill="currentColor"/>
+    <circle cx="25" cy="9" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="25" y1="10.5" x2="25" y2="32"/>
-      <path d="M 25 14 L 21 22 L 19 30"/>
-      <path d="M 25 14 L 29 22 L 31 30"/>
-      <line x1="25" y1="32" x2="22" y2="52"/>
-      <line x1="25" y1="32" x2="28" y2="52"/>
-      <path d="M 19 52 L 22 52 L 22 55"/>
-      <path d="M 28 52 L 31 52 L 31 55"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
-      <path d="M 42 18 L 42 10" stroke-width="1.2" stroke="#6A93C8"/>
-      <path d="M 40 12 L 42 10 L 44 12" stroke-width="1.2" stroke="#6A93C8"/>
+      <line x1="25" y1="12.5" x2="25" y2="34"/>
+      <path d="M 25 16 L 20 26"/>
+      <path d="M 25 16 L 30 26"/>
+      <line x1="22" y1="34" x2="22" y2="56"/>
+      <line x1="28" y1="34" x2="28" y2="56"/>
+      <line x1="19" y1="57" x2="25" y2="57" stroke-width="1.5"/>
+      <line x1="25" y1="57" x2="31" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-sl-calf-raise" viewBox="0 0 50 60">
-    <circle cx="22" cy="8" r="3.5" fill="currentColor"/>
+    <circle cx="22" cy="9" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="22" y1="11.5" x2="22" y2="32"/>
-      <path d="M 22 15 L 30 18 L 38 18"/>
-      <path d="M 22 15 L 17 25 L 15 32"/>
-      <line x1="22" y1="32" x2="22" y2="52"/>
-      <path d="M 19 52 L 22 52 L 22 55"/>
-      <path d="M 22 32 L 27 38 L 30 42"/>
-      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2" stroke="#D9A24E"/>
-      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <line x1="22" y1="12.5" x2="22" y2="34"/>
+      <line x1="22" y1="16" x2="38" y2="20"/>
+      <line x1="22" y1="16" x2="17" y2="26"/>
+      <line x1="22" y1="34" x2="22" y2="56"/>
+      <line x1="19" y1="57" x2="26" y2="57" stroke-width="1.5"/>
+      <path d="M 22 34 L 28 40 L 26 45"/>
+      <line x1="42" y1="6" x2="42" y2="56" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="57" x2="42" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-calf-stretch" viewBox="0 0 50 60">
@@ -630,32 +645,30 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
   <symbol id="ic-goblet-sq" viewBox="0 0 50 60">
     <circle cx="25" cy="14" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="25" y1="17.5" x2="25" y2="32"/>
-      <path d="M 25 20 L 22 24 L 23 28"/>
-      <path d="M 25 20 L 28 24 L 27 28"/>
+      <line x1="25" y1="17.5" x2="25" y2="33"/>
+      <path d="M 25 20 L 21 27 L 23 32"/>
+      <path d="M 25 20 L 29 27 L 27 32"/>
     </g>
-    <rect x="20" y="26" width="10" height="6" rx="1" fill="#D9A24E"/>
+    <rect x="20" y="30" width="10" height="6" rx="1" fill="#D9A24E"/>
     <g stroke="#D9A24E" stroke-width="1.2" stroke-linecap="round" fill="none">
-      <line x1="22" y1="26" x2="22" y2="24"/>
-      <line x1="28" y1="26" x2="28" y2="24"/>
+      <line x1="22" y1="30" x2="22" y2="28"/>
+      <line x1="28" y1="30" x2="28" y2="28"/>
     </g>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path d="M 25 32 L 16 42 L 14 54"/>
-      <path d="M 25 32 L 34 42 L 36 54"/>
+      <path d="M 25 33 L 16 43 L 14 55"/>
+      <path d="M 25 33 L 34 43 L 36 55"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-pushup" viewBox="0 0 50 60">
-    <circle cx="42" cy="38" r="3.5" fill="currentColor"/>
+    <circle cx="44" cy="33" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="38" y1="40" x2="12" y2="42"/>
-      <path d="M 16 41 L 16 50"/>
-      <path d="M 36 41 L 36 50"/>
-      <line x1="14" y1="50" x2="18" y2="50" stroke-width="1.5"/>
-      <line x1="34" y1="50" x2="38" y2="50" stroke-width="1.5"/>
-      <line x1="12" y1="42" x2="4" y2="49"/>
-      <line x1="3" y1="49" x2="6" y2="50" stroke-width="1.5"/>
-      <line x1="2" y1="52" x2="48" y2="52" stroke="#807868" stroke-width="1.5"/>
+      <line x1="41" y1="34" x2="12" y2="43"/>
+      <path d="M 12 43 L 6 50"/>
+      <line x1="3" y1="51" x2="9" y2="51" stroke-width="1.5"/>
+      <line x1="38" y1="35" x2="38" y2="50"/>
+      <line x1="35" y1="51" x2="41" y2="51" stroke-width="1.5"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-db-row" viewBox="0 0 50 60">
@@ -676,31 +689,28 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-plank" viewBox="0 0 50 60">
-    <circle cx="8" cy="32" r="3.5" fill="currentColor"/>
+    <circle cx="45" cy="36" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="11.5" y1="32" x2="42" y2="36"/>
-      <path d="M 13 33 L 13 41 L 18 41"/>
-      <path d="M 17 33 L 17 41 L 22 41"/>
-      <line x1="42" y1="36" x2="48" y2="44"/>
-      <line x1="46" y1="44" x2="49" y2="46" stroke-width="1.5"/>
-      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5" stroke="#807868"/>
+      <line x1="42" y1="37" x2="16" y2="44"/>
+      <path d="M 16 44 L 7 50"/>
+      <line x1="4" y1="51" x2="10" y2="51" stroke-width="1.5"/>
+      <path d="M 41 38 L 41 50 L 47 50"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- Strength Day B -->
   <symbol id="ic-rdl" viewBox="0 0 50 60">
-    <circle cx="18" cy="14" r="3.5" fill="currentColor"/>
+    <circle cx="25" cy="9" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="20" y1="17" x2="32" y2="30"/>
-      <line x1="30" y1="28" x2="28" y2="44"/>
-      <line x1="33" y1="29" x2="35" y2="44"/>
-    </g>
-    <rect x="23" y="44" width="10" height="3" fill="#D9A24E"/>
-    <rect x="30" y="44" width="10" height="3" fill="#D9A24E"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path d="M 32 30 L 30 44 L 29 54"/>
-      <path d="M 32 30 L 36 44 L 37 54"/>
+      <line x1="25" y1="12.5" x2="25" y2="34"/>
+      <line x1="24" y1="16" x2="20" y2="33"/>
+      <line x1="26" y1="16" x2="30" y2="33"/>
+      <path d="M 25 34 L 22 46 L 21 57"/>
+      <path d="M 25 34 L 28 46 L 29 57"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
+    <rect x="16" y="32" width="8" height="3" rx="1" fill="#D9A24E"/>
+    <rect x="26" y="32" width="8" height="3" rx="1" fill="#D9A24E"/>
   </symbol>
   <symbol id="ic-oh-press" viewBox="0 0 50 60">
     <circle cx="25" cy="14" r="3.5" fill="currentColor"/>
@@ -736,14 +746,14 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-dead-bug" viewBox="0 0 50 60">
-    <circle cx="8" cy="38" r="3.5" fill="currentColor"/>
+    <circle cx="9" cy="46" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="11.5" y1="38" x2="30" y2="40"/>
-      <path d="M 14 38 L 14 28 L 16 22"/>
-      <path d="M 16 38 L 13 44 L 10 50"/>
-      <path d="M 28 40 L 32 32 L 30 24"/>
-      <path d="M 30 40 L 40 46 L 47 50"/>
-      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5" stroke="#807868"/>
+      <line x1="12" y1="47" x2="31" y2="47"/>
+      <path d="M 15 47 L 13 33"/>
+      <path d="M 17 47 L 20 33"/>
+      <path d="M 31 47 L 31 34 L 41 33"/>
+      <path d="M 28 47 L 28 37 L 37 36"/>
+      <line x1="2" y1="50" x2="48" y2="50" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- Cardio -->
@@ -799,6 +809,9 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
   </symbol>
   <symbol id="ic-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <polyline points="9 18 15 12 9 6"/>
+  </symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
   </symbol>
   <symbol id="ic-sl-stance-2" viewBox="0 0 50 60">
     <circle cx="25" cy="8" r="3.5" fill="currentColor"/>
@@ -869,31 +882,32 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-calf-raise-2" viewBox="0 0 50 60">
-    <circle cx="25" cy="12" r="3.5" fill="currentColor"/>
+    <circle cx="25" cy="5" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="25" y1="15.5" x2="25" y2="37"/>
-      <path d="M 25 19 L 21 27 L 19 35"/>
-      <path d="M 25 19 L 29 27 L 31 35"/>
-      <line x1="25" y1="37" x2="22" y2="55"/>
-      <line x1="25" y1="37" x2="28" y2="55"/>
-      <path d="M 22 55 L 19 55" stroke-width="1.5"/>
-      <path d="M 28 55 L 31 55" stroke-width="1.5"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
-      <path d="M 42 15 L 42 23" stroke-width="1.2" stroke="#6A93C8"/>
-      <path d="M 40 21 L 42 23 L 44 21" stroke-width="1.2" stroke="#6A93C8"/>
+      <line x1="25" y1="8.5" x2="25" y2="30"/>
+      <path d="M 25 12 L 20 22"/>
+      <path d="M 25 12 L 30 22"/>
+      <line x1="22" y1="30" x2="22" y2="52"/>
+      <line x1="28" y1="30" x2="28" y2="52"/>
+      <path d="M 22 52 L 21 57"/>
+      <path d="M 28 52 L 29 57"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 19 40 Q 17 46 19 51" stroke-width="1.6" stroke="#E26B5F"/>
+      <path d="M 31 40 Q 33 46 31 51" stroke-width="1.6" stroke="#E26B5F"/>
     </g>
   </symbol>
   <symbol id="ic-sl-calf-raise-2" viewBox="0 0 50 60">
-    <circle cx="22" cy="13" r="3.5" fill="currentColor"/>
+    <circle cx="22" cy="5" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="22" y1="16.5" x2="22" y2="35"/>
-      <path d="M 22 20 L 30 22 L 38 22"/>
-      <path d="M 22 20 L 17 30 L 15 37"/>
-      <line x1="22" y1="35" x2="22" y2="55"/>
-      <path d="M 19 55 L 22 55 L 26 55"/>
-      <path d="M 22 35 L 27 41 L 30 45"/>
-      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2" stroke="#D9A24E"/>
-      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <line x1="22" y1="8.5" x2="22" y2="30"/>
+      <line x1="22" y1="12" x2="38" y2="16"/>
+      <line x1="22" y1="12" x2="17" y2="22"/>
+      <line x1="22" y1="30" x2="22" y2="52"/>
+      <path d="M 22 52 L 21 57"/>
+      <path d="M 22 30 L 28 36 L 26 41"/>
+      <line x1="42" y1="6" x2="42" y2="56" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="57" x2="42" y2="57" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 19 40 Q 17 46 19 51" stroke-width="1.6" stroke="#E26B5F"/>
     </g>
   </symbol>
   <symbol id="ic-calf-stretch-2" viewBox="0 0 50 60">
@@ -912,33 +926,31 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     <circle cx="25" cy="23" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <line x1="25" y1="26.5" x2="25" y2="41"/>
-      <path d="M 25 29 L 22 33 L 23 37"/>
-      <path d="M 25 29 L 28 33 L 27 37"/>
+      <path d="M 25 29 L 21 35 L 23 40"/>
+      <path d="M 25 29 L 29 35 L 27 40"/>
     </g>
-    <rect x="20" y="35" width="10" height="6" rx="1" fill="#D9A24E"/>
+    <rect x="20" y="38" width="10" height="6" rx="1" fill="#D9A24E"/>
     <g stroke="#D9A24E" stroke-width="1.2" stroke-linecap="round" fill="none">
-      <line x1="22" y1="35" x2="22" y2="33"/>
-      <line x1="28" y1="35" x2="28" y2="33"/>
+      <line x1="22" y1="38" x2="22" y2="36"/>
+      <line x1="28" y1="38" x2="28" y2="36"/>
     </g>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path d="M 25 41 L 12 42 L 14 54"/>
-      <path d="M 25 41 L 38 42 L 36 54"/>
+      <path d="M 25 41 L 12 43 L 14 55"/>
+      <path d="M 25 41 L 38 43 L 36 55"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-pushup-2" viewBox="0 0 50 60">
-  <circle cx="42" cy="43" r="3.5" fill="currentColor"/>
-  <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <line x1="38" y1="45" x2="12" y2="46"/>
-    <path d="M 16 45 L 13 49 L 16 50"/>
-    <path d="M 36 45 L 33 49 L 36 50"/>
-    <line x1="14" y1="50" x2="18" y2="50" stroke-width="1.5"/>
-    <line x1="34" y1="50" x2="38" y2="50" stroke-width="1.5"/>
-    <line x1="12" y1="46" x2="2" y2="50"/>
-    <line x1="1" y1="50" x2="4" y2="51" stroke-width="1.5"/>
-    <line x1="2" y1="52" x2="48" y2="52" stroke="#807868" stroke-width="1.5"/>
-  </g>
-</symbol>
+    <circle cx="44" cy="38" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="41" y1="39" x2="12" y2="46"/>
+      <path d="M 12 46 L 6 51"/>
+      <line x1="3" y1="52" x2="9" y2="52" stroke-width="1.5"/>
+      <path d="M 38 40 L 34 47 L 38 51"/>
+      <line x1="35" y1="52" x2="41" y2="52" stroke-width="1.5"/>
+      <line x1="2" y1="53" x2="48" y2="53" stroke-width="1.5" stroke="#807868"/>
+    </g>
+  </symbol>
   <symbol id="ic-db-row-2" viewBox="0 0 50 60">
     <circle cx="14" cy="22" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -957,30 +969,27 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-plank-2" viewBox="0 0 50 60">
-    <circle cx="8" cy="32" r="3.5" fill="currentColor"/>
+    <circle cx="45" cy="35" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="11.5" y1="32" x2="42" y2="35"/>
-      <path d="M 13 33 L 13 41 L 18 41"/>
-      <path d="M 17 33 L 17 41 L 22 41"/>
-      <line x1="42" y1="35" x2="48" y2="44"/>
-      <line x1="46" y1="44" x2="49" y2="46" stroke-width="1.5"/>
-      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5" stroke="#807868"/>
+      <line x1="42" y1="36" x2="16" y2="42"/>
+      <path d="M 16 42 L 7 50"/>
+      <line x1="4" y1="51" x2="10" y2="51" stroke-width="1.5"/>
+      <path d="M 41 37 L 41 50 L 47 50"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-rdl-2" viewBox="0 0 50 60">
-    <circle cx="31" cy="9" r="3.5" fill="currentColor"/>
+    <circle cx="13" cy="20" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="31" y1="12.5" x2="32" y2="30"/>
-      <line x1="30" y1="14" x2="28" y2="30"/>
-      <line x1="33" y1="14" x2="35" y2="30"/>
-    </g>
-    <rect x="23" y="30" width="10" height="3" fill="#D9A24E"/>
-    <rect x="30" y="30" width="10" height="3" fill="#D9A24E"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path d="M 32 30 L 30 44 L 29 54"/>
-      <path d="M 32 30 L 36 44 L 37 54"/>
+      <line x1="15" y1="22" x2="27" y2="34"/>
+      <line x1="18" y1="25" x2="20" y2="42"/>
+      <line x1="20" y1="26" x2="24" y2="42"/>
+      <path d="M 27 34 L 29 46 L 30 57"/>
+      <path d="M 27 34 L 25 46 L 24 57"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
+    <rect x="15" y="42" width="8" height="3" rx="1" fill="#D9A24E"/>
+    <rect x="21" y="42" width="8" height="3" rx="1" fill="#D9A24E"/>
   </symbol>
   <symbol id="ic-oh-press-2" viewBox="0 0 50 60">
     <circle cx="25" cy="14" r="3.5" fill="currentColor"/>
@@ -1016,14 +1025,14 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-dead-bug-2" viewBox="0 0 50 60">
-    <circle cx="8" cy="38" r="3.5" fill="currentColor"/>
+    <circle cx="9" cy="46" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="11.5" y1="38" x2="30" y2="40"/>
-      <path d="M 14 38 L 7 31 L 3 26"/>
-      <path d="M 16 38 L 18 32 L 16 26"/>
-      <path d="M 28 40 L 37 42 L 45 44"/>
-      <path d="M 30 40 L 33 29 L 31 21"/>
-      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5" stroke="#807868"/>
+      <line x1="12" y1="47" x2="31" y2="47"/>
+      <path d="M 15 47 L 6 43"/>
+      <path d="M 17 47 L 20 33"/>
+      <path d="M 31 47 L 42 48"/>
+      <path d="M 28 47 L 28 37 L 37 36"/>
+      <line x1="2" y1="50" x2="48" y2="50" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-walking-2" viewBox="0 0 50 60">
@@ -1099,6 +1108,8 @@ const state = {
   checks: [],      // [{ ts, date, goalMet, feel, hurt, decision, phase, week, dayInWeek }]
   pending: [],
   activeUser: null, // slug of the active persona
+  session: null,    // { date, done: { exKey: true } } — per-day exercise completion
+  injury: null,     // { parts:[], since, riceUntil, kind } — active injury tracking
   settings: { repo: '', pat: '', autoSync: true, units: 'imperial' },
   ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '', openBlocks: {} },
 };
@@ -1252,6 +1263,41 @@ const BLOCK_EX = {
   rest:    [], hooper: [],
 };
 function exercisesForBlock(key) { return (BLOCK_EX[key] || []).map(k => EXERCISES.find(e => e.key === k)).filter(Boolean); }
+
+// ---- Per-day exercise completion (workout flow) ----
+function ensureSession() { const d = isoToday(); if (!state.session || state.session.date !== d) state.session = { date: d, done: {} }; return state.session; }
+function todayExerciseKeys() { const ks = []; currentDayPlan().blocks.forEach(b => exercisesForBlock(b.key).forEach(ex => { if (!ks.includes(ex.key)) ks.push(ex.key); })); return ks; }
+function exDone(key) { return !!(state.session && state.session.done && state.session.done[key]); }
+function toggleEx(key) { ensureSession(); if (state.session.done[key]) delete state.session.done[key]; else state.session.done[key] = true; saveLocal(); }
+function markBlockDone(blockKey) { ensureSession(); exercisesForBlock(blockKey).forEach(ex => { state.session.done[ex.key] = true; }); saveLocal(); }
+function sessionCounts() { ensureSession(); const ks = todayExerciseKeys(); return { done: ks.filter(k => state.session.done[k]).length, total: ks.length }; }
+
+// ---- Time-aware detraining / layoff (evidence: tendon de-adapts ~2mo; run restarts more conservatively than strength) ----
+function lastCheckDate() { for (let i = state.checks.length - 1; i >= 0; i--) { if (state.checks[i] && state.checks[i].date) return state.checks[i].date; } return null; }
+function daysSinceLastCheck() { const d = lastCheckDate(); if (!d) return 0; const ms = Date.now() - new Date(d + 'T12:00:00').getTime(); return Math.max(0, Math.floor(ms / 86400000)); }
+function layoffTier() {
+  const g = daysSinceLastCheck();
+  if (g < 15) return null;
+  if (g < 29) return { gap: g, level: 1, pct: 85, title: 'Welcome back', msg: `${g} days off. Ease in: ~15% lighter today, rebuild over a week. Hold running at your last tolerated run-walk, not your best.` };
+  if (g < 57) return { gap: g, level: 2, pct: 70, title: 'Easing back in', msg: `${g} days off (~1-2 months). Start ~30% lighter, higher reps, +10%/week. Running throttles back to early run-walk intervals — tendons de-adapt faster than your heart and muscle.` };
+  return { gap: g, level: 3, pct: 60, title: 'Restart, smartly', msg: `${g}+ days off. Start ~40% lighter and rebuild running from the run-walk start, regardless of your old level. Muscle memory means it comes back much faster the second time.` };
+}
+
+// ---- Deload (evidence: lighter week every ~4-6 weeks; or early on under-recovery trend) ----
+function underRecoveryTrend() {
+  const recent = state.checks.slice(-7);
+  if (recent.length < 4) return false;
+  const flags = recent.filter(c => c.feel <= 2 || c.decision === 'modify' || c.decision === 'repeat').length;
+  return flags >= 3;
+}
+function isDeloadWeek() { const wk = state.phase?.week ?? 1; const ph = state.phase?.phase ?? 0; return ph >= 1 && wk > 0 && wk % 5 === 0; }
+function deloadActive() { return isDeloadWeek() || underRecoveryTrend(); }
+
+// ---- Injury (PEACE & LOVE / overuse loading; red-flag screen) ----
+const BODY_PARTS = ['neck','shoulder','upper back','lower back','elbow','wrist','hip','groin','glute','quad','hamstring','knee','shin','calf','ankle','foot'];
+function injuryActive() { return !!(state.injury && (!state.injury.clearedAt)); }
+function injuryInRice() { return injuryActive() && state.injury.riceUntil && Date.now() < state.injury.riceUntil; }
+function clearInjury() { if (state.injury) { state.injury.clearedAt = Date.now(); } state.injury = null; saveLocal(); }
 // Animation frames per exercise (frame A = base icon, frame B = authored complementary pose)
 const FRAMES = {
   'ic-sl-stance': ['ic-sl-stance','ic-sl-stance-2'],
@@ -1347,18 +1393,37 @@ function advancePointer() {
   }
   state.phase = { phase, week, dayInWeek, sessionsCleared: (cur.sessionsCleared ?? 0) + 1, lastDecision: new Date().toISOString() };
 }
-function applyCheck(goalMet, feel, hurt) {
-  const outcome = decide(goalMet, feel, hurt);
+const INJURY_REST = { key: 'rest', title: 'Rest & protect', cls: 'strength',
+  action: 'Offload the painful movement today. Keep moving everything that does not hurt.',
+  why: 'For a fresh tweak, current guidance is PEACE & LOVE, not RICE: Protect (briefly offload), Elevate, Avoid anti-inflammatories/ice as a "healing" step, Compress, Educate — then over the next days gently Load, stay Optimistic, do easy pain-free cardio (Vascularization) and graded Exercise. Gentle early loading beats prolonged rest (BJSM 2019/2020). Prefer paracetamol over NSAIDs for pain; re-check tomorrow.' };
+const INJURY_FLAG = { key: 'rest', title: 'See a clinician first', cls: 'strength',
+  action: 'Hold off and get this looked at before training it.',
+  why: 'You flagged a warning sign — cannot bear weight, bone-point tenderness, numbness, deformity, joint locking/giving way, a "pop", or rapid swelling. Any of these warrants a professional check (GP, physio, urgent care), and it matters more at 40+ where fracture and medication-interaction risk are higher. Resume the plan once cleared.' };
+
+function applyCheck(goalMet, feel, hurt, parts, redFlag) {
+  let outcome = decide(goalMet, feel, hurt);
   const cur = state.phase || {};
   const today = isoToday();
+  // --- Injury handling (PEACE & LOVE / red-flag screen) ---
+  const wasInRice = injuryInRice();
+  if (hurt) {
+    outcome = redFlag ? INJURY_FLAG : INJURY_REST;
+    state.injury = { parts: parts || [], since: Date.now(), riceUntil: Date.now() + 3 * 86400000, kind: 'acute', redFlag: !!redFlag };
+  } else if (injuryActive()) {
+    // re-checked with no pain: the injury is settling — clear it and resume
+    state.injury = null;
+  }
+  // --- Ease back: no load jump on the first session back after a layoff or within the injury-protect window ---
+  const lay = layoffTier();
+  if (!hurt && outcome.key === 'progress' && (lay || wasInRice)) outcome = OUTCOMES.repeat;
   const existingIdx = state.checks.findIndex(c => c.date === today);
   const alreadyCheckedToday = existingIdx >= 0;
   const entry = {
-    ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt,
+    ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt, parts: parts || [],
     decision: outcome.key, phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1,
   };
   if (alreadyCheckedToday) state.checks[existingIdx] = entry; else state.checks.push(entry);
-  // advance at most once per local day, and only on a Progress call (re-checking the same day never double-advances)
+  // advance at most once per local day, only on Progress, never while hurt/injured
   if (outcome.key === 'progress' && !alreadyCheckedToday) {
     advancePointer();
   } else {
@@ -1373,11 +1438,11 @@ function applyCheck(goalMet, feel, hurt) {
 // STORAGE
 // ============================================================
 function loadUserState(slug) {
-  state.profile = null; state.phase = null; state.checks = []; state.pending = [];
+  state.profile = null; state.phase = null; state.checks = []; state.pending = []; state.session = null; state.injury = null;
   if (!slug) return;
   try {
     const raw = localStorage.getItem(userStateKey(slug));
-    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; }
+    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; state.session = d.session || null; state.injury = d.injury || null; }
   } catch (e) { console.error('loadUserState failed', e); }
 }
 function loadLocal() {
@@ -1411,7 +1476,7 @@ function saveLocal() {
     if (slug) {
       state.activeUser = slug;
       localStorage.setItem(ACTIVE_KEY, slug);
-      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending }));
+      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending, session: state.session, injury: state.injury }));
     }
   } catch (e) { console.error('saveLocal failed', e); }
 }
@@ -1598,6 +1663,15 @@ function bindEvents() {
     el.setAttribute('aria-expanded', open ? 'true' : 'false');
     state.ui.openBlocks[i] = open;   // persist so it survives re-renders
   }));
+  document.querySelectorAll('[data-exp-why]').forEach(el => el.addEventListener('click', () => {
+    const panel = document.getElementById('why-panel');
+    if (!panel) return;
+    const open = panel.classList.toggle('open');
+    el.setAttribute('aria-expanded', open ? 'true' : 'false');
+    state.ui.whyOpen = open;
+  }));
+  document.querySelectorAll('[data-toggle-ex]').forEach(el => el.addEventListener('click', () => { toggleEx(el.getAttribute('data-toggle-ex')); render(); }));
+  document.querySelectorAll('[data-markall]').forEach(el => el.addEventListener('click', () => { markBlockDone(el.getAttribute('data-markall')); render(); }));
 }
 
 // ============================================================
@@ -1689,7 +1763,40 @@ function bindOnboarding() {
 }
 
 // ---------- TODAY ----------
+// Why-this-session rationale (grounded in docs/EVIDENCE-REVIEW.md)
+function dayWhy() {
+  const ph = state.phase?.phase ?? 0;
+  const blocks = currentDayPlan().blocks;
+  const hasStr = blocks.some(b => b.kind === 'strength');
+  const hasRun = blocks.some(b => /run/i.test(b.title) || /run/i.test(b.label));
+  const hasWalk = blocks.some(b => b.kind === 'cardio') && !hasRun;
+  if (ph === 0) return { line: "Build the slowest tissue first — tendons and bone lag your heart and muscles.", points: [
+    "Phase 0 is deliberately low-impact: daily walking, 10-min PT (balance, hips, calves), and protein — no loaded lifting or running yet.",
+    "Connective tissue and bone adapt over months while muscle and cardio adapt in weeks, so we prep the structure before the stress (Bohm/Arampatzis, Sports Med 2015).",
+    "Single-leg balance and hip work is the base that keeps knees and shins healthy once running starts." ] };
+  if (ph >= 4) return { line: "Get faster and more durable with quality sets and quick movements — not 100 grinding reps.", points: [
+    "Strength 2-3x/week at RIR 2-3 plus a little power (fast sit-to-stands, step-ups) and brief impact bone-snacks beats high-volume daily work for 40+.",
+    "Near-daily training to failure raises injury risk without extra benefit at this age — quality and recovery win.",
+    "Keep building toward 10K with the +10% session cap and a lighter week every 4-6 weeks." ] };
+  if (hasRun) return { line: "Each run grows at most ~10% over your longest recent run — no hero sessions.", points: [
+    "A single run that spikes far past what you have recently done is the strongest injury trigger, so we cap the jump, not the week (Johansen/Nielsen, BJSM 2025).",
+    "Run-walk on non-consecutive days keeps impact tolerable while tendons and bone catch up.",
+    "Novice and 40+ runners are the highest-risk group — easing in is the whole point." ] };
+  if (hasStr) return { line: "Strength is your #1 injury insurance — and we stop 2-3 reps short of failure.", points: [
+    "Resistance training cuts overuse injuries roughly in half (Lauersen, BJSM 2018) — the most evidence-backed thing in this program.",
+    "Leave ~2-3 good reps in the tank (RIR 2-3); add load only after you hit your reps cleanly two sessions in a row.",
+    "The heavy, slow calf and leg work is tendon-prep — it stiffens the tendons running will pound (Bohm/Arampatzis, 2015)." ] };
+  if (hasWalk) return { line: "Easy, conversational cardio builds the aerobic base you can sustain without breaking down.", points: [
+    "Zone 2 (you can talk in full sentences) grows the engine with minimal injury risk.",
+    "Aerobic fitness (VO2max) is among the strongest predictors of long-term health (Kokkinos, JACC 2022).",
+    "This volume is the foundation your runs are built on." ] };
+  return { line: "Recovery outranks everything — today's job is to let adaptation happen.", points: [
+    "Rest and easy movement are when the work you did turns into fitness.",
+    "Sleep, hydration, and protein (~1.6 g/kg/day spread across meals) drive recovery, especially at 40+." ] };
+}
+
 function renderToday() {
+  ensureSession();
   const phaseIdx = state.phase?.phase ?? 0;
   const pd = PHASES[phaseIdx];
   const dayInWeek = state.phase?.dayInWeek ?? 1;
@@ -1698,6 +1805,17 @@ function renderToday() {
   const crumb = `${who}Phase ${phaseIdx} · Wk ${state.phase?.week ?? 1} · Session ${dayInWeek}/${pd.week.length}`;
   const todayChecks = state.checks.filter(c => c.date === isoToday());
   const lastToday = todayChecks[todayChecks.length - 1];
+  const why = dayWhy();
+  const whyOpen = !!state.ui.whyOpen;
+  const layoff = layoffTier();
+  const counts = sessionCounts();
+  const recent = state.checks.slice(-14);
+  let trend = '';
+  if (recent.length >= 2) {
+    const avg = recent.reduce((s,c)=>s+(c.feel||0),0)/recent.length;
+    const adh = Math.round(recent.filter(c=>c.goalMet==='done').length/recent.length*100);
+    trend = `Readiness ~${avg.toFixed(1)}/5 over your last ${recent.length} check-ins · ${adh}% sessions completed · ${state.phase?.sessionsCleared ?? 0} progressions so far.`;
+  }
   return `<div class="screen">
     <div class="screen-head">
       <div class="col"><span class="crumb">${escHtml(crumb)}</span><div class="sp-4"></div><span class="sync"></span></div>
@@ -1706,18 +1824,41 @@ function renderToday() {
     <h1 class="display-m serif">${escHtml(pd.name)}</h1>
     <div class="sp-4"></div>
     <p class="title" style="color:var(--mobility);">${dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery'}</p>
-    <div class="sp-24"></div>
-    <p class="label">Today's goal</p><div class="sp-8"></div>
+    <div class="sp-16"></div>
+    <div style="margin-bottom:12px;">
+      <button class="today-block" data-exp-why aria-expanded="${whyOpen?'true':'false'}">
+        <div class="card" style="padding:14px 16px;border:1px solid var(--rule);">
+          <div class="rx-head"><div class="col"><span class="label" style="color:var(--milestone);">Today · why</span><div class="sp-4"></div><div class="body">${escHtml(why.line)}</div></div><div class="rx-chev">${svgUse('ic-chev-right',20)}</div></div>
+        </div>
+      </button>
+      <div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:12px 14px;border:1px solid var(--rule);margin-top:8px;">
+        ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
+        ${trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(trend)}</p>`:''}
+        <div class="sp-8"></div><button class="more" data-go="settings">Full evidence base &rarr;</button>
+      </div></div>
+    </div>
+    ${layoff ? `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>` : ''}
+    ${(!layoff && deloadActive()) ? `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>` : ''}
+    ${injuryActive() ? `<div class="card-block strength" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--strength);">Recovering · ${escHtml((state.injury.parts||[]).join(', ')||'injury')}</span><div class="sp-4"></div><div class="body-dim">${injuryInRice()?'Protect &amp; gently load the area for now (PEACE &amp; LOVE). Keep moving everything that does not hurt.':'Ease back with pain-monitored loading — keep pain at or under ~3-5/10 and settled by next morning.'} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>` : ''}
+    <p class="label">Today's goal${counts.total?` · <span class="rx-count">${counts.done}/${counts.total} done</span>`:''}</p><div class="sp-8"></div>
     ${dayPlan.blocks.map((b,i)=>{
       const exs = exercisesForBlock(b.key);
+      const bdone = exs.filter(e=>exDone(e.key)).length;
       const head = `<div class="card-block ${b.kind}"><div class="stripe"></div>
         <div class="card" style="padding:14px 16px;"><div class="rx-head"><div class="col">
           <span class="label">${escHtml(b.label)}</span><div class="sp-4"></div>
           <div class="title">${escHtml(b.title)}</div>${b.detail?`<div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div>`:''}
-        </div>${exs.length?`<div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div>`;
+        </div><div class="col" style="align-items:flex-end;gap:6px;">${exs.length?`<span class="rx-count">${bdone}/${exs.length}</span><div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div></div>`;
       if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
       const open = !!state.ui.openBlocks[i];
-      const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">${exs.map(ex=>`<div class="ex-card"><div class="fig">${animatedFigure(ex,48)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div></div>`).join('')}</div>`;
+      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
+      const todo = exs.filter(e=>!exDone(e.key));
+      const done = exs.filter(e=>exDone(e.key));
+      const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">
+        ${todo.length?`<div class="ex-grid">${todo.map(card).join('')}</div>`:''}
+        ${todo.length?`<button class="markall" data-markall="${escHtml(b.key)}">${svgUse('ic-check',14)} Mark all ${exs.length} complete</button>`:''}
+        ${done.length?`<div class="ex-done-label">${svgUse('ic-check',14)} Completed (${done.length})</div><div class="ex-grid">${done.map(card).join('')}</div>`:''}
+      </div>`;
       return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
     }).join('')}
     ${lastToday ? `<div class="sp-12"></div>
@@ -1732,19 +1873,38 @@ function renderToday() {
 }
 
 // ---------- CHECK ----------
+function bodyMap(sel) {
+  const seg = (part,x,y,w,h)=>`<rect class="bm-seg${sel.includes(part)?' sel':''}" data-part="${part}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/>`;
+  return `<svg viewBox="0 0 100 188" class="bodymap" aria-label="Body map — tap where it hurts">
+    <circle class="bm-seg${sel.includes('head/neck')?' sel':''}" data-part="head/neck" cx="50" cy="13" r="10"/>
+    ${seg('left shoulder',26,26,16,9)}${seg('right shoulder',58,26,16,9)}
+    ${seg('chest',38,30,24,15)}${seg('core',39,47,22,15)}
+    ${seg('left arm',21,30,11,44)}${seg('right arm',68,30,11,44)}
+    ${seg('hip / groin',37,64,26,12)}
+    ${seg('left thigh',38,78,11,33)}${seg('right thigh',51,78,11,33)}
+    ${seg('left knee',38,112,11,9)}${seg('right knee',51,112,11,9)}
+    ${seg('left lower leg',39,122,10,36)}${seg('right lower leg',51,122,10,36)}
+    ${seg('left foot',35,159,13,9)}${seg('right foot',52,159,13,9)}
+  </svg>`;
+}
 function renderCheck() {
-  state._chk = state._chk || { goalMet: null, feel: null, hurt: false };
+  ensureSession();
+  const { done, total } = sessionCounts();
+  const allEx = total > 0 && done === total;
+  state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: [], redFlag: false };
+  if (!state._chk.parts) state._chk.parts = [];
   setTimeout(bindCheck, 0);
   const t = state._chk;
   const ready = t.goalMet && t.feel;
   const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
+  const reChk = injuryActive();
   return `<div class="screen no-nav">
     <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
-    <h1 class="display-s serif">Daily check-in</h1>
+    <h1 class="display-s serif">${reChk ? 'Pain re-check' : 'Daily check-in'}</h1>
     <div class="sp-8"></div>
-    <p class="body-dim">Two taps. The app picks the call.</p>
+    <p class="body-dim">${reChk ? 'Still sore, or good to ease back in?' : 'A tap or two — the app picks the call.'}</p>
     <div class="sp-24"></div>
-    <p class="label">Did you meet today's goal?</p><div class="sp-8"></div>
+    <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
     <div class="chip-row" data-q="goal">
       <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">Done</button>
       <button class="chip ${t.goalMet==='partial'?'active':''}" data-val="partial">Partial</button>
@@ -1757,11 +1917,17 @@ function renderCheck() {
         <span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
     </div>
     <div class="sp-20"></div>
-    <button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Sharp pain flagged — tap to clear':'Something hurts (sharp pain)?'}</button>
+    <button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Something hurts — tap to clear':'Something hurts?'}</button>
+    ${t.hurt ? `<div class="sp-16"></div>
+      <p class="label">Where? Tap all that apply.</p><div class="sp-8"></div>
+      ${bodyMap(t.parts)}
+      <div class="bm-chips">${['lower back','glute','hamstring','calf','Achilles'].map(p=>`<button class="bm-chip${t.parts.includes(p)?' sel':''}" data-part="${p}">${p}</button>`).join('')}</div>
+      <div class="sp-16"></div>
+      <button class="hurt-toggle ${t.redFlag?'on':''}" id="chk-flag" style="text-align:left;padding:10px 14px;height:auto;min-height:56px;font-size:14px;">${t.redFlag?'⚠ Warning sign flagged — we will route you to a clinician':'Any of: cannot bear weight · bone-point tenderness · numbness · deformity · locking/giving way · a "pop" · rapid swelling?'}</button>` : ''}
     <div class="sp-24"></div>
     <button id="chk-go" ${ready?'':'disabled'}>See the call</button>
     <div class="sp-16"></div>
-    <p class="body-dim" style="font-size: 14px;">Readiness drives the decision. A single daily feel rating is a simplification of the 4-item Hooper Index (Hooper et al. 1995); subjective readiness tracks training response better than objective markers (Saw, Main &amp; Gastin, BJSM 2016).</p>
+    <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016). Pain — or a flagged warning sign — routes you to rest/clinical care, and the program then eases you back with pain-monitored loading.</p>
   </div>`;
 }
 function bindCheck() {
@@ -1777,17 +1943,24 @@ function bindCheck() {
     feel.querySelectorAll('button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active'); refreshGo();
   }));
-  const hurt = document.getElementById('chk-hurt');
-  hurt.addEventListener('click', () => {
+  document.getElementById('chk-hurt').addEventListener('click', () => {
     state._chk.hurt = !state._chk.hurt;
-    hurt.classList.toggle('on', state._chk.hurt);
-    hurt.textContent = state._chk.hurt ? '⚠ Sharp pain flagged — tap to clear' : 'Something hurts (sharp pain)?';
+    if (!state._chk.hurt) { state._chk.parts = []; state._chk.redFlag = false; }
+    render();
   });
-  function refreshGo() { document.getElementById('chk-go').disabled = !(state._chk.goalMet && state._chk.feel); }
+  const flag = document.getElementById('chk-flag');
+  if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
+  document.querySelectorAll('[data-part]').forEach(el => el.addEventListener('click', () => {
+    const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
+    if (i >= 0) state._chk.parts.splice(i,1); else state._chk.parts.push(p);
+    el.classList.toggle('sel');
+  }));
+  function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
   document.getElementById('chk-go').addEventListener('click', () => {
     const t = state._chk;
     if (!(t.goalMet && t.feel)) return;
-    const outcome = applyCheck(t.goalMet, t.feel, t.hurt);
+    const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
+    state.ui.resultOutcome = outcome;
     delete state._chk;
     navigate('result', { outcome: outcome.key });
   });
@@ -1795,7 +1968,7 @@ function bindCheck() {
 
 // ---------- RESULT ----------
 function renderResult(outcomeKey) {
-  const o = OUTCOMES[outcomeKey] || OUTCOMES.repeat;
+  const o = (state.ui.resultOutcome && state.ui.resultOutcome.key === outcomeKey) ? state.ui.resultOutcome : (OUTCOMES[outcomeKey] || OUTCOMES.repeat);
   let modifyHtml = '';
   if (o.key === 'modify') {
     const blocks = currentDayPlan().blocks.map(modifyBlock);
