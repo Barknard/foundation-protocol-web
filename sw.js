@@ -1,8 +1,8 @@
 /* Foundation Protocol service worker — offline app shell.
    The whole app is one HTML file; cache it so it opens with no network.
    GitHub API (data sync) is NEVER cached — it always goes to the network. */
-const CACHE = 'fp-shell-v2.1.1';
-const SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE = 'fp-shell-v2.2.0';
+const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './logo.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

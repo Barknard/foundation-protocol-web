@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#1A1614">
 <meta name="color-scheme" content="dark">
 <title>Foundation Protocol</title>
-<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path fill='%23E8E2D2' d='M24,16 L78,16 L78,30 L68,30 L68,24 L40,24 L40,42 L62,42 L62,52 L40,52 L40,80 L24,80 Z'/></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path fill='%23E8E2D2' d='M24,16 L78,16 L78,30 L68,30 L68,24 L40,24 L40,42 L62,42 L62,52 L40,52 L40,80 L24,80 Z'/></svg>">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path d='M48 20 L78 72 L18 72 Z' fill='none' stroke='%23E8E2D2' stroke-width='6' stroke-linejoin='round'/><path d='M33 67 L48 45 L63 67 Z' fill='%23E8E2D2'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path d='M48 20 L78 72 L18 72 Z' fill='none' stroke='%23E8E2D2' stroke-width='6' stroke-linejoin='round'/><path d='M33 67 L48 45 L63 67 Z' fill='%23E8E2D2'/></svg>">
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,7 +72,7 @@ body {
   min-height: 100dvh;
   padding: 0;
   position: relative;
-  padding-bottom: 80px; /* room for bottom nav */
+  padding-bottom: calc(clamp(66px, 9.5vh, 96px) + env(safe-area-inset-bottom) + 16px); /* room for bottom nav */
 }
 .screen { padding: 56px var(--pad) 24px; min-height: 100vh; min-height: 100dvh; }
 .screen.no-nav { padding-bottom: 24px; }
@@ -248,6 +248,19 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .field textarea { resize: vertical; min-height: 80px; }
 .field .help { font-size: 14px; color: var(--paper-low); }
 
+/* brand logo (homepage) */
+.brand { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.brand-logo { width: clamp(76px, 24vw, 104px); height: clamp(76px, 24vw, 104px); object-fit: contain; margin-bottom: 10px; }
+
+/* unit toggle + auto-conversion */
+.unit-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; }
+.seg button { height: 30px; min-width: 0; width: auto; padding: 0 14px; background: transparent; color: var(--paper-dim); font-size: 13px; font-weight: 600; border: none; border-radius: 0; }
+.seg button.on { background: var(--milestone); color: var(--ink); }
+.conv-wrap { position: relative; display: flex; align-items: center; }
+.conv-wrap input { padding-right: 96px; }
+.conv { position: absolute; right: 16px; color: var(--paper-low); font-family: 'IBM Plex Mono', monospace; font-size: 14px; pointer-events: none; white-space: nowrap; }
+
 /* radio cards */
 .radio-card {
   background: var(--surface);
@@ -335,13 +348,13 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   padding-bottom: env(safe-area-inset-bottom);
 }
 .nav .tab {
-  flex: 1; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  flex: 1; height: clamp(66px, 9.5vh, 96px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(4px, 0.9vh, 8px);
   background: transparent; border: none; color: var(--paper-low); cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: 'IBM Plex Mono', monospace; font-size: clamp(11px, calc(7px + 1.4vw), 15px); letter-spacing: 0.08em; text-transform: uppercase;
   width: auto; border-radius: 0;
 }
 .nav .tab.active { color: var(--milestone); }
-.nav .tab svg { width: 22px; height: 22px; }
+.nav .tab svg { width: clamp(24px, calc(14px + 3.4vw), 34px); height: clamp(24px, calc(14px + 3.4vw), 34px); }
 
 /* ---------- HEADER ---------- */
 .screen-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -399,11 +412,13 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .fig-hero {
   background: var(--surface-1);
   border-radius: 18px;
-  height: 220px;
+  height: clamp(184px, 48vw, 240px);
   display: flex; align-items: center; justify-content: center;
   margin: 12px 0;
 }
 .fig-hero svg { height: 170px; width: 170px; color: var(--paper); }
+.fig-hero .afig { width: clamp(150px, 42vw, 196px) !important; height: clamp(150px, 42vw, 196px) !important; }
+.fig-hero .afig svg { width: 100% !important; height: 100% !important; }
 .step-list { display: grid; grid-template-columns: 28px 1fr; gap: 8px 12px; }
 .step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-low); padding-top: 3px; }
 .step-list .t { font-size: 17px; color: var(--paper); line-height: 1.5; padding-bottom: 6px; }
@@ -479,6 +494,19 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- TOUCH / MOBILE ---------- */
+button, .btn, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .icon, .switch {
+  touch-action: manipulation;          /* no 300ms tap delay, no double-tap zoom */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+.brand-logo { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
+html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in the PWA */
+@media (max-width: 380px) {
+  :root { --pad: 18px; }
+  .screen { padding-top: 44px; }
+}
 </style>
 </head>
 <body>
@@ -496,7 +524,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 16 L 19 22 L 15 27"/>
       <line x1="25" y1="32" x2="25" y2="55"/>
       <path d="M 25 32 L 18 40 L 25 42"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-sl-squat" viewBox="0 0 50 60">
@@ -507,7 +535,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 18 L 17 25 L 12 28"/>
       <path d="M 25 33 L 22 44 L 25 55"/>
       <path d="M 25 33 L 31 40 L 34 38"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-sl-hop" viewBox="0 0 50 60">
@@ -518,9 +546,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 22 22 L 16 24 L 12 21"/>
       <path d="M 24 36 L 22 46 L 26 53"/>
       <path d="M 24 36 L 30 42 L 35 40"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
-      <path d="M 8 30 L 13 30" stroke-width="1.2"/>
-      <path d="M 11 28 L 13 30 L 11 32" stroke-width="1.2"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 8 30 L 13 30" stroke-width="1.2" stroke="#6A93C8"/>
+      <path d="M 11 28 L 13 30 L 11 32" stroke-width="1.2" stroke="#6A93C8"/>
     </g>
   </symbol>
   <!-- PT Hip -->
@@ -532,7 +560,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 16 32 L 22 30"/>
       <line x1="33" y1="34" x2="45" y2="42"/>
       <path d="M 33 34 L 42 28 L 47 24"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-glute-bridge" viewBox="0 0 50 60">
@@ -542,7 +570,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 11 47 L 15 50 L 19 50"/>
       <path d="M 28 32 L 32 45 L 38 53"/>
       <path d="M 28 32 L 30 46 L 36 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-band-walk" viewBox="0 0 50 60">
@@ -553,8 +581,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 18 L 32 25 L 36 28"/>
       <path d="M 26 32 L 18 44 L 14 55"/>
       <path d="M 26 32 L 34 44 L 38 55"/>
-      <path d="M 18 44 Q 26 47 34 44" stroke-dasharray="1.5 1.5"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <path d="M 18 44 Q 26 47 34 44" stroke-dasharray="1.5 1.5" stroke="#D9A24E"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- PT Shin -->
@@ -568,9 +596,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="25" y1="32" x2="28" y2="52"/>
       <path d="M 19 52 L 22 52 L 22 55"/>
       <path d="M 28 52 L 31 52 L 31 55"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5"/>
-      <path d="M 42 18 L 42 10" stroke-width="1.2"/>
-      <path d="M 40 12 L 42 10 L 44 12" stroke-width="1.2"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 42 18 L 42 10" stroke-width="1.2" stroke="#6A93C8"/>
+      <path d="M 40 12 L 42 10 L 44 12" stroke-width="1.2" stroke="#6A93C8"/>
     </g>
   </symbol>
   <symbol id="ic-sl-calf-raise" viewBox="0 0 50 60">
@@ -582,8 +610,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="22" y1="32" x2="22" y2="52"/>
       <path d="M 19 52 L 22 52 L 22 55"/>
       <path d="M 22 32 L 27 38 L 30 42"/>
-      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2"/>
-      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5"/>
+      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-calf-stretch" viewBox="0 0 50 60">
@@ -594,8 +622,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 16 21 L 22 22 L 30 22"/>
       <path d="M 28 37 L 34 47 L 38 54"/>
       <line x1="28" y1="37" x2="20" y2="54"/>
-      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2"/>
-      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5"/>
+      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- Strength Day A -->
@@ -606,15 +634,15 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 20 L 22 24 L 23 28"/>
       <path d="M 25 20 L 28 24 L 27 28"/>
     </g>
-    <rect x="20" y="26" width="10" height="6" rx="1" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+    <rect x="20" y="26" width="10" height="6" rx="1" fill="#D9A24E"/>
+    <g stroke="#D9A24E" stroke-width="1.2" stroke-linecap="round" fill="none">
       <line x1="22" y1="26" x2="22" y2="24"/>
       <line x1="28" y1="26" x2="28" y2="24"/>
     </g>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 25 32 L 16 42 L 14 54"/>
       <path d="M 25 32 L 34 42 L 36 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-pushup" viewBox="0 0 50 60">
@@ -627,7 +655,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="34" y1="50" x2="38" y2="50" stroke-width="1.5"/>
       <line x1="12" y1="42" x2="4" y2="49"/>
       <line x1="3" y1="49" x2="6" y2="50" stroke-width="1.5"/>
-      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke="#807868" stroke-width="1.5"/>
     </g>
   </symbol>
   <symbol id="ic-db-row" viewBox="0 0 50 60">
@@ -638,13 +666,13 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 38 26 L 38 36"/>
       <path d="M 22 26 L 18 32 L 18 38"/>
     </g>
-    <rect x="13" y="38" width="10" height="4" fill="currentColor"/>
+    <rect x="13" y="38" width="10" height="4" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <line x1="17" y1="25" x2="6" y2="36"/>
-      <line x1="30" y1="38" x2="46" y2="38" stroke-width="2"/>
-      <line x1="32" y1="38" x2="32" y2="50" stroke-width="1.5"/>
-      <line x1="44" y1="38" x2="44" y2="50" stroke-width="1.5"/>
-      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5"/>
+      <line x1="30" y1="38" x2="46" y2="38" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="32" y1="38" x2="32" y2="50" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="44" y1="38" x2="44" y2="50" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-plank" viewBox="0 0 50 60">
@@ -655,7 +683,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 17 33 L 17 41 L 22 41"/>
       <line x1="42" y1="36" x2="48" y2="44"/>
       <line x1="46" y1="44" x2="49" y2="46" stroke-width="1.5"/>
-      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5"/>
+      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- Strength Day B -->
@@ -666,12 +694,12 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="30" y1="28" x2="28" y2="44"/>
       <line x1="33" y1="29" x2="35" y2="44"/>
     </g>
-    <rect x="23" y="44" width="10" height="3" fill="currentColor"/>
-    <rect x="30" y="44" width="10" height="3" fill="currentColor"/>
+    <rect x="23" y="44" width="10" height="3" fill="#D9A24E"/>
+    <rect x="30" y="44" width="10" height="3" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 32 30 L 30 44 L 29 54"/>
       <path d="M 32 30 L 36 44 L 37 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-oh-press" viewBox="0 0 50 60">
@@ -681,12 +709,12 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="22" y1="19" x2="20" y2="5"/>
       <line x1="28" y1="19" x2="30" y2="5"/>
     </g>
-    <rect x="15" y="3" width="10" height="3" fill="currentColor"/>
-    <rect x="25" y="3" width="10" height="3" fill="currentColor"/>
+    <rect x="15" y="3" width="10" height="3" fill="#D9A24E"/>
+    <rect x="25" y="3" width="10" height="3" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <line x1="25" y1="37" x2="22" y2="55"/>
       <line x1="25" y1="37" x2="28" y2="55"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-split-sq" viewBox="0 0 50 60">
@@ -701,10 +729,10 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 22 33 L 17 44 L 14 55"/>
       <path d="M 22 33 L 32 42 L 42 46"/>
-      <line x1="38" y1="46" x2="48" y2="46" stroke-width="2"/>
-      <line x1="40" y1="46" x2="40" y2="55" stroke-width="1.5"/>
-      <line x1="46" y1="46" x2="46" y2="55" stroke-width="1.5"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5"/>
+      <line x1="38" y1="46" x2="48" y2="46" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="40" y1="46" x2="40" y2="55" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="46" y1="46" x2="46" y2="55" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-dead-bug" viewBox="0 0 50 60">
@@ -715,7 +743,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 16 38 L 13 44 L 10 50"/>
       <path d="M 28 40 L 32 32 L 30 24"/>
       <path d="M 30 40 L 40 46 L 47 50"/>
-      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5"/>
+      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- Cardio -->
@@ -727,7 +755,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 16 L 18 22 L 16 30"/>
       <path d="M 25 32 L 30 44 L 35 54"/>
       <path d="M 25 32 L 22 44 L 17 52"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-running" viewBox="0 0 50 60">
@@ -738,9 +766,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 23 18 L 14 24 L 12 30"/>
       <path d="M 25 32 L 33 40 L 40 46"/>
       <path d="M 25 32 L 19 42 L 15 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
-      <path d="M 5 16 L 11 16" stroke-width="1"/>
-      <path d="M 5 22 L 11 22" stroke-width="1"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 5 16 L 11 16" stroke-width="1" stroke="#6A93C8"/>
+      <path d="M 5 22 L 11 22" stroke-width="1" stroke="#6A93C8"/>
     </g>
   </symbol>
 
@@ -780,7 +808,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 16 L 17 18 L 11 16"/>
       <line x1="25" y1="32" x2="25" y2="55"/>
       <path d="M 25 32 L 16 38 L 23 40"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-sl-squat-2" viewBox="0 0 50 60">
@@ -791,7 +819,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 25 L 17 32 L 12 35"/>
       <path d="M 25 40 L 33 47 L 25 55"/>
       <path d="M 25 40 L 31 47 L 34 45"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-sl-hop-2" viewBox="0 0 50 60">
@@ -802,9 +830,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 22 30 L 17 33.8 L 13 37"/>
       <path d="M 24 44 L 33 49 L 26 53"/>
       <path d="M 24 44 L 30 50 L 35 48"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
-      <path d="M 10 36 L 10 41" stroke-width="1.2"/>
-      <path d="M 8 39 L 10 41 L 12 39" stroke-width="1.2"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 10 36 L 10 41" stroke-width="1.2" stroke="#6A93C8"/>
+      <path d="M 8 39 L 10 41 L 12 39" stroke-width="1.2" stroke="#6A93C8"/>
     </g>
   </symbol>
   <symbol id="ic-hip-abd-2" viewBox="0 0 50 60">
@@ -815,7 +843,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 16 32 L 22 30"/>
       <line x1="33" y1="34" x2="45" y2="42"/>
       <path d="M 33 34 L 42 40 L 47 44"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-glute-bridge-2" viewBox="0 0 50 60">
@@ -825,7 +853,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 11 47 L 15 50 L 19 50"/>
       <path d="M 31.7 49.5 L 44.7 45.6 L 38 53"/>
       <path d="M 31.7 49.5 L 45.7 51.4 L 36 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-band-walk-2" viewBox="0 0 50 60">
@@ -836,8 +864,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 18 L 32 25 L 36 28"/>
       <path d="M 26 32 L 21 45.5 L 19 57"/>
       <path d="M 26 32 L 31 45.5 L 33 57"/>
-      <path d="M 21 45.5 Q 26 48.5 31 45.5" stroke-dasharray="1.5 1.5"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <path d="M 21 45.5 Q 26 48.5 31 45.5" stroke-dasharray="1.5 1.5" stroke="#D9A24E"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-calf-raise-2" viewBox="0 0 50 60">
@@ -850,9 +878,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="25" y1="37" x2="28" y2="55"/>
       <path d="M 22 55 L 19 55" stroke-width="1.5"/>
       <path d="M 28 55 L 31 55" stroke-width="1.5"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5"/>
-      <path d="M 42 15 L 42 23" stroke-width="1.2"/>
-      <path d="M 40 21 L 42 23 L 44 21" stroke-width="1.2"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 42 15 L 42 23" stroke-width="1.2" stroke="#6A93C8"/>
+      <path d="M 40 21 L 42 23 L 44 21" stroke-width="1.2" stroke="#6A93C8"/>
     </g>
   </symbol>
   <symbol id="ic-sl-calf-raise-2" viewBox="0 0 50 60">
@@ -864,8 +892,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="22" y1="35" x2="22" y2="55"/>
       <path d="M 19 55 L 22 55 L 26 55"/>
       <path d="M 22 35 L 27 41 L 30 45"/>
-      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2"/>
-      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5"/>
+      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-calf-stretch-2" viewBox="0 0 50 60">
@@ -876,8 +904,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 17 20 L 23 21 L 30 21"/>
       <path d="M 28 37 L 31.5 48 L 37 54"/>
       <line x1="28" y1="37" x2="20" y2="54"/>
-      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2"/>
-      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5"/>
+      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-goblet-sq-2" viewBox="0 0 50 60">
@@ -887,15 +915,15 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 29 L 22 33 L 23 37"/>
       <path d="M 25 29 L 28 33 L 27 37"/>
     </g>
-    <rect x="20" y="35" width="10" height="6" rx="1" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+    <rect x="20" y="35" width="10" height="6" rx="1" fill="#D9A24E"/>
+    <g stroke="#D9A24E" stroke-width="1.2" stroke-linecap="round" fill="none">
       <line x1="22" y1="35" x2="22" y2="33"/>
       <line x1="28" y1="35" x2="28" y2="33"/>
     </g>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 25 41 L 12 42 L 14 54"/>
       <path d="M 25 41 L 38 42 L 36 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-pushup-2" viewBox="0 0 50 60">
@@ -908,7 +936,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
     <line x1="34" y1="50" x2="38" y2="50" stroke-width="1.5"/>
     <line x1="12" y1="46" x2="2" y2="50"/>
     <line x1="1" y1="50" x2="4" y2="51" stroke-width="1.5"/>
-    <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5"/>
+    <line x1="2" y1="52" x2="48" y2="52" stroke="#807868" stroke-width="1.5"/>
   </g>
 </symbol>
   <symbol id="ic-db-row-2" viewBox="0 0 50 60">
@@ -919,13 +947,13 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 38 26 L 38 36"/>
       <path d="M 22 26 L 28 23 L 28 29"/>
     </g>
-    <rect x="23" y="29" width="10" height="4" fill="currentColor"/>
+    <rect x="23" y="29" width="10" height="4" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <line x1="17" y1="25" x2="6" y2="36"/>
-      <line x1="30" y1="38" x2="46" y2="38" stroke-width="2"/>
-      <line x1="32" y1="38" x2="32" y2="50" stroke-width="1.5"/>
-      <line x1="44" y1="38" x2="44" y2="50" stroke-width="1.5"/>
-      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5"/>
+      <line x1="30" y1="38" x2="46" y2="38" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="32" y1="38" x2="32" y2="50" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="44" y1="38" x2="44" y2="50" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-plank-2" viewBox="0 0 50 60">
@@ -936,7 +964,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 17 33 L 17 41 L 22 41"/>
       <line x1="42" y1="35" x2="48" y2="44"/>
       <line x1="46" y1="44" x2="49" y2="46" stroke-width="1.5"/>
-      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5"/>
+      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-rdl-2" viewBox="0 0 50 60">
@@ -946,12 +974,12 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="30" y1="14" x2="28" y2="30"/>
       <line x1="33" y1="14" x2="35" y2="30"/>
     </g>
-    <rect x="23" y="30" width="10" height="3" fill="currentColor"/>
-    <rect x="30" y="30" width="10" height="3" fill="currentColor"/>
+    <rect x="23" y="30" width="10" height="3" fill="#D9A24E"/>
+    <rect x="30" y="30" width="10" height="3" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 32 30 L 30 44 L 29 54"/>
       <path d="M 32 30 L 36 44 L 37 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-oh-press-2" viewBox="0 0 50 60">
@@ -961,12 +989,12 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <line x1="22" y1="19" x2="19" y2="33"/>
       <line x1="28" y1="19" x2="31" y2="33"/>
     </g>
-    <rect x="15" y="18" width="10" height="3" fill="currentColor"/>
-    <rect x="25" y="18" width="10" height="3" fill="currentColor"/>
+    <rect x="15" y="18" width="10" height="3" fill="#D9A24E"/>
+    <rect x="25" y="18" width="10" height="3" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <line x1="25" y1="37" x2="22" y2="55"/>
       <line x1="25" y1="37" x2="28" y2="55"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-split-sq-2" viewBox="0 0 50 60">
@@ -981,10 +1009,10 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 22 41 L 11 45.5 L 14 55"/>
       <path d="M 22 41 L 32.5 49.5 L 42 46"/>
-      <line x1="38" y1="46" x2="48" y2="46" stroke-width="2"/>
-      <line x1="40" y1="46" x2="40" y2="55" stroke-width="1.5"/>
-      <line x1="46" y1="46" x2="46" y2="55" stroke-width="1.5"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5"/>
+      <line x1="38" y1="46" x2="48" y2="46" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="40" y1="46" x2="40" y2="55" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="46" y1="46" x2="46" y2="55" stroke-width="1.5" stroke="#D9A24E"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-dead-bug-2" viewBox="0 0 50 60">
@@ -995,7 +1023,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 16 38 L 18 32 L 16 26"/>
       <path d="M 28 40 L 37 42 L 45 44"/>
       <path d="M 30 40 L 33 29 L 31 21"/>
-      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5"/>
+      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-walking-2" viewBox="0 0 50 60">
@@ -1006,7 +1034,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 25 16 L 32 22 L 34 30"/>
       <path d="M 25 32 L 20 44 L 15 54"/>
       <path d="M 25 32 L 28 44 L 33 52"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-running-2" viewBox="0 0 50 60">
@@ -1017,9 +1045,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
       <path d="M 23 18 L 32 24 L 34 30"/>
       <path d="M 25 32 L 17 40 L 10 46"/>
       <path d="M 25 32 L 31 42 L 35 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
-      <path d="M 5 16 L 11 16" stroke-width="1"/>
-      <path d="M 5 22 L 11 22" stroke-width="1"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 5 16 L 11 16" stroke-width="1" stroke="#6A93C8"/>
+      <path d="M 5 22 L 11 22" stroke-width="1" stroke="#6A93C8"/>
     </g>
   </symbol>
 </svg>
@@ -1046,14 +1074,21 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 // ============================================================
 // CONFIG
 // ============================================================
-const APP_VERSION = '2.0.0';
-const STORAGE_KEY = 'foundation-protocol-state-v2';
+const APP_VERSION = '2.1.0';
+const STORAGE_KEY = 'foundation-protocol-state-v2';        // legacy single-user blob (migrated on load)
 const SETTINGS_KEY = 'foundation-protocol-settings-v2';
-const DATA_FILES = {
-  profile: 'data/profile.json',
-  phase: 'data/phase.json',
-  checks: 'data/checks.json',
-};
+const ACTIVE_KEY = 'foundation-protocol-active-user';
+const DATA_KEYS = ['profile', 'phase', 'checks'];
+// Each persona's data lives in its own folder: data/users/<slug>/{profile,phase,checks}.json
+function slugify(s) { return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); }
+function activeSlug() { return state.activeUser || (state.profile && state.profile.usernameSlug) || ''; }
+function userStateKey(slug) { return `${STORAGE_KEY}:${slug}`; }
+function dataPath(key) { return `data/users/${activeSlug() || 'default'}/${key}.json`; }
+// Unit conversion (imperial default)
+const LB_PER_KG = 2.2046226218;
+function lbToKg(lb) { return lb / LB_PER_KG; }
+function kgToLb(kg) { return kg * LB_PER_KG; }
+function fmt1(n) { return (Math.round(n * 10) / 10).toString(); }
 
 // ============================================================
 // STATE
@@ -1063,7 +1098,8 @@ const state = {
   phase: null,     // { phase, week, dayInWeek, sessionsCleared, lastDecision }
   checks: [],      // [{ ts, date, goalMet, feel, hurt, decision, phase, week, dayInWeek }]
   pending: [],
-  settings: { repo: '', pat: '', autoSync: true },
+  activeUser: null, // slug of the active persona
+  settings: { repo: '', pat: '', autoSync: true, units: 'imperial' },
   ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '', openBlocks: {} },
 };
 
@@ -1336,24 +1372,47 @@ function applyCheck(goalMet, feel, hurt) {
 // ============================================================
 // STORAGE
 // ============================================================
+function loadUserState(slug) {
+  state.profile = null; state.phase = null; state.checks = []; state.pending = [];
+  if (!slug) return;
+  try {
+    const raw = localStorage.getItem(userStateKey(slug));
+    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; }
+  } catch (e) { console.error('loadUserState failed', e); }
+}
 function loadLocal() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const d = JSON.parse(raw);
-      state.profile = d.profile || null;
-      state.phase   = d.phase   || null;
-      state.checks  = d.checks  || [];
-      state.pending = d.pending || [];
-    }
     const sraw = localStorage.getItem(SETTINGS_KEY);
     if (sraw) state.settings = { ...state.settings, ...JSON.parse(sraw) };
+    // Migrate a pre-persona single-user blob into a named persona once.
+    const legacy = localStorage.getItem(STORAGE_KEY);
+    if (legacy && !localStorage.getItem(ACTIVE_KEY)) {
+      try {
+        const d = JSON.parse(legacy);
+        if (d && d.profile) {
+          const slug = d.profile.usernameSlug || slugify(d.profile.username || 'me') || 'me';
+          d.profile.username = d.profile.username || slug;
+          d.profile.usernameSlug = slug;
+          localStorage.setItem(userStateKey(slug), JSON.stringify(d));
+          localStorage.setItem(ACTIVE_KEY, slug);
+        }
+      } catch (_) {}
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    const slug = localStorage.getItem(ACTIVE_KEY) || '';
+    state.activeUser = slug || null;
+    loadUserState(slug);
   } catch (e) { console.error('loadLocal failed', e); }
 }
 function saveLocal() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending }));
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    const slug = activeSlug();
+    if (slug) {
+      state.activeUser = slug;
+      localStorage.setItem(ACTIVE_KEY, slug);
+      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending }));
+    }
   } catch (e) { console.error('saveLocal failed', e); }
 }
 function markDirty(...keys) {
@@ -1408,10 +1467,10 @@ function mergeChecks(remote, local) {
   return [...byTs.values()].sort((a, b) => a.ts - b.ts);
 }
 async function syncFromRemote() {
-  if (!isConfigured()) return;
+  if (!isConfigured() || !activeSlug()) return;
   setSync('syncing', 'Loading from GitHub');
   try {
-    const [profile, phase, checks] = await Promise.allSettled([ ghGet(DATA_FILES.profile), ghGet(DATA_FILES.phase), ghGet(DATA_FILES.checks) ]);
+    const [profile, phase, checks] = await Promise.allSettled([ ghGet(dataPath('profile')), ghGet(dataPath('phase')), ghGet(dataPath('checks')) ]);
     if (profile.status === 'fulfilled' && profile.value) state.profile = profile.value;
     if (phase.status   === 'fulfilled' && phase.value)   state.phase   = phase.value;
     if (checks.status  === 'fulfilled' && Array.isArray(checks.value)) state.checks = checks.value;
@@ -1423,7 +1482,7 @@ async function syncFromRemote() {
 }
 let _syncing = false, _syncQueued = false;
 async function syncToRemote() {
-  if (!isConfigured() || state.pending.length === 0) return;
+  if (!isConfigured() || !activeSlug() || state.pending.length === 0) return;
   if (_syncing) { _syncQueued = true; return; }      // serialize: avoid overlapping push loops
   _syncing = true;
   setSync('syncing', `Pushing ${state.pending.length} change${state.pending.length===1?'':'s'}`);
@@ -1431,9 +1490,9 @@ async function syncToRemote() {
     for (const key of [...state.pending]) {
       if (key === 'checks') {
         // union with any checks pushed from another device so cross-device entries are never clobbered
-        try { const remote = await ghGet(DATA_FILES.checks); if (Array.isArray(remote)) state.checks = mergeChecks(remote, state.checks); } catch (_) {}
+        try { const remote = await ghGet(dataPath('checks')); if (Array.isArray(remote)) state.checks = mergeChecks(remote, state.checks); } catch (_) {}
       }
-      await ghPut(DATA_FILES[key], state[key]);
+      await ghPut(dataPath(key), state[key]);
       state.pending = state.pending.filter(k => k !== key);
       saveLocal();
     }
@@ -1552,14 +1611,21 @@ function renderLoading() {
 
 // ---------- ONBOARDING ----------
 function renderOnboarding() {
-  const p = state._onb = state._onb || { weight:'', pushup:'', walk:'', age:'', phase:0 };
+  const p = state._onb = state._onb || { username: (state.profile && state.profile.username) || state.activeUser || '', weight:'', pushup:'', walk:'', age:'', phase:0, unit: state.settings.units || 'imperial' };
   setTimeout(bindOnboarding, 0);
+  const imp = p.unit === 'imperial';
   return `<div class="screen no-nav">
-    <p class="label">Foundation Protocol</p><div class="sp-12"></div>
+    <div class="brand"><img class="brand-logo" src="logo.png" alt=""><p class="label">Foundation Protocol</p></div>
+    <div class="sp-12"></div>
     <h1 class="display-m serif">Baseline</h1><div class="sp-8"></div>
-    <p class="body-dim">Five numbers, one time. After this it is two taps a day, nothing to type.</p>
+    <p class="body-dim">A name and a few numbers, one time. After this it is two taps a day, nothing to type.</p>
     <div class="sp-24"></div>
-    <div class="field"><label for="onb-weight">Body weight (kg)</label><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="78.4"></div>
+    <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. eddie" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Your profile saves under this name as its own persona (its own file). Pick something you'll remember.</div></div>
+    <div class="field">
+      <div class="unit-row"><label for="onb-weight">Body weight</label>
+        <div class="seg" id="onb-unit"><button type="button" data-u="imperial" class="${imp?'on':''}">lb</button><button type="button" data-u="metric" class="${imp?'':'on'}">kg</button></div></div>
+      <div class="conv-wrap"><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="${imp?'173':'78.4'}"><span class="conv" id="onb-weight-conv"></span></div>
+    </div>
     <div class="field"><label for="onb-pushup">Max strict pushups (one set)</label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="12"></div>
     <div class="field"><label for="onb-walk">Longest continuous walk (minutes)</label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="35"></div>
     <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="34"></div>
@@ -1576,22 +1642,46 @@ function renderOnboarding() {
 }
 function bindOnboarding() {
   const get = id => document.getElementById(id);
-  const upd = () => { state._onb.weight=get('onb-weight').value; state._onb.pushup=get('onb-pushup').value; state._onb.walk=get('onb-walk').value; state._onb.age=get('onb-age').value; };
-  ['onb-weight','onb-pushup','onb-walk','onb-age'].forEach(id => get(id).addEventListener('input', upd));
+  const upd = () => { state._onb.username=get('onb-username').value; state._onb.weight=get('onb-weight').value; state._onb.pushup=get('onb-pushup').value; state._onb.walk=get('onb-walk').value; state._onb.age=get('onb-age').value; };
+  const updConv = () => {
+    const conv = get('onb-weight-conv'); if (!conv) return;
+    const v = parseFloat(get('onb-weight').value);
+    if (!(v > 0)) { conv.textContent = ''; return; }
+    conv.textContent = state._onb.unit === 'imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`;
+  };
+  ['onb-username','onb-weight','onb-pushup','onb-walk','onb-age'].forEach(id => get(id).addEventListener('input', upd));
+  get('onb-weight').addEventListener('input', updConv);
+  document.querySelectorAll('#onb-unit button').forEach(b => b.addEventListener('click', () => {
+    const u = b.getAttribute('data-u'); if (u === state._onb.unit) return;
+    const wEl = get('onb-weight'); const cur = parseFloat(wEl.value);
+    if (cur > 0) wEl.value = u === 'metric' ? fmt1(lbToKg(cur)) : fmt1(kgToLb(cur)); // keep the physical weight
+    state._onb.unit = u;
+    document.querySelectorAll('#onb-unit button').forEach(x => x.classList.toggle('on', x.getAttribute('data-u') === u));
+    wEl.placeholder = u === 'imperial' ? '173' : '78.4';
+    upd(); updConv();
+  }));
   document.querySelectorAll('[data-phase]').forEach(el => el.addEventListener('click', () => {
     state._onb.phase = Number(el.getAttribute('data-phase'));
     document.querySelectorAll('[data-phase]').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
   }));
+  updConv();
   get('onb-continue').addEventListener('click', () => {
     upd();
-    const w=parseFloat(state._onb.weight), pu=parseInt(state._onb.pushup,10), wk=parseInt(state._onb.walk,10), ag=parseInt(state._onb.age,10);
-    if (!(w>=20 && w<=400))      { toast('Enter a valid body weight in kg','error'); return; }
+    const slug = slugify(state._onb.username);
+    if (!slug) { toast('Choose a username','error'); return; }
+    const rawW = parseFloat(state._onb.weight);
+    const w = state._onb.unit === 'imperial' ? lbToKg(rawW) : rawW;   // store kg internally
+    const pu=parseInt(state._onb.pushup,10), wk=parseInt(state._onb.walk,10), ag=parseInt(state._onb.age,10);
+    if (!(w>=20 && w<=400))      { toast('Enter a valid body weight','error'); return; }
     if (!(pu>=0 && pu<=300))     { toast('Enter your max pushups (a number)','error'); return; }
     if (!(wk>=0 && wk<=600))     { toast('Enter your longest walk in minutes','error'); return; }
     if (!(ag>=13 && ag<=100))    { toast('Enter a valid age (13–100)','error'); return; }
-    state.profile = { weightKg:w, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:state._onb.phase, createdAt:Date.now() };
+    state.settings.units = state._onb.unit;
+    state.activeUser = slug;
+    state.profile = { username: state._onb.username.trim(), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:state._onb.phase, createdAt:Date.now() };
     state.phase = { phase:state._onb.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
+    state.pending = [];
     markDirty('profile','phase');
     delete state._onb;
     navigate('today');
@@ -1604,7 +1694,8 @@ function renderToday() {
   const pd = PHASES[phaseIdx];
   const dayInWeek = state.phase?.dayInWeek ?? 1;
   const dayPlan = currentDayPlan();
-  const crumb = `Phase ${phaseIdx} · Wk ${state.phase?.week ?? 1} · Session ${dayInWeek}/${pd.week.length}`;
+  const who = state.profile?.username ? `${state.profile.username} · ` : '';
+  const crumb = `${who}Phase ${phaseIdx} · Wk ${state.phase?.week ?? 1} · Session ${dayInWeek}/${pd.week.length}`;
   const todayChecks = state.checks.filter(c => c.date === isoToday());
   const lastToday = todayChecks[todayChecks.length - 1];
   return `<div class="screen">
@@ -1880,6 +1971,12 @@ function renderSettings() {
   return `<div class="screen no-nav">
     <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
     <h1 class="display-s serif">Settings</h1><div class="sp-20"></div>
+    <p class="label">Persona</p><div class="sp-8"></div>
+    <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona keeps its own files in the repo: <span class="mono" style="font-size:13px;">data/users/${escHtml(activeSlug()||'…')}/</span></p>
+    <div class="sp-12"></div>
+    <div class="field"><label for="s-user">Switch / load a persona</label><input type="text" id="s-user" value="${escHtml(activeSlug())}" placeholder="username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Type a username, then load it from GitHub to use this device as that persona.</div></div>
+    <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
+    <div class="divider"></div>
     <p class="label">GitHub Sync</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Optional. When set, every check commits to a repo so you can use the app from any device. Without this, data stays in this browser only.</p>
     <div class="sp-12"></div>
@@ -1919,9 +2016,24 @@ function bindSettings() {
   repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
   pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
   autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
+  const loaduser = document.getElementById('s-loaduser');
+  if (loaduser) loaduser.addEventListener('click', async () => {
+    const slug = slugify(document.getElementById('s-user').value);
+    if (!slug) { toast('Enter a username','error'); return; }
+    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    if (!confirm(`Switch this device to persona "${slug}" and load its data from GitHub?`)) return;
+    state.activeUser = slug;
+    localStorage.setItem(ACTIVE_KEY, slug);
+    loadUserState(slug);            // use any local copy first
+    await syncFromRemote();         // then pull the latest for this persona
+    saveLocal();
+    navigate(state.profile ? 'today' : 'onboarding');
+    toast(state.profile ? `Loaded persona ${slug}` : `No data yet for ${slug} — set it up`, state.profile ? 'success' : 'error');
+  });
   document.getElementById('s-test').addEventListener('click', async () => {
     if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
-    state.pending = Object.keys(DATA_FILES); await syncToRemote();
+    if (!activeSlug()) { toast('Set a username first (finish onboarding)','error'); return; }
+    state.pending = [...DATA_KEYS]; await syncToRemote();
     toast(state.ui.syncStatus==='online'?'Pushed to GitHub':'Sync failed — check repo and token', state.ui.syncStatus==='online'?'success':'error');
   });
   document.getElementById('s-pull').addEventListener('click', async () => {
@@ -1936,8 +2048,9 @@ function bindSettings() {
     toast('Downloaded','success');
   });
   document.getElementById('s-reset').addEventListener('click', () => {
-    if (!confirm('Delete the local profile, checks, and progress on this device? GitHub data is untouched.')) return;
-    localStorage.removeItem(STORAGE_KEY);
+    if (!confirm('Delete this persona\'s profile, checks, and progress on this device? GitHub data is untouched.')) return;
+    const slug = activeSlug();
+    if (slug) localStorage.removeItem(userStateKey(slug));
     state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
     navigate('onboarding'); toast('Local data cleared','success');
   });
@@ -1950,10 +2063,11 @@ async function init() {
   loadLocal();
   navigate(state.profile ? 'today' : 'onboarding');
   if (isConfigured()) {
-    if (state.profile == null) { await syncFromRemote(); if (state.profile) navigate('today'); }
+    if (state.profile == null && state.activeUser) { await syncFromRemote(); if (state.profile) navigate('today'); else if (state.ui.syncStatus !== 'error') setSync('offline', 'Local only'); }
+    else if (state.profile == null) { setSync('offline', 'Local only'); }
     else if (state.pending.length) await syncToRemote();
-    else setSync('online','Synced');
-  } else setSync('offline','Local only');
+    else setSync('online', 'Synced');
+  } else setSync('offline', 'Local only');
 }
 window.addEventListener('online',  () => { setSync('syncing','Reconnecting'); syncToRemote(); });
 window.addEventListener('offline', () => { setSync('offline','Offline'); });
