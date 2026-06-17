@@ -1113,6 +1113,60 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
       <path d="M 4 24 L 11 24" stroke-width="1" stroke="#6A93C8"/>
     </g>
   </symbol>
+  <symbol id="ic-kb-swing" viewBox="0 0 50 60">
+    <circle cx="25" cy="17" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="20.5" x2="24" y2="33"/>
+      <path d="M 25 23 L 22 33 L 25 41"/>
+      <path d="M 25 23 L 28 33 L 25 41"/>
+      <path d="M 24 33 L 17 45 L 15 55"/>
+      <path d="M 24 33 L 31 45 L 33 55"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+    </g>
+    <rect x="21" y="40" width="8" height="6" rx="2" fill="#D9A24E"/>
+    <path d="M 23 40 Q 25 37 27 40" stroke="#D9A24E" stroke-width="1.3" fill="none"/>
+  </symbol>
+  <symbol id="ic-kb-swing-2" viewBox="0 0 50 60">
+    <circle cx="25" cy="9" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="12.5" x2="25" y2="34"/>
+      <path d="M 25 16 L 23 20 L 25 23"/>
+      <path d="M 25 16 L 27 20 L 25 23"/>
+      <path d="M 25 34 L 21 45 L 20 55"/>
+      <path d="M 25 34 L 29 45 L 30 55"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+    </g>
+    <rect x="21" y="22" width="8" height="6" rx="2" fill="#D9A24E"/>
+    <path d="M 23 22 Q 25 19 27 22" stroke="#D9A24E" stroke-width="1.3" fill="none"/>
+  </symbol>
+  <symbol id="ic-kb-carry" viewBox="0 0 50 60">
+    <circle cx="25" cy="9" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="12.5" x2="25" y2="34"/>
+      <line x1="25" y1="16" x2="18" y2="33"/>
+      <line x1="25" y1="16" x2="32" y2="33"/>
+      <path d="M 25 34 L 22 46 L 21 56"/>
+      <path d="M 25 34 L 28 46 L 29 56"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+    </g>
+    <rect x="14" y="33" width="8" height="6" rx="2" fill="#D9A24E"/>
+    <rect x="28" y="33" width="8" height="6" rx="2" fill="#D9A24E"/>
+    <g stroke="#D9A24E" stroke-width="1.3" fill="none"><path d="M 16 33 Q 18 30 20 33"/><path d="M 30 33 Q 32 30 34 33"/></g>
+  </symbol>
+  <symbol id="ic-kb-carry-2" viewBox="0 0 50 60">
+    <circle cx="25" cy="9" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="12.5" x2="25" y2="34"/>
+      <line x1="25" y1="16" x2="18" y2="33"/>
+      <line x1="25" y1="16" x2="32" y2="33"/>
+      <path d="M 25 34 L 20 45 L 18 55"/>
+      <path d="M 25 34 L 30 45 L 32 55"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+    </g>
+    <rect x="14" y="33" width="8" height="6" rx="2" fill="#D9A24E"/>
+    <rect x="28" y="33" width="8" height="6" rx="2" fill="#D9A24E"/>
+    <g stroke="#D9A24E" stroke-width="1.3" fill="none"><path d="M 16 33 Q 18 30 20 33"/><path d="M 30 33 Q 32 30 34 33"/></g>
+  </symbol>
 </svg>
 
 <div id="app">
@@ -1307,6 +1361,12 @@ const EXERCISES = [
   { key:'run', name:'Easy Run', rx:'30 – 60 min', icon:'ic-running', cat:'Cardio',
     steps:['Easy, conversational pace — you can talk in full sentences.','HR over pace as the priority.','+10% rule: never more than 110% of 30-day longest.'],
     cue:'Easy runs feel suspiciously slow. That is the point.' },
+  { key:'kb_swing', name:'Kettlebell Swing', rx:'3 × 12 – 15', icon:'ic-kb-swing', cat:'Kettlebell',
+    steps:['Hinge at the hips (not a squat) — push hips back, soft knees.','Hike the bell back between your legs, then snap hips forward to float it to chest height.','Arms stay relaxed — hips do the work, not shoulders.','Start ~15 lb; go up (20, 25) as it feels easy. Stop if your low back rounds.'],
+    cue:'It is a hip snap, not a lift. Glutes finish the swing.' },
+  { key:'kb_carry', name:'Farmer Carry', rx:'3 × 30 – 40 sec', icon:'ic-kb-carry', cat:'Kettlebell',
+    steps:['A kettlebell in each hand, arms straight, shoulders down and back.','Stand tall, ribs down, brace, and walk slow and even.','Start ~20 – 25 lb per hand; lighter if grip or posture slips.','Builds grip, core, and tall posture — straight carryover to running.'],
+    cue:'Walk like a book is balanced on your head — tall and steady.' },
 ];
 
 // Maps each session block to the library exercises it contains (Today tap-to-reveal)
@@ -1315,10 +1375,10 @@ const BLOCK_EX = {
   ptLight: ['sl_stance','hip_abd','calf_stretch','dead_bug'],
   walk30:  ['walk'], walk40: ['walk'], walk45: ['walk'], walk60: ['walk'],
   strA:    ['goblet_sq','pushup','db_row','plank'],
-  strB:    ['rdl','oh_press','split_sq','plank'],
+  strB:    ['rdl','oh_press','split_sq','kb_swing','plank'],
   rw1:     ['run','walk'], rw2: ['run','walk'], rw3: ['run','walk'],
   easyRun: ['run'], longRun: ['run'], tempo: ['run'], longRun10k: ['run'],
-  opmAm:   ['pushup','goblet_sq'], opmCore: ['plank'],
+  opmAm:   ['pushup','goblet_sq','kb_swing'], opmCore: ['plank','kb_carry'],
   loaded:  ['goblet_sq','rdl','oh_press'],
   rest:    [], hooper: [],
 };
@@ -1401,6 +1461,8 @@ const FRAMES = {
   'ic-dead-bug': ['ic-dead-bug','ic-dead-bug-2'],
   'ic-walking': ['ic-walking','ic-walking-3','ic-walking-2'],
   'ic-running': ['ic-running','ic-running-3','ic-running-2'],
+  'ic-kb-swing': ['ic-kb-swing','ic-kb-swing-2'],
+  'ic-kb-carry': ['ic-kb-carry','ic-kb-carry-2'],
 };
 EXERCISES.forEach(e => { e.frames = FRAMES[e.icon] || [e.icon]; });
 
@@ -2194,7 +2256,7 @@ function renderResult(outcomeKey) {
 
 // ---------- LIBRARY ----------
 function renderLibrary() {
-  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Mobility','Cardio'];
+  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Kettlebell','Mobility','Cardio'];
   return `<div class="screen">
     <p class="label">Exercise Library</p><div class="sp-8"></div>
     <h1 class="display-s serif">Form, cues, prescriptions</h1><div class="sp-16"></div>
