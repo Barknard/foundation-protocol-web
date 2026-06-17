@@ -1196,11 +1196,6 @@ const STORAGE_KEY = 'foundation-protocol-state-v2';        // legacy single-user
 const SETTINGS_KEY = 'foundation-protocol-settings-v2';
 const ACTIVE_KEY = 'foundation-protocol-active-user';
 const DATA_KEYS = ['profile', 'phase', 'checks'];
-// "Sign in with GitHub" (OAuth device flow). Fill these once after the 5-min setup in docs/SETUP-OAUTH.md.
-// GH_CLIENT_ID = your GitHub OAuth App client id (public, safe to embed). GH_OAUTH_PROXY = the deployed CORS worker URL.
-const GH_CLIENT_ID = '';
-const GH_OAUTH_PROXY = '';
-function oauthEnabled() { return !!(GH_CLIENT_ID && GH_OAUTH_PROXY); }
 // Each persona's data lives in its own folder: data/users/<slug>/{profile,phase,checks}.json
 function slugify(s) { return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); }
 function activeSlug() { return state.activeUser || (state.profile && state.profile.usernameSlug) || ''; }
@@ -1247,7 +1242,7 @@ const BLOCKS = {
   easyRun:  { kind: 'cardio',    label: 'Easy run • 30',     title: 'Continuous easy',        detail: 'Talk-test • HR priority' },
   longRun:  { kind: 'cardio',    label: 'Long run • 45',     title: 'Easy, continuous',        detail: 'Cap at +10% vs 30-day longest' },
   tempo:    { kind: 'cardio',    label: 'Intervals • 35',    title: '4 × 4 min hard / 3 min easy', detail: 'Max 20% of weekly volume' },
-  opmAm:    { kind: 'strength',  label: 'OPM • AM',          title: '100 push / 100 squat', detail: 'Spread across day' },
+  opmAm:    { kind: 'strength',  label: 'Strength • AM',     title: 'Quality strength sets', detail: 'RIR 2-3 · 2–3 hard sets, stop shy of failure' },
   opmCore:  { kind: 'strength',  label: 'Core • PM',         title: 'Plank + carries',      detail: 'Anti-extension core' },
   loaded:   { kind: 'strength',  label: 'Loaded • 45',       title: 'Barbell / DB progression', detail: 'Switch from bodyweight stim' },
   longRun10k:{ kind: 'cardio',   label: 'Long run • 60+',    title: 'Building to 10K',      detail: 'Cap vs 30-day longest' },
@@ -1407,7 +1402,9 @@ function layoffTier() {
 function underRecoveryTrend() {
   const recent = state.checks.slice(-7);
   if (recent.length < 4) return false;
-  const flags = recent.filter(c => c.feel <= 2 || c.decision === 'modify' || c.decision === 'repeat').length;
+  // 'repeat' just means "held steady / not fully completed" — not under-recovery — so it must NOT count here,
+  // or steady training at feel 3 would trip a spurious deload. Count only genuine fatigue/distress signals.
+  const flags = recent.filter(c => c.feel <= 2 || c.decision === 'modify' || c.decision === 'rest').length;
   return flags >= 3;
 }
 function isDeloadWeek() { const wk = state.phase?.week ?? 1; const ph = state.phase?.phase ?? 0; return ph >= 1 && wk > 0 && wk % 5 === 0; }
@@ -1559,6 +1556,9 @@ const INJURY_FLAG = { key: 'rest', title: 'See a clinician first', cls: 'strengt
 
 function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   let outcome = decide(goalMet, feel, hurt);
+  // When something hurts, route to the dedicated injury outcome: clinician escalation on a red flag,
+  // otherwise the PEACE & LOVE rest/protect card (previously these were defined but never shown).
+  if (hurt) outcome = redFlag ? INJURY_FLAG : INJURY_REST;
   const cur = state.phase || {};
   const today = isoToday();
   // --- Injury handling (PEACE & LOVE / red-flag screen) ---
@@ -1576,15 +1576,29 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   if (!hurt && outcome.key === 'progress' && (lay || wasInRice)) outcome = OUTCOMES.repeat;
   const existingIdx = state.checks.findIndex(c => c.date === today);
   const alreadyCheckedToday = existingIdx >= 0;
+  const prevEntry = alreadyCheckedToday ? state.checks[existingIdx] : null;
+  const prevWasProgress = !!(prevEntry && prevEntry.decision === 'progress');
+  const prevPre = (prevEntry && prevEntry._pre) ? prevEntry._pre : null;   // pre-advance pointer snapshot
+  const nowIsProgress = outcome.key === 'progress';
   const entry = {
     ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt, parts: parts || [],
     decision: outcome.key, phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1,
   };
+  // Keep the pointer consistent with TODAY's current decision: advance at most once per local day,
+  // and roll back a same-day advance if a re-check downgrades away from Progress (fixes pointer/decision drift).
+  let willAdvance = false;
+  if (nowIsProgress && !prevWasProgress) {
+    entry._pre = { phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1, sessionsCleared: cur.sessionsCleared ?? 0, lastDecision: cur.lastDecision ?? null };
+  } else if (nowIsProgress && prevWasProgress) {
+    entry._pre = prevPre;   // already advanced earlier today; keep the original snapshot, don't advance twice
+  }
   if (alreadyCheckedToday) state.checks[existingIdx] = entry; else state.checks.push(entry);
-  // advance at most once per local day, only on Progress, never while hurt/injured
-  const willAdvance = outcome.key === 'progress' && !alreadyCheckedToday;
-  if (willAdvance) {
+  if (nowIsProgress && !prevWasProgress) {
     advancePointer();
+    willAdvance = true;
+  } else if (!nowIsProgress && prevWasProgress && prevPre) {
+    state.phase = { phase: prevPre.phase, week: prevPre.week, dayInWeek: prevPre.dayInWeek, sessionsCleared: prevPre.sessionsCleared, lastDecision: new Date().toISOString() };
+    logEvent('progress', `Rolled back today's advance — re-checked as ${outcome.title}`);
   } else {
     if (!state.phase) state.phase = { phase: 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };
     state.phase.lastDecision = new Date().toISOString();
@@ -1612,8 +1626,8 @@ function loadUserState(slug) {
 }
 function loadLocal() {
   try {
-    const sraw = localStorage.getItem(SETTINGS_KEY);
-    if (sraw) state.settings = { ...state.settings, ...JSON.parse(sraw) };
+    try { const sraw = localStorage.getItem(SETTINGS_KEY); if (sraw) state.settings = { ...state.settings, ...JSON.parse(sraw) }; }
+    catch (_) { /* a corrupt settings blob must not abort persona loading below */ }
     // Migrate a pre-persona single-user blob into a named persona once.
     const legacy = localStorage.getItem(STORAGE_KEY);
     if (legacy && !localStorage.getItem(ACTIVE_KEY)) {
@@ -1691,84 +1705,24 @@ async function ghPut(path, data) {
 }
 function isConfigured() { return Boolean(state.settings.repo && state.settings.pat); }
 
-// ---- "Sign in with GitHub" (OAuth device flow via CORS proxy; no client secret) ----
-function showDeviceModal(code, uri) {
-  hideDeviceModal();
-  const ov = document.createElement('div'); ov.id = 'device-modal'; ov.className = 'crown';
-  ov.innerHTML = `<div style="max-width:340px;"><p class="label" style="color:var(--milestone);">Authorize on GitHub</p><div class="sp-8"></div>
-    <p class="body">On the GitHub page, enter this code:</p><div class="sp-8"></div>
-    <div class="display-m serif" style="letter-spacing:0.18em;color:var(--milestone);">${escHtml(code)}</div><div class="sp-16"></div>
-    <button class="secondary" id="dm-open">Open GitHub page</button><div class="sp-8"></div>
-    <button class="ghost" id="dm-cancel">Cancel</button>
-    <div class="sp-12"></div><p class="body-dim" style="font-size:13px;">Waiting for you to authorize…</p></div>`;
-  document.body.appendChild(ov);
-  document.getElementById('dm-open').onclick = () => { try { window.open(uri, '_blank'); } catch (_) {} };
-  document.getElementById('dm-cancel').onclick = () => { state._signinCancel = true; hideDeviceModal(); setSync('offline', 'Local only'); };
-}
-function hideDeviceModal() { const e = document.getElementById('device-modal'); if (e) e.remove(); }
 function celebrate(line, then) {
   const ov = document.createElement('div'); ov.className = 'crown';
   ov.innerHTML = `<div style="max-width:340px;"><div class="display-l serif" style="color:var(--milestone);">✦</div><div class="sp-12"></div><p class="headline serif">${escHtml(line)}</p></div>`;
   document.body.appendChild(ov);
   setTimeout(() => { ov.remove(); if (then) then(); }, 1500);
 }
-async function ghSignIn() {
-  if (!oauthEnabled()) { toast('GitHub sign-in is not set up yet','error'); return; }
-  const base = GH_OAUTH_PROXY.replace(/\/$/, '');
-  state._signinCancel = false;
-  try {
-    setSync('syncing', 'Starting GitHub sign-in');
-    const r = await fetch(base + '/device/code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ client_id: GH_CLIENT_ID, scope: 'repo' }) });
-    const d = await r.json();
-    if (!d.device_code) throw new Error('Could not start sign-in');
-    const uri = d.verification_uri || 'https://github.com/login/device';
-    showDeviceModal(d.user_code, uri);
-    try { window.open(uri, '_blank'); } catch (_) {}
-    const token = await ghPollToken(base, d.device_code, d.interval || 5, d.expires_in || 900);
-    hideDeviceModal();
-    if (state._signinCancel) return;
-    if (!token) { setSync('error', 'Sign-in timed out'); toast('Sign-in timed out — try again','error'); return; }
-    state.settings.pat = token;
-    const me = await fetch('https://api.github.com/user', { headers: ghHeaders() }).then(x => x.json());
-    const login = me && me.login ? me.login : '';
-    if (login) await ghEnsureDataRepo(login);
-    saveLocal();
-    if (login) logEvent('persona', `Connected GitHub as ${login}`);
-    if (state._onb && !slugify(state._onb.username) && login) { state._onb.username = login; }
-    if (state.profile && !state.profile.username && login) { state.profile.username = login; state.profile.usernameSlug = slugify(login); }
-    setSync('online', 'Connected');
-    toast('Connected to GitHub as ' + (login || 'you'), 'success');
-    render();
-  } catch (e) { console.error(e); hideDeviceModal(); setSync('error', e.message); toast('Sign-in failed — try again', 'error'); }
-}
-async function ghPollToken(base, device_code, interval, expires) {
-  const end = Date.now() + expires * 1000; let wait = Math.max(5, interval) * 1000;
-  while (Date.now() < end) {
-    await new Promise(r => setTimeout(r, wait));
-    try {
-      const r = await fetch(base + '/access_token', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ client_id: GH_CLIENT_ID, device_code, grant_type: 'urn:ietf:params:oauth:grant-type:device_code' }) });
-      const d = await r.json();
-      if (d.access_token) return d.access_token;
-      if (d.error === 'slow_down') wait += 5000;
-      else if (d.error && d.error !== 'authorization_pending') return null;
-    } catch (_) { /* keep polling */ }
-  }
-  return null;
-}
-async function ghEnsureDataRepo(login) {
-  state.settings.repo = `${login}/foundation-protocol-data`;
-  try {
-    const check = await fetch(`https://api.github.com/repos/${state.settings.repo}`, { headers: ghHeaders() });
-    if (check.status === 404) {
-      await fetch('https://api.github.com/user/repos', { method:'POST', headers:{ ...ghHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify({ name: 'foundation-protocol-data', private: true, auto_init: true, description: 'My Foundation Protocol training data' }) });
-    }
-  } catch (_) {}
-}
 function mergeChecks(remote, local) {
-  const byTs = new Map();
-  (Array.isArray(remote) ? remote : []).forEach(c => { if (c && c.ts != null) byTs.set(c.ts, c); });
-  (Array.isArray(local)  ? local  : []).forEach(c => { if (c && c.ts != null) byTs.set(c.ts, c); }); // local wins ties
-  return [...byTs.values()].sort((a, b) => a.ts - b.ts);
+  // Dedupe by calendar DATE, not raw ts: a same-day re-check gets a new ts, so keying by ts would
+  // keep BOTH the old and new entry for one day and double-count it. Newest ts wins per date.
+  const byDate = new Map();
+  const take = c => {
+    if (!c || c.ts == null || !c.date) return;
+    const prev = byDate.get(c.date);
+    if (!prev || c.ts >= prev.ts) byDate.set(c.date, c);
+  };
+  (Array.isArray(remote) ? remote : []).forEach(take);
+  (Array.isArray(local)  ? local  : []).forEach(take);   // local applied last → wins exact ts ties
+  return [...byDate.values()].sort((a, b) => a.ts - b.ts);
 }
 async function syncFromRemote() {
   if (!isConfigured() || !activeSlug()) return;
@@ -1945,7 +1899,6 @@ function renderOnboarding() {
     <h1 class="display-m serif">Welcome</h1><div class="sp-4"></div>
     <p class="body-dim">You're already in. Two quick screens and you're training.</p>
     <div class="sp-20"></div>
-    ${oauthEnabled() ? `<button class="secondary" id="onb-github">${svgUse('ic-settings',18)} Continue with GitHub</button><p class="help" style="margin-top:6px;">We'll fill in your name, nothing else. Optional — or just type one below.</p><div class="sp-12"></div>` : ''}
     <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. eddie" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
     <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="42"><div class="help">Keeps your plan age-appropriate — recovery, deloads, and pacing scale with age.</div></div>`;
   else if (r === 2) body = `
@@ -1982,7 +1935,6 @@ function bindOnboarding() {
   const updConv = () => { const conv = get('onb-weight-conv'); if (!conv) return; const v = parseFloat(get('onb-weight').value); conv.textContent = (v>0) ? (o.unit==='imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`) : ''; };
   FIELDS.forEach(k => { const e = get('onb-'+k); if (e) e.addEventListener('input', upd); });
   const wEl = get('onb-weight'); if (wEl) wEl.addEventListener('input', updConv);
-  const gh = get('onb-github'); if (gh) gh.addEventListener('click', ghSignIn);
   document.querySelectorAll('#onb-unit button').forEach(b => b.addEventListener('click', () => {
     const u = b.getAttribute('data-u'); if (u === o.unit) return;
     const cur = parseFloat(wEl.value);
@@ -2005,6 +1957,10 @@ function bindOnboarding() {
     const r = o.step || 1;
     if (r === 1) {
       if (!slugify(o.username)) { toast('Pick a username to continue','error'); return; }
+      const slug = slugify(o.username);
+      // Block a name that collides with an existing persona on this device (distinct names can slugify the same),
+      // so onboarding never silently overwrites someone else's saved data.
+      if (slug !== state.activeUser && localStorage.getItem(userStateKey(slug))) { toast('That name is already used on this device — pick another, or load it from Settings.','error'); return; }
       const ag = parseInt(o.age,10); if (!(ag>=13 && ag<=100)) { toast('Enter a valid age (13–100)','error'); return; }
     }
     if (r === 2) {
@@ -2019,7 +1975,7 @@ function bindOnboarding() {
     const w = o.unit==='imperial' ? lbToKg(parseFloat(o.weight)) : parseFloat(o.weight);
     const pu = o.pushup==='' ? 0 : parseInt(o.pushup,10), wk = o.walk==='' ? 0 : parseInt(o.walk,10), ag = parseInt(o.age,10), slug = slugify(o.username);
     state.settings.units = o.unit; state.activeUser = slug;
-    state.profile = { username: o.username.trim(), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
+    state.profile = { username: o.username.trim().slice(0,40), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
     state.phase = { phase:o.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
     state.pending = [];
     markDirty('profile','phase');
@@ -2106,7 +2062,7 @@ function renderToday() {
       </div></div>
     </div>
     ${layoff ? `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>` : ''}
-    ${(!layoff && deloadActive()) ? `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>` : ''}
+    ${(!layoff && !injuryActive() && deloadActive()) ? `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>` : ''}
     ${(() => { const sc = standingCall(); return sc ? `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>` : ''; })()}
     <p class="label">Today's goal${counts.total?` · <span class="rx-count">${counts.done}/${counts.total} done</span>`:''}</p><div class="sp-8"></div>
     ${dayPlan.blocks.map((b,i)=>{
@@ -2132,7 +2088,7 @@ function renderToday() {
     ${(() => {
       if (standingCall()) return '';   // the recovering card above is the active call
       const lastAny = state.checks[state.checks.length - 1];
-      const carried = (!lastToday && lastAny && lastAny.date !== isoToday() && ['rest','modify','repeat'].includes(lastAny.decision)) ? lastAny : null;
+      const carried = (!lastToday && !layoff && lastAny && lastAny.date !== isoToday() && daysSinceLastCheck() <= 2 && ['rest','modify','repeat'].includes(lastAny.decision)) ? lastAny : null;
       const c = lastToday || carried; if (!c) return '';
       const o = OUTCOMES[c.decision] || OUTCOMES.repeat;
       const lbl = lastToday ? "Today's call" : 'Still standing · your last call';
@@ -2451,17 +2407,9 @@ function renderSettings() {
     <p class="label">GitHub Sync</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Without this, data stays in this browser only.</p>
     <div class="sp-12"></div>
-    ${oauthEnabled() ? `
-      <button id="s-signin">${svgUse('ic-settings',18)} ${isConfigured() ? 'Reconnect GitHub' : 'Sign in with GitHub'}</button>
-      <div class="sp-8"></div>
-      ${isConfigured() ? `<p class="body-dim" style="font-size:14px;">Connected · syncing to <span class="mono" style="font-size:13px;">${escHtml(s.repo)}</span></p><div class="sp-8"></div>` : ''}
-      <details class="adv"><summary>Advanced: paste a token instead</summary><div class="sp-8"></div>
-        <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="you/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-        <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write.</div></div>
-      </details>
-    ` : `
+    ${isConfigured() ? `<p class="body-dim" style="font-size:14px;">Connected · syncing to <span class="mono" style="font-size:13px;">${escHtml(s.repo)}</span></p><div class="sp-8"></div>` : ''}
     <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>`}
+    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
     <div class="sp-8"></div>
     <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
     <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
@@ -2493,8 +2441,6 @@ function renderSettings() {
   </div>`;
 }
 function bindSettings() {
-  const signin = document.getElementById('s-signin');
-  if (signin) signin.addEventListener('click', ghSignIn);
   const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
   if (!repo || !pat) return;   // DOM moved on before this deferred bind ran
   repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
@@ -2537,7 +2483,11 @@ function bindSettings() {
     if (!confirm('Delete this persona\'s profile, checks, and progress on this device? GitHub data is untouched.')) return;
     const slug = activeSlug();
     if (slug) localStorage.removeItem(userStateKey(slug));
+    // Fully zero the in-memory persona (mirrors loadUserState('')) so nothing — log, injury, session,
+    // or the active-user pointer — bleeds into the next persona created from onboarding.
     state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
+    state.session=null; state.injury=null; state.log=[]; state._preDay=null;
+    state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}
     navigate('onboarding'); toast('Local data cleared','success');
   });
 }
