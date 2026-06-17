@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1A1614">
+<meta name="color-scheme" content="dark">
+<title>Foundation Protocol</title>
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path fill='%23E8E2D2' d='M24,16 L78,16 L78,30 L68,30 L68,24 L40,24 L40,42 L62,42 L62,52 L40,52 L40,80 L24,80 Z'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path fill='%23E8E2D2' d='M24,16 L78,16 L78,30 L68,30 L68,24 L40,24 L40,42 L62,42 L62,52 L40,52 L40,80 L24,80 Z'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ---------- TOKENS ---------- */
+:root {
+  --ink: #1A1614;
+  --surface: #211C19;
+  --surface-1: #2A2522;
+  --surface-2: #332D29;
+  --paper: #E8E2D2;
+  --paper-dim: #B8B0A0;
+  --paper-low: #807868;
+  --rule: #3A3431;
+  --strength: #E26B5F;
+  --cardio: #6A93C8;
+  --mobility: #7BAE83;
+  --milestone: #D9A24E;
+  --tap-min: 48px;
+  --pad: 24px;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.02), 0 12px 32px rgba(0,0,0,0.32);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+html { background: var(--ink); }
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ---------- TYPE SCALE ---------- */
+.serif { font-family: 'Fraunces', Georgia, serif; }
+.mono  { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.display-l { font-family: 'Fraunces', serif; font-weight: 900; font-size: 44px; line-height: 1; letter-spacing: -0.02em; }
+.display-m { font-family: 'Fraunces', serif; font-weight: 900; font-size: 32px; line-height: 1.05; letter-spacing: -0.015em; }
+.display-s { font-family: 'Fraunces', serif; font-weight: 700; font-size: 24px; line-height: 1.1; letter-spacing: -0.01em; }
+.headline  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; line-height: 1.15; }
+.title     { font-weight: 600; font-size: 16px; line-height: 1.3; }
+.title-sm  { font-weight: 500; font-size: 14px; line-height: 1.3; }
+.body      { font-size: 15px; line-height: 1.5; color: var(--paper); }
+.body-dim  { font-size: 14px; line-height: 1.45; color: var(--paper-dim); }
+.label     { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
+.label-sm  { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-low); }
+.metric    { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--paper); }
+
+/* ---------- LAYOUT ---------- */
+#app {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0;
+  position: relative;
+  padding-bottom: 80px; /* room for bottom nav */
+}
+.screen { padding: 56px var(--pad) 24px; min-height: 100vh; min-height: 100dvh; }
+.screen.no-nav { padding-bottom: 24px; }
+.row { display: flex; align-items: center; }
+.row.between { justify-content: space-between; }
+.row.gap-8 { gap: 8px; }
+.row.gap-12 { gap: 12px; }
+.row.gap-16 { gap: 16px; }
+.col { display: flex; flex-direction: column; }
+.grow { flex: 1; }
+.sp-4  { height: 4px; }
+.sp-8  { height: 8px; }
+.sp-12 { height: 12px; }
+.sp-16 { height: 16px; }
+.sp-20 { height: 20px; }
+.sp-24 { height: 24px; }
+.sp-32 { height: 32px; }
+.sp-48 { height: 48px; }
+.divider { height: 1px; background: var(--rule); margin: 16px 0; }
+
+/* ---------- BUTTONS / CHIPS ---------- */
+button, .btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  background: var(--milestone);
+  color: var(--ink);
+  height: 56px;
+  min-width: 64px;
+  border-radius: 12px;
+  padding: 0 20px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  transition: background 120ms ease, transform 120ms ease;
+}
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button:active:not(:disabled) { transform: scale(0.98); }
+button.secondary { background: var(--surface-1); color: var(--paper); }
+button.ghost { background: transparent; color: var(--paper); border: 1px solid var(--rule); }
+button.danger { background: transparent; color: var(--strength); border: 1px solid var(--strength); }
+button.compact { height: 44px; width: auto; padding: 0 16px; font-size: 14px; }
+button.icon { width: 48px; height: 48px; padding: 0; background: transparent; color: var(--paper-dim); border-radius: 12px; }
+
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 48px; padding: 0 18px;
+  background: var(--surface-1); color: var(--paper-dim);
+  border: 1px solid var(--rule); border-radius: 24px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  flex: 1; min-width: 80px;
+  transition: all 120ms ease;
+}
+.chip.active { background: var(--milestone); color: var(--ink); border-color: var(--milestone); font-weight: 600; }
+.chip.yes.active { background: var(--mobility); border-color: var(--mobility); }
+.chip.no.active  { background: var(--strength); border-color: var(--strength); color: var(--paper); }
+
+/* ---------- FEEL GRID (daily check) ---------- */
+.feel-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.feel {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px;
+  min-height: 84px;
+  padding: 12px 4px;
+  background: var(--surface-1);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  color: var(--paper-dim);
+  cursor: pointer;
+  width: 100%;
+  transition: all 120ms ease;
+}
+.feel .feel-face { font-size: 26px; line-height: 1; filter: grayscale(0.35); transition: filter 120ms ease; }
+.feel .feel-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--paper-low); }
+.feel.active { border-color: var(--milestone); background: var(--surface-2); color: var(--paper); }
+.feel.active .feel-face { filter: grayscale(0); transform: scale(1.08); }
+.feel.active .feel-label { color: var(--paper); }
+/* tint the active label by readiness band */
+.feel.feel-5.active .feel-label, .feel.feel-4.active .feel-label { color: var(--mobility); }
+.feel.feel-3.active .feel-label { color: var(--milestone); }
+.feel.feel-2.active .feel-label, .feel.feel-1.active .feel-label { color: var(--strength); }
+.feel.feel-5.active { border-color: var(--mobility); }
+.feel.feel-4.active { border-color: var(--mobility); }
+.feel.feel-3.active { border-color: var(--milestone); }
+.feel.feel-2.active { border-color: var(--strength); }
+.feel.feel-1.active { border-color: var(--strength); }
+
+.hurt-toggle {
+  width: 100%;
+  height: 52px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  color: var(--paper-dim);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.hurt-toggle.on {
+  background: color-mix(in srgb, var(--strength) 16%, transparent);
+  border-color: var(--strength);
+  color: var(--strength);
+  font-weight: 600;
+}
+
+/* ---------- CARDS ---------- */
+.card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 18px 16px;
+  border: 1px solid transparent;
+}
+.card.bordered { border-color: var(--rule); background: transparent; }
+.card-block { display: grid; grid-template-columns: 4px 1fr; gap: 14px; align-items: stretch; }
+.card-block .stripe { background: var(--paper-dim); border-radius: 2px; min-height: 100%; }
+.card-block.mobility  .stripe { background: var(--mobility); }
+.card-block.strength  .stripe { background: var(--strength); }
+.card-block.cardio    .stripe { background: var(--cardio); }
+.card-block.milestone .stripe { background: var(--milestone); }
+.card-block.rest      .stripe { background: var(--paper-low); }
+.card-block.mobility  .label  { color: var(--mobility); }
+.card-block.strength  .label  { color: var(--strength); }
+.card-block.cardio    .label  { color: var(--cardio); }
+.card-block.milestone .label  { color: var(--milestone); }
+.card-block.rest      .label  { color: var(--paper-low); }
+
+.zone {
+  display: grid; grid-template-columns: 88px 1fr; gap: 16px;
+  padding: 18px 18px; border-radius: 14px; border: 1.5px solid;
+  align-items: center;
+}
+.zone .score { font-family: 'Fraunces', serif; font-weight: 900; font-size: 32px; line-height: 1; }
+.zone .label-line { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.zone.green  { border-color: var(--mobility);  background: color-mix(in srgb, var(--mobility) 12%, transparent); }
+.zone.green  .score, .zone.green  .label-line { color: var(--mobility); }
+.zone.yellow { border-color: var(--milestone); background: color-mix(in srgb, var(--milestone) 12%, transparent); }
+.zone.yellow .score, .zone.yellow .label-line { color: var(--milestone); }
+.zone.red    { border-color: var(--strength);  background: color-mix(in srgb, var(--strength) 12%, transparent); }
+.zone.red    .score, .zone.red    .label-line { color: var(--strength); }
+
+/* ---------- INPUTS ---------- */
+.field {
+  width: 100%;
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 8px;
+}
+.field label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
+.field input[type=text], .field input[type=number], .field input[type=password], .field textarea {
+  font-family: inherit; font-size: 16px;
+  background: var(--surface-1);
+  color: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 14px 16px;
+  outline: none;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field input:focus, .field textarea:focus { border-color: var(--milestone); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field .help { font-size: 12px; color: var(--paper-low); }
+
+/* radio cards */
+.radio-card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  display: grid; grid-template-columns: 24px 1fr; gap: 14px; align-items: center;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.radio-card.selected { border-color: var(--milestone); background: var(--surface-1); }
+.radio-card .dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--paper-dim); display: flex; align-items: center; justify-content: center;
+}
+.radio-card.selected .dot { border-color: var(--milestone); }
+.radio-card.selected .dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--milestone); }
+
+/* slider */
+.slider-row { padding: 10px 0; }
+.slider-row .top { display: flex; align-items: center; justify-content: space-between; }
+.slider-row .top .name { font-weight: 600; font-size: 16px; }
+.slider-row .top .val  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 22px; color: var(--milestone); }
+.slider-row input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 48px;
+  background: transparent; outline: none; cursor: pointer;
+}
+.slider-row input[type=range]::-webkit-slider-runnable-track {
+  height: 4px; background: var(--rule); border-radius: 4px;
+}
+.slider-row input[type=range]::-moz-range-track {
+  height: 4px; background: var(--rule); border-radius: 4px;
+}
+.slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--milestone);
+  margin-top: -12px;
+  cursor: pointer;
+  border: 4px solid var(--ink);
+}
+.slider-row input[type=range]::-moz-range-thumb {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--milestone);
+  cursor: pointer;
+  border: 4px solid var(--ink);
+}
+.slider-row .anchors { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--paper-low); text-transform: uppercase; margin-top: -8px; }
+
+/* switch */
+.switch-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0;
+}
+.switch-row .info .name { font-weight: 600; font-size: 16px; }
+.switch-row .info .help { font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
+.switch {
+  --w: 52px;
+  --h: 30px;
+  position: relative; display: inline-block; width: var(--w); height: var(--h);
+  flex-shrink: 0;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider {
+  position: absolute; inset: 0; cursor: pointer; background: var(--surface-1);
+  border: 1px solid var(--rule); border-radius: 999px; transition: 0.2s;
+}
+.switch .slider::before {
+  position: absolute; content: ''; width: 22px; height: 22px; left: 3px; bottom: 3px;
+  background: var(--paper-dim); border-radius: 50%; transition: 0.2s;
+}
+.switch input:checked + .slider { background: var(--mobility); border-color: var(--mobility); }
+.switch input:checked + .slider::before { transform: translateX(22px); background: var(--ink); }
+
+/* ---------- BOTTOM NAV ---------- */
+.nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--rule);
+  display: flex; align-items: stretch;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav .tab {
+  flex: 1; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: transparent; border: none; color: var(--paper-low); cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  width: auto; border-radius: 0;
+}
+.nav .tab.active { color: var(--milestone); }
+.nav .tab svg { width: 22px; height: 22px; }
+
+/* ---------- HEADER ---------- */
+.screen-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.screen-head .crumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
+.back-row { display: flex; align-items: center; gap: 8px; margin-left: -8px; margin-bottom: 12px; }
+.back-row button { background: transparent; color: var(--paper-dim); height: 40px; width: auto; padding: 0 8px; font-size: 14px; gap: 4px; }
+.back-row button:hover { color: var(--paper); }
+
+/* ---------- TOAST ---------- */
+.toast {
+  position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%);
+  background: var(--surface-2); color: var(--paper); padding: 12px 18px;
+  border-radius: 12px; font-size: 14px; border: 1px solid var(--rule);
+  z-index: 100; box-shadow: var(--shadow-card);
+  opacity: 0; transition: opacity 200ms ease;
+  pointer-events: none; max-width: 360px;
+  text-align: center;
+}
+.toast.show { opacity: 1; }
+.toast.error { border-color: var(--strength); color: var(--strength); }
+.toast.success { border-color: var(--mobility); color: var(--mobility); }
+
+/* ---------- LIBRARY / EXERCISE ---------- */
+.lib-row {
+  display: grid; grid-template-columns: 56px 1fr 16px;
+  gap: 12px; align-items: center;
+  padding: 10px;
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  margin-bottom: 8px;
+  text-align: left;
+  width: 100%;
+  height: auto;
+  color: var(--paper);
+  font-weight: 400;
+}
+.lib-row:hover { border-color: var(--rule); }
+.lib-row .fig {
+  width: 56px; height: 56px;
+  background: var(--surface-1);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.lib-row .fig svg { width: 44px; height: 44px; color: var(--paper); }
+.lib-row .text { display: flex; flex-direction: column; }
+.lib-row .text .name { font-size: 15px; font-weight: 600; color: var(--paper); }
+.lib-row .text .rx { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-dim); margin-top: 2px; }
+.lib-row .chev { color: var(--paper-low); }
+
+.cat-header { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--milestone); margin-top: 16px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+
+/* exercise detail */
+.fig-hero {
+  background: var(--surface-1);
+  border-radius: 18px;
+  height: 220px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 12px 0;
+}
+.fig-hero svg { height: 170px; width: 170px; color: var(--paper); }
+.step-list { display: grid; grid-template-columns: 28px 1fr; gap: 8px 12px; }
+.step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-low); padding-top: 3px; }
+.step-list .t { font-size: 14px; color: var(--paper); line-height: 1.5; padding-bottom: 6px; }
+
+/* ---------- CHART ---------- */
+.chart {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.chart .top { display: flex; justify-content: space-between; align-items: baseline; }
+.chart canvas { width: 100%; height: 120px; display: block; margin-top: 8px; }
+.chart .bottom { display: flex; justify-content: space-between; margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-dim); }
+.chart .empty { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--paper-low); font-size: 13px; }
+
+/* status pip */
+.sync {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  color: var(--paper-low); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.sync::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--paper-low);
+}
+.sync.online::before { background: var(--mobility); }
+.sync.offline::before { background: var(--milestone); }
+.sync.error::before { background: var(--strength); }
+.sync.syncing::before {
+  background: var(--cardio);
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ---------- SCREEN MOTION ---------- */
+.screen { animation: fade-in 180ms ease; }
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- =================================================== -->
+<!-- SVG SPRITES — 19 stick figures + UI icons          -->
+<!-- =================================================== -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <!-- PT Neuromuscular -->
+  <symbol id="ic-sl-stance" viewBox="0 0 50 60">
+    <circle cx="25" cy="8" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="11.5" x2="25" y2="32"/>
+      <path d="M 25 16 L 31 22 L 35 27"/>
+      <path d="M 25 16 L 19 22 L 15 27"/>
+      <line x1="25" y1="32" x2="25" y2="55"/>
+      <path d="M 25 32 L 18 40 L 25 42"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-sl-squat" viewBox="0 0 50 60">
+    <circle cx="25" cy="10" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="13.5" x2="25" y2="33"/>
+      <path d="M 25 18 L 33 25 L 38 28"/>
+      <path d="M 25 18 L 17 25 L 12 28"/>
+      <path d="M 25 33 L 22 44 L 25 55"/>
+      <path d="M 25 33 L 31 40 L 34 38"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-sl-hop" viewBox="0 0 50 60">
+    <circle cx="22" cy="14" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="22" y1="17.5" x2="24" y2="36"/>
+      <path d="M 22 22 L 30 26 L 35 24"/>
+      <path d="M 22 22 L 16 24 L 12 21"/>
+      <path d="M 24 36 L 22 46 L 26 53"/>
+      <path d="M 24 36 L 30 42 L 35 40"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <path d="M 8 30 L 13 30" stroke-width="1.2"/>
+      <path d="M 11 28 L 13 30 L 11 32" stroke-width="1.2"/>
+    </g>
+  </symbol>
+  <!-- PT Hip -->
+  <symbol id="ic-hip-abd" viewBox="0 0 50 60">
+    <circle cx="10" cy="32" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="13.5" y1="32" x2="33" y2="34"/>
+      <path d="M 14 33 L 15 38 L 13 43"/>
+      <path d="M 16 32 L 22 30"/>
+      <line x1="33" y1="34" x2="45" y2="42"/>
+      <path d="M 33 34 L 42 28 L 47 24"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-glute-bridge" viewBox="0 0 50 60">
+    <circle cx="7" cy="45" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="10.5" y1="45" x2="28" y2="32"/>
+      <path d="M 11 47 L 15 50 L 19 50"/>
+      <path d="M 28 32 L 32 45 L 38 53"/>
+      <path d="M 28 32 L 30 46 L 36 54"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-band-walk" viewBox="0 0 50 60">
+    <circle cx="25" cy="10" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="13.5" x2="26" y2="32"/>
+      <path d="M 25 18 L 18 25 L 14 28"/>
+      <path d="M 25 18 L 32 25 L 36 28"/>
+      <path d="M 26 32 L 18 44 L 14 55"/>
+      <path d="M 26 32 L 34 44 L 38 55"/>
+      <path d="M 18 44 Q 26 47 34 44" stroke-dasharray="1.5 1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <!-- PT Shin -->
+  <symbol id="ic-calf-raise" viewBox="0 0 50 60">
+    <circle cx="25" cy="7" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="10.5" x2="25" y2="32"/>
+      <path d="M 25 14 L 21 22 L 19 30"/>
+      <path d="M 25 14 L 29 22 L 31 30"/>
+      <line x1="25" y1="32" x2="22" y2="52"/>
+      <line x1="25" y1="32" x2="28" y2="52"/>
+      <path d="M 19 52 L 22 52 L 22 55"/>
+      <path d="M 28 52 L 31 52 L 31 55"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5"/>
+      <path d="M 42 18 L 42 10" stroke-width="1.2"/>
+      <path d="M 40 12 L 42 10 L 44 12" stroke-width="1.2"/>
+    </g>
+  </symbol>
+  <symbol id="ic-sl-calf-raise" viewBox="0 0 50 60">
+    <circle cx="22" cy="8" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="22" y1="11.5" x2="22" y2="32"/>
+      <path d="M 22 15 L 30 18 L 38 18"/>
+      <path d="M 22 15 L 17 25 L 15 32"/>
+      <line x1="22" y1="32" x2="22" y2="52"/>
+      <path d="M 19 52 L 22 52 L 22 55"/>
+      <path d="M 22 32 L 27 38 L 30 42"/>
+      <line x1="42" y1="6" x2="42" y2="55" stroke-width="2"/>
+      <line x1="2" y1="55" x2="42" y2="55" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-calf-stretch" viewBox="0 0 50 60">
+    <circle cx="14" cy="14" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="16" y1="17" x2="28" y2="37"/>
+      <path d="M 16 19 L 22 19 L 30 18"/>
+      <path d="M 16 21 L 22 22 L 30 22"/>
+      <path d="M 28 37 L 34 47 L 38 54"/>
+      <line x1="28" y1="37" x2="20" y2="54"/>
+      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2"/>
+      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <!-- Strength Day A -->
+  <symbol id="ic-goblet-sq" viewBox="0 0 50 60">
+    <circle cx="25" cy="14" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="17.5" x2="25" y2="32"/>
+      <path d="M 25 20 L 22 24 L 23 28"/>
+      <path d="M 25 20 L 28 24 L 27 28"/>
+    </g>
+    <rect x="20" y="26" width="10" height="6" rx="1" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none">
+      <line x1="22" y1="26" x2="22" y2="24"/>
+      <line x1="28" y1="26" x2="28" y2="24"/>
+    </g>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M 25 32 L 16 42 L 14 54"/>
+      <path d="M 25 32 L 34 42 L 36 54"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-pushup" viewBox="0 0 50 60">
+    <circle cx="42" cy="38" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="38" y1="40" x2="12" y2="42"/>
+      <path d="M 16 41 L 16 50"/>
+      <path d="M 36 41 L 36 50"/>
+      <line x1="14" y1="50" x2="18" y2="50" stroke-width="1.5"/>
+      <line x1="34" y1="50" x2="38" y2="50" stroke-width="1.5"/>
+      <line x1="12" y1="42" x2="4" y2="49"/>
+      <line x1="3" y1="49" x2="6" y2="50" stroke-width="1.5"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-db-row" viewBox="0 0 50 60">
+    <circle cx="14" cy="22" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="17" y1="24" x2="38" y2="26"/>
+      <path d="M 35 26 L 35 36"/>
+      <path d="M 38 26 L 38 36"/>
+      <path d="M 22 26 L 18 32 L 18 38"/>
+    </g>
+    <rect x="13" y="38" width="10" height="4" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="17" y1="25" x2="6" y2="36"/>
+      <line x1="30" y1="38" x2="46" y2="38" stroke-width="2"/>
+      <line x1="32" y1="38" x2="32" y2="50" stroke-width="1.5"/>
+      <line x1="44" y1="38" x2="44" y2="50" stroke-width="1.5"/>
+      <line x1="2" y1="52" x2="48" y2="52" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-plank" viewBox="0 0 50 60">
+    <circle cx="8" cy="32" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="11.5" y1="32" x2="42" y2="36"/>
+      <path d="M 13 33 L 13 41 L 18 41"/>
+      <path d="M 17 33 L 17 41 L 22 41"/>
+      <line x1="42" y1="36" x2="48" y2="44"/>
+      <line x1="46" y1="44" x2="49" y2="46" stroke-width="1.5"/>
+      <line x1="2" y1="46" x2="49" y2="46" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <!-- Strength Day B -->
+  <symbol id="ic-rdl" viewBox="0 0 50 60">
+    <circle cx="18" cy="14" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="20" y1="17" x2="32" y2="30"/>
+      <line x1="30" y1="28" x2="28" y2="44"/>
+      <line x1="33" y1="29" x2="35" y2="44"/>
+    </g>
+    <rect x="23" y="44" width="10" height="3" fill="currentColor"/>
+    <rect x="30" y="44" width="10" height="3" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M 32 30 L 30 44 L 29 54"/>
+      <path d="M 32 30 L 36 44 L 37 54"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-oh-press" viewBox="0 0 50 60">
+    <circle cx="25" cy="14" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="17.5" x2="25" y2="37"/>
+      <line x1="22" y1="19" x2="20" y2="5"/>
+      <line x1="28" y1="19" x2="30" y2="5"/>
+    </g>
+    <rect x="15" y="3" width="10" height="3" fill="currentColor"/>
+    <rect x="25" y="3" width="10" height="3" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="37" x2="22" y2="55"/>
+      <line x1="25" y1="37" x2="28" y2="55"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-split-sq" viewBox="0 0 50 60">
+    <circle cx="22" cy="11" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="22" y1="14.5" x2="22" y2="33"/>
+      <line x1="19" y1="17" x2="16" y2="33"/>
+      <line x1="25" y1="17" x2="28" y2="33"/>
+    </g>
+    <rect x="12" y="33" width="8" height="3" fill="currentColor"/>
+    <rect x="24" y="33" width="8" height="3" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M 22 33 L 17 44 L 14 55"/>
+      <path d="M 22 33 L 32 42 L 42 46"/>
+      <line x1="38" y1="46" x2="48" y2="46" stroke-width="2"/>
+      <line x1="40" y1="46" x2="40" y2="55" stroke-width="1.5"/>
+      <line x1="46" y1="46" x2="46" y2="55" stroke-width="1.5"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-dead-bug" viewBox="0 0 50 60">
+    <circle cx="8" cy="38" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="11.5" y1="38" x2="30" y2="40"/>
+      <path d="M 14 38 L 14 28 L 16 22"/>
+      <path d="M 16 38 L 13 44 L 10 50"/>
+      <path d="M 28 40 L 32 32 L 30 24"/>
+      <path d="M 30 40 L 40 46 L 47 50"/>
+      <line x1="2" y1="52" x2="49" y2="52" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <!-- Cardio -->
+  <symbol id="ic-walking" viewBox="0 0 50 60">
+    <circle cx="25" cy="8" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="25" y1="11.5" x2="25" y2="32"/>
+      <path d="M 25 16 L 32 22 L 35 28"/>
+      <path d="M 25 16 L 18 22 L 16 30"/>
+      <path d="M 25 32 L 30 44 L 35 54"/>
+      <path d="M 25 32 L 22 44 L 17 52"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <symbol id="ic-running" viewBox="0 0 50 60">
+    <circle cx="22" cy="10" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="22" y1="13.5" x2="25" y2="32"/>
+      <path d="M 23 18 L 34 22 L 36 16"/>
+      <path d="M 23 18 L 14 24 L 12 30"/>
+      <path d="M 25 32 L 33 40 L 40 46"/>
+      <path d="M 25 32 L 19 42 L 15 54"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5"/>
+      <path d="M 5 16 L 11 16" stroke-width="1"/>
+      <path d="M 5 22 L 11 22" stroke-width="1"/>
+    </g>
+  </symbol>
+
+  <!-- UI icons -->
+  <symbol id="ic-today" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+    <circle cx="12" cy="15" r="2" fill="currentColor"/>
+  </symbol>
+  <symbol id="ic-library" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </symbol>
+  <symbol id="ic-progress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </symbol>
+  <symbol id="ic-phase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 4h16v4H4z"/><path d="M4 12h16v4H4z"/><path d="M4 20h10v0H4z"/>
+  </symbol>
+  <symbol id="ic-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
+  </symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </symbol>
+  <symbol id="ic-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="9 18 15 12 9 6"/>
+  </symbol>
+</svg>
+
+<div id="app">
+  <!-- screens render here -->
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+// Application code is in app.js (inlined below)
+</script>
+<script id="app-script">
+/* ============================================================
+   FOUNDATION PROTOCOL — single-file web app (simplified)
+   Two taps a day. No typing after onboarding.
+   Q1: Did you meet today's goal?   Q2: How do you feel?
+   → one of four calls: PROGRESS · REPEAT · MODIFY · REST
+   Persists to a GitHub repo via the Contents API.
+   ============================================================ */
+
+'use strict';
+
+// ============================================================
+// CONFIG
+// ============================================================
+const APP_VERSION = '2.0.0';
+const STORAGE_KEY = 'foundation-protocol-state-v2';
+const SETTINGS_KEY = 'foundation-protocol-settings-v2';
+const DATA_FILES = {
+  profile: 'data/profile.json',
+  phase: 'data/phase.json',
+  checks: 'data/checks.json',
+};
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  profile: null,
+  phase: null,     // { phase, week, dayInWeek, sessionsCleared, lastDecision }
+  checks: [],      // [{ ts, date, goalMet, feel, hurt, decision, phase, week, dayInWeek }]
+  pending: [],
+  settings: { repo: '', pat: '', autoSync: true },
+  ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '' },
+};
+
+// ============================================================
+// PHASE + EXERCISE DEFINITIONS (carried from PDF)
+// ============================================================
+const BLOCKS = {
+  ptFull:   { kind: 'mobility',  label: 'PT • 10 min',       title: 'Neuromuscular + Hip', detail: 'Balance • Hip • Tibialis • Calf' },
+  ptLight:  { kind: 'mobility',  label: 'PT • 8 min',        title: 'Quick mobility',      detail: 'Hips + ankles • Optional' },
+  walk30:   { kind: 'cardio',    label: 'Z2 • 30 min',       title: 'Walk, conversational', detail: 'Talk-test pace' },
+  walk40:   { kind: 'cardio',    label: 'Z2 • 40 min',       title: 'Walk, conversational', detail: 'Small hills if available' },
+  walk45:   { kind: 'cardio',    label: 'Z2 • 45 min',       title: 'Walk, conversational', detail: 'Full sentences while walking' },
+  walk60:   { kind: 'cardio',    label: 'Z2 • 60 min',       title: 'Long walk',           detail: 'Mixed terrain' },
+  rest:     { kind: 'rest',      label: 'Rest',              title: 'Full recovery',       detail: 'Sleep 7+ • Hydrate' },
+  strA:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day A — Push / Squat', detail: 'Goblet sq • Pushup • Row • Plank' },
+  strB:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day B — Hinge / Press', detail: 'RDL • OH press • Split sq • Dead bug' },
+  rw1:      { kind: 'cardio',    label: 'Run-walk • 30',     title: '1 min run / 4 min walk', detail: '5 rounds • Stop if shin pain' },
+  rw2:      { kind: 'cardio',    label: 'Run-walk • 35',     title: '2 min run / 3 min walk', detail: '5 rounds • Build gradually' },
+  rw3:      { kind: 'cardio',    label: 'Run-walk • 40',     title: '3 min run / 2 min walk', detail: 'Form check at mile 1' },
+  easyRun:  { kind: 'cardio',    label: 'Easy run • 30',     title: 'Continuous Z2',        detail: 'Talk-test • HR priority' },
+  longRun:  { kind: 'cardio',    label: 'Long run • 45',     title: 'Z2 continuous',        detail: 'Cap at +10% vs 30-day longest' },
+  tempo:    { kind: 'cardio',    label: 'Intervals • 35',    title: '4 × 4 min hard / 3 min easy', detail: 'Max 20% of weekly volume' },
+  opmAm:    { kind: 'strength',  label: 'OPM • AM',          title: '100 push / 100 squat', detail: 'Spread across day' },
+  opmCore:  { kind: 'strength',  label: 'OPM • PM',          title: '100 situp + plank',    detail: 'Dead bug / Hollow' },
+  loaded:   { kind: 'strength',  label: 'Loaded • 45',       title: 'Barbell / DB progression', detail: 'Switch from bodyweight stim' },
+  longRun10k:{ kind: 'cardio',   label: 'Long run • 60+',    title: 'Building to 10K',      detail: 'Cap vs 30-day longest' },
+  hooper:   { kind: 'milestone', label: 'Check-in',          title: 'Weekly review',        detail: 'Reflect on the week' },
+};
+function day(name, blocks) { return { day: name, blocks: blocks.map(k => BLOCKS[k]) }; }
+
+const PHASES = [
+  {
+    index: 0, name: 'Infrastructure', weeks: 'Weeks 1 – 4', totalWeeks: 4,
+    summary: 'No training stress. Build the support system. Walking, daily PT, protein dialed in, baseline measurements logged.',
+    focus: ['Walk daily, build to 60 min on Saturday', 'PT every morning, no skipped days', 'Protein 1.6 g/kg per day', 'Sunday review'],
+    exit:  ['Walk 60 min comfortably', '30 sec single-leg eyes closed', '160 g/day protein consistent'],
+    week: [ day('Mon',['ptFull','walk30']), day('Tue',['ptFull','rest']), day('Wed',['ptFull','walk30']),
+            day('Thu',['ptLight','rest']), day('Fri',['ptFull','walk30']), day('Sat',['ptFull','walk40']),
+            day('Sun',['ptLight','hooper']) ],
+  },
+  {
+    index: 1, name: 'Foundation', weeks: 'Weeks 5 – 12', totalWeeks: 8,
+    summary: 'Strength enters the system. Two full-body sessions per week, alternating Day A (push/squat) and Day B (hinge/press). Zone 2 walking volume builds toward 60 minutes. Daily PT continues.',
+    focus: ['Strength 2× weekly, Day A and Day B', 'Z2 walking 3 – 4× weekly', 'Daily 10-min PT', 'Sunday review'],
+    exit:  ['Single-leg glute bridge × 10 each side', 'Pushup with knees off the floor', 'Walk 75 min comfortably'],
+    week: [ day('Mon',['ptFull','strA']), day('Tue',['ptFull','walk45']), day('Wed',['ptFull','strB']),
+            day('Thu',['ptFull','walk45']), day('Fri',['ptLight','rest']), day('Sat',['ptFull','walk60']),
+            day('Sun',['ptLight','hooper']) ],
+  },
+  {
+    index: 2, name: 'Run Introduction', weeks: 'Weeks 13 – 24', totalWeeks: 12,
+    summary: 'Run-walk intervals begin, 2× weekly, starting at 1 min run / 4 min walk × 5 rounds. Single-session cap: never run more than +10% over your longest run in the past 30 days. Eccentric calf protocol enters.',
+    focus: ['Run-walk 2× weekly, non-consecutive days', 'Strength 2× weekly continues', '+10% rule: cap vs 30-day longest', 'Sunday review'],
+    exit:  ['Run 5 min continuous × 5 rounds', 'No morning shin tenderness for 7 days', '5K total run-walk distance'],
+    week: [ day('Mon',['ptFull','strA']), day('Tue',['ptFull','rw1']), day('Wed',['ptFull','strB']),
+            day('Thu',['ptFull','walk45']), day('Fri',['ptLight','rest']), day('Sat',['ptFull','rw2']),
+            day('Sun',['ptLight','hooper']) ],
+  },
+  {
+    index: 3, name: 'Build', weeks: 'Weeks 25 – 40', totalWeeks: 16,
+    summary: 'Continuous running becomes possible. Three running sessions per week: two easy, one harder. Polarized 80/20 distribution. Strength can move to 3× weekly.',
+    focus: ['3 runs weekly: 2 easy, 1 hard', '80% easy / 20% hard distribution', 'Strength can move to 3× weekly', 'Sunday review'],
+    exit:  ['5K continuous run at conversational pace', '50 pushups in one unbroken set', 'Resting HR down 5 – 10 bpm'],
+    week: [ day('Mon',['ptFull','strA']), day('Tue',['ptLight','easyRun']), day('Wed',['ptFull','strB']),
+            day('Thu',['ptLight','rw3']), day('Fri',['ptFull','rest']), day('Sat',['ptLight','longRun']),
+            day('Sun',['ptLight','hooper']) ],
+  },
+  {
+    index: 4, name: 'Target', weeks: 'Weeks 41+', totalWeeks: 99,
+    summary: 'OPM milestone enters daily practice: 100 pushups, 100 situp variants, 100 squats — split across the day as needed. 10K running capacity built progressively. Strength transitions to loaded work.',
+    focus: ['OPM split AM and PM', '4 runs weekly: 2 easy, 1 tempo, 1 long', 'Loaded strength 2× weekly', '+10% rule still applies'],
+    exit:  ['Daily 100 / 100 / 100 sustained for 4 weeks', '10K continuous run under 60 minutes', 'Loaded strength replaces bodyweight'],
+    week: [ day('Mon',['opmAm','loaded']), day('Tue',['opmCore','easyRun']), day('Wed',['opmAm','loaded']),
+            day('Thu',['opmCore','tempo']), day('Fri',['opmAm','rest']), day('Sat',['ptFull','longRun10k']),
+            day('Sun',['opmCore','hooper']) ],
+  },
+];
+
+const EXERCISES = [
+  { key:'sl_stance', name:'Single-Leg Stance', rx:'3 × 45 sec each', icon:'ic-sl-stance', cat:'Neuromuscular',
+    steps:['Stand tall on one foot, knee lifted to hip height.','Fix gaze on a point ahead at eye level.','Hips level, ribs stacked, ankle relaxed.','Progress to eyes closed at week 3, then to a folded towel.'],
+    cue:'If you are rock-solid, eyes closed or step onto a folded towel.' },
+  { key:'sl_squat', name:'Single-Leg Mini-Squat', rx:'3 × 10 each', icon:'ic-sl-squat', cat:'Neuromuscular',
+    steps:['Start from single-leg stance.','Bend the standing knee to about 30 degrees.','Knee tracks over middle toe.','Stop the set when the knee caves inward.'],
+    cue:'When the knee caves inward, the hip is fatigued.' },
+  { key:'sl_hop', name:'Single-Leg Hop', rx:'3 × 6 each', icon:'ic-sl-hop', cat:'Neuromuscular',
+    steps:['Phase 1 onward only.','Hop forward 30 – 60 cm, land on the same leg.','Stick the landing for 2 full seconds.','Reset to upright before the next rep.'],
+    cue:'Quality landing beats height or distance.' },
+  { key:'hip_abd', name:'Side-Lying Hip Abduction', rx:'3 × 12 each', icon:'ic-hip-abd', cat:'Hip',
+    steps:['Lie on side, top leg straight and stacked.','Lift the top leg toward the ceiling, toes forward.','Pause at the top, lower over 2 – 3 seconds.','Pelvis stays still — do not roll back.'],
+    cue:'Smaller range, cleaner reps.' },
+  { key:'glute_bridge', name:'Glute Bridge', rx:'3 × 12', icon:'ic-glute-bridge', cat:'Hip',
+    steps:['Lie on back, knees bent, feet flat hip-width.','Drive through heels, lift hips, squeeze glutes.','Body forms one line knees-hips-shoulders.','Phase 1: progress to single-leg by extending one leg.'],
+    cue:'Feel it in the glutes, not the lower back.' },
+  { key:'band_walk', name:'Lateral Band Walk', rx:'3 × 10 each', icon:'ic-band-walk', cat:'Hip',
+    steps:['Band around knees or ankles, athletic stance.','Step sideways, knees pushed out against band.','Maintain band tension throughout.','10 steps one direction then reverse.'],
+    cue:'If knees buckle inward, the band is too heavy.' },
+  { key:'calf_raise', name:'Calf Raise', rx:'3 × 15', icon:'ic-calf-raise', cat:'Shin',
+    steps:['Stand on flat floor or stair edge.','Rise high on toes.','Hold 1 second at top.','Lower over 3 full seconds.'],
+    cue:'The slow descent is the point. Do not rush.' },
+  { key:'sl_calf_raise', name:'Single-Leg Calf Raise', rx:'3 × 10 each', icon:'ic-sl-calf-raise', cat:'Shin',
+    steps:['Phase 2 progression only.','One leg, hand on wall for balance.','Rise high on working foot, pause 1 sec.','Lower over 3 seconds.'],
+    cue:'Running is single-leg impacts. Train single-leg.' },
+  { key:'calf_stretch', name:'Calf Stretch', rx:'2 × 30 sec each', icon:'ic-calf-stretch', cat:'Shin',
+    steps:["Arm's length from wall, hands flat at shoulder height.",'Step one leg back about 60 cm.','Lean forward, back knee straight.','Hold 30 sec. Bend back knee for second set (soleus).'],
+    cue:'Tight calves transmit impact straight to the shin.' },
+  { key:'goblet_sq', name:'Goblet Squat', rx:'3 × 8 – 12', icon:'ic-goblet-sq', cat:'Day A',
+    steps:['Hold dumbbell vertically at chest.','Feet shoulder-width, toes slightly out.','Sit down and back, knees track middle toes.','Drive up through heels, torso upright.'],
+    cue:'If heels lift, improve ankle mobility separately.' },
+  { key:'pushup', name:'Pushup', rx:'3 × 6 – 12', icon:'ic-pushup', cat:'Day A',
+    steps:['Start at incline if needed: counter, bench, box.','Hands slightly wider than shoulders.','Lower chest to within an inch of surface.','Elbows back at ~45 degrees, not flared.'],
+    cue:'Sagging hips means abs disengaged. Squeeze glutes.' },
+  { key:'db_row', name:'Single-Arm DB Row', rx:'3 × 10 each', icon:'ic-db-row', cat:'Day A',
+    steps:['One knee and same-side hand on bench.','Other foot flat, dumbbell hangs straight.','Pull elbow back toward hip, squeeze shoulder blade.','Lower with control over 2 – 3 seconds.'],
+    cue:'Pull with the back, not the arm.' },
+  { key:'plank', name:'Plank Hold', rx:'3 × 30 – 60 sec', icon:'ic-plank', cat:'Day A',
+    steps:['Forearms under shoulders, elbows aligned.','Hips in line with shoulders and ankles.','Squeeze glutes, ribs stacked over hips.','Hold for time, stop when form drops.'],
+    cue:'30 seconds perfect beats 90 seconds leaky.' },
+  { key:'rdl', name:'Romanian Deadlift, DB', rx:'3 × 8 – 12', icon:'ic-rdl', cat:'Day B',
+    steps:['Stand hip-width, dumbbells in front of thighs.','Hinge from hips, push them backward.','Dumbbells travel close to legs.','Drive hips forward to stand, squeeze glutes at top.'],
+    cue:'If you feel it in the lower back, you are bending the spine.' },
+  { key:'oh_press', name:'Overhead Press, DB', rx:'3 × 8 – 10', icon:'ic-oh-press', cat:'Day B',
+    steps:['Stand tall, dumbbells at shoulder height.','Brace core, ribs down, glutes squeezed.','Press straight up overhead.','Biceps align with ears at top.'],
+    cue:'If you cannot press without leaning back, drop the weight.' },
+  { key:'split_sq', name:'Bulgarian Split Squat', rx:'3 × 8 each', icon:'ic-split-sq', cat:'Day B',
+    steps:['Rear foot on bench, laces down.','Front foot far enough forward to track over mid-foot.','~70 percent of bodyweight on front leg.','Drive through front heel to stand.'],
+    cue:'Start bodyweight. Add DBs only after 8 clean per leg.' },
+  { key:'dead_bug', name:'Dead Bug', rx:'3 × 8 each', icon:'ic-dead-bug', cat:'Day B',
+    steps:['On back, arms up over shoulders, knees over hips.','Press lower back flat against floor.','Lower opposite arm and leg slowly.','Return with control. Alternate sides.'],
+    cue:'Trains anti-extension. Protects spine when running.' },
+  { key:'walk', name:'Z2 Walk', rx:'30 – 60 min', icon:'ic-walking', cat:'Cardio',
+    steps:['Conversational pace. Full sentences while moving.','Talk test is the only intensity gauge needed.','Mixed terrain when ready.'],
+    cue:'If you cannot finish a sentence, you are over pace.' },
+  { key:'run', name:'Easy Run', rx:'30 – 60 min', icon:'ic-running', cat:'Cardio',
+    steps:['Continuous Zone 2 pace, talk test holds.','HR over pace as the priority.','+10% rule: never more than 110% of 30-day longest.'],
+    cue:'Easy runs feel suspiciously slow. That is the point.' },
+];
+
+// ============================================================
+// DECISION ENGINE
+// ============================================================
+const OUTCOMES = {
+  progress: {
+    key: 'progress', title: 'Progress', cls: 'mobility',
+    action: 'Move to the next session.',
+    why: 'You completed the work and you are recovered. That is the only condition under which load should go up. The next session is a small step, not a leap. This is autoregulation: progression follows readiness, not the calendar.'
+  },
+  repeat: {
+    key: 'repeat', title: 'Repeat this session', cls: 'cardio',
+    action: 'Run the same session again next time.',
+    why: 'Either the session was not fully completed, or you are recovered but not fresh enough to add load. Repeating consolidates the adaptation already in motion. Most plateaus clear in 7 to 14 days of holding steady.'
+  },
+  modify: {
+    key: 'modify', title: 'Easier version next', cls: 'milestone',
+    action: 'Same session, easiest variation, no added load.',
+    why: 'You are a bit run down but not wrecked. Keep the movement pattern, drop the intensity: incline pushups, bodyweight squats, shorter holds, run-walk instead of running. Training through mild fatigue at reduced load preserves the habit without digging a deeper hole.'
+  },
+  rest: {
+    key: 'rest', title: 'Rest today', cls: 'strength',
+    action: 'Full rest, or an easy 15 to 20 min walk only.',
+    why: 'Recovery outranks everything else. Sleep, hydrate, get protein in. Re-check tomorrow and resume where you left off. Nothing is lost by resting one day; a lot can be lost by training on top of a body that is signalling stop.'
+  },
+};
+
+function decide(goalMet, feel, hurt) {
+  if (hurt) {
+    return { ...OUTCOMES.rest,
+      title: 'Stop. Rest and check the pain.',
+      why: 'Sharp pain is not training stress. Take today off entirely. If the same sharp pain is still there after a few days, or it is point-tender on the bone, see a physio before resuming. ' + OUTCOMES.rest.why };
+  }
+  if (feel <= 1) return OUTCOMES.rest;
+  if (feel === 2) return OUTCOMES.modify;
+  if (goalMet === 'done') return feel >= 4 ? OUTCOMES.progress : OUTCOMES.repeat;
+  return OUTCOMES.repeat;
+}
+
+function modifyBlock(block) {
+  switch (block.kind) {
+    case 'strength': return { title: block.title, detail: 'Easiest variation, no added load. Incline pushups, bodyweight squats, shorter holds.' };
+    case 'cardio':
+      if (/run/i.test(block.title) || /run/i.test(block.label))
+        return { title: 'Run-walk or walk', detail: 'Drop the running. Walk, or gentle run-walk intervals for the same time.' };
+      return { title: 'Short easy walk', detail: '15 to 20 minutes, conversational. Nothing more.' };
+    case 'mobility': return { title: block.title, detail: 'Painless items only. Skip anything that aggravates.' };
+    case 'milestone': return { title: block.title, detail: block.detail };
+    default: return { title: 'Rest', detail: 'Sleep, hydrate, protein.' };
+  }
+}
+
+// ============================================================
+// PROGRESSION
+// ============================================================
+function currentPhaseDef() { return PHASES[(state.phase?.phase ?? state.profile?.startingPhase ?? 0)]; }
+function currentDayPlan() {
+  const pd = currentPhaseDef();
+  const idx = ((state.phase?.dayInWeek ?? 1) - 1);
+  return pd.week[Math.max(0, Math.min(idx, pd.week.length - 1))];
+}
+function advancePointer() {
+  const cur = state.phase || { phase: 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };
+  const pd = PHASES[cur.phase];
+  let { phase, week, dayInWeek } = cur;
+  dayInWeek += 1;
+  if (dayInWeek > pd.week.length) {
+    dayInWeek = 1; week += 1;
+    if (week > pd.totalWeeks) { week = 1; phase = Math.min(phase + 1, PHASES.length - 1); }
+  }
+  state.phase = { phase, week, dayInWeek, sessionsCleared: (cur.sessionsCleared ?? 0) + 1, lastDecision: new Date().toISOString() };
+}
+function applyCheck(goalMet, feel, hurt) {
+  const outcome = decide(goalMet, feel, hurt);
+  const cur = state.phase || {};
+  state.checks.push({
+    ts: Date.now(), date: isoToday(), goalMet, feel, hurt: !!hurt,
+    decision: outcome.key, phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1,
+  });
+  if (outcome.key === 'progress') {
+    advancePointer();
+  } else {
+    if (!state.phase) state.phase = { phase: 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };
+    state.phase.lastDecision = new Date().toISOString();
+  }
+  markDirty('checks', 'phase');
+  return outcome;
+}
+
+// ============================================================
+// STORAGE
+// ============================================================
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      state.profile = d.profile || null;
+      state.phase   = d.phase   || null;
+      state.checks  = d.checks  || [];
+      state.pending = d.pending || [];
+    }
+    const sraw = localStorage.getItem(SETTINGS_KEY);
+    if (sraw) state.settings = { ...state.settings, ...JSON.parse(sraw) };
+  } catch (e) { console.error('loadLocal failed', e); }
+}
+function saveLocal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+  } catch (e) { console.error('saveLocal failed', e); }
+}
+function markDirty(...keys) {
+  keys.forEach(k => { if (!state.pending.includes(k)) state.pending.push(k); });
+  saveLocal();
+  if (state.settings.autoSync) syncToRemote();
+}
+
+// ---------- GitHub API ----------
+function ghUrl(path) { return `https://api.github.com/repos/${state.settings.repo}/contents/${path}`; }
+function ghHeaders() { return { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Authorization': `Bearer ${state.settings.pat}` }; }
+function b64encode(s) { return btoa(unescape(encodeURIComponent(s))); }
+function b64decode(s) { return decodeURIComponent(escape(atob(s.replace(/\s/g, '')))); }
+const fileShaCache = {};
+async function ghGet(path) {
+  const resp = await fetch(ghUrl(path), { headers: ghHeaders() });
+  if (resp.status === 404) return null;
+  if (!resp.ok) throw new Error(`GitHub GET ${path} → ${resp.status}`);
+  const json = await resp.json();
+  fileShaCache[path] = json.sha;
+  return JSON.parse(b64decode(json.content));
+}
+async function ghPut(path, data) {
+  let sha = fileShaCache[path];
+  if (!sha) { try { const resp = await fetch(ghUrl(path), { headers: ghHeaders() }); if (resp.ok) { const j = await resp.json(); sha = j.sha; fileShaCache[path] = sha; } } catch (_) {} }
+  const body = { message: `Update ${path}`, content: b64encode(JSON.stringify(data, null, 2)) };
+  if (sha) body.sha = sha;
+  const resp = await fetch(ghUrl(path), { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!resp.ok) { const t = await resp.text(); throw new Error(`GitHub PUT ${path} → ${resp.status}: ${t.slice(0,200)}`); }
+  const json = await resp.json();
+  fileShaCache[path] = json.content.sha;
+}
+function isConfigured() { return Boolean(state.settings.repo && state.settings.pat); }
+async function syncFromRemote() {
+  if (!isConfigured()) return;
+  setSync('syncing', 'Loading from GitHub');
+  try {
+    const [profile, phase, checks] = await Promise.all([ ghGet(DATA_FILES.profile), ghGet(DATA_FILES.phase), ghGet(DATA_FILES.checks) ]);
+    if (profile) state.profile = profile;
+    if (phase)   state.phase   = phase;
+    if (Array.isArray(checks)) state.checks = checks;
+    saveLocal(); setSync('online', 'Synced');
+  } catch (e) { console.error(e); setSync('error', e.message); }
+}
+async function syncToRemote() {
+  if (!isConfigured() || state.pending.length === 0) return;
+  setSync('syncing', `Pushing ${state.pending.length} change${state.pending.length===1?'':'s'}`);
+  try {
+    for (const key of [...state.pending]) {
+      await ghPut(DATA_FILES[key], state[key]);
+      state.pending = state.pending.filter(k => k !== key);
+      saveLocal();
+    }
+    setSync('online', 'Synced');
+  } catch (e) { console.error(e); setSync('error', e.message); }
+}
+function setSync(status, message) {
+  state.ui.syncStatus = status; state.ui.syncMessage = message;
+  document.querySelectorAll('.sync').forEach(el => {
+    el.className = 'sync ' + status;
+    el.textContent = status === 'error' ? 'Sync issue' : status === 'syncing' ? 'Syncing…' : status === 'online' ? 'Synced' : (isConfigured() ? 'Idle' : 'Local only');
+  });
+}
+
+// ============================================================
+// UTIL
+// ============================================================
+function isoToday() { return new Date().toISOString().slice(0,10); }
+function escHtml(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height="${s}" aria-hidden="true"><use href="#${id}"/></svg>`; }
+function toast(message, kind) {
+  const el = document.getElementById('toast');
+  el.className = 'toast ' + (kind||'');
+  el.textContent = message;
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+const FEEL_LABELS = { 5:'Great', 4:'Good', 3:'OK', 2:'Rough', 1:'Wrecked' };
+
+// ============================================================
+// ROUTER + RENDER
+// ============================================================
+const backStack = [];
+function navigate(screen, params) {
+  if (state.ui.screen && state.ui.screen !== screen && state.ui.screen !== 'loading') {
+    backStack.push({ screen: state.ui.screen, params: state.ui.params });
+    if (backStack.length > 20) backStack.shift();
+  }
+  state.ui.screen = screen; state.ui.params = params || {};
+  render(); window.scrollTo(0,0);
+}
+function goBack(fallback) {
+  if (backStack.length > 0) { const prev = backStack.pop(); state.ui.screen = prev.screen; state.ui.params = prev.params; render(); window.scrollTo(0,0); }
+  else navigate(fallback || 'today');
+}
+function render() {
+  const root = document.getElementById('app');
+  const screen = state.ui.screen;
+  const tabScreens = ['today','library','progress','phase'];
+  let html = '';
+  switch (screen) {
+    case 'onboarding':     html = renderOnboarding(); break;
+    case 'today':          html = renderToday(); break;
+    case 'check':          html = renderCheck(); break;
+    case 'result':         html = renderResult(state.ui.params.outcome); break;
+    case 'library':        html = renderLibrary(); break;
+    case 'progress':       html = renderProgress(); break;
+    case 'phase':          html = renderPhaseList(); break;
+    case 'phaseDetail':    html = renderPhaseDetail(state.ui.params.index); break;
+    case 'exerciseDetail': html = renderExerciseDetail(state.ui.params.key); break;
+    case 'settings':       html = renderSettings(); break;
+    default:               html = renderLoading();
+  }
+  if (tabScreens.includes(screen)) html += renderNav(screen);
+  root.innerHTML = html;
+  bindEvents();
+  setSync(state.ui.syncStatus, state.ui.syncMessage);
+}
+function renderNav(active) {
+  return `<nav class="nav">
+    <button class="tab ${active==='today'?'active':''}" data-go="today">${svgUse('ic-today',22)}<span>Today</span></button>
+    <button class="tab ${active==='library'?'active':''}" data-go="library">${svgUse('ic-library',22)}<span>Library</span></button>
+    <button class="tab ${active==='progress'?'active':''}" data-go="progress">${svgUse('ic-progress',22)}<span>Progress</span></button>
+    <button class="tab ${active==='phase'?'active':''}" data-go="phase">${svgUse('ic-phase',22)}<span>Phase</span></button>
+  </nav>`;
+}
+function bindEvents() {
+  document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => {
+    const target = el.getAttribute('data-go');
+    const params = {};
+    for (const a of el.attributes) if (a.name.startsWith('data-p-')) params[a.name.slice(7)] = a.value;
+    navigate(target, params);
+  }));
+  document.querySelectorAll('[data-back]').forEach(el => el.addEventListener('click', () => goBack('today')));
+}
+
+// ============================================================
+// SCREENS
+// ============================================================
+function renderLoading() {
+  return `<div class="screen no-nav"><div class="sp-48"></div><div class="sp-48"></div>
+    <p class="label" style="text-align:center;">Foundation Protocol</p><div class="sp-12"></div>
+    <h1 class="display-l serif" style="text-align:center;">F</h1></div>`;
+}
+
+// ---------- ONBOARDING ----------
+function renderOnboarding() {
+  const p = state._onb = state._onb || { weight:'', pushup:'', walk:'', age:'', phase:0 };
+  setTimeout(bindOnboarding, 0);
+  return `<div class="screen no-nav">
+    <p class="label">Foundation Protocol</p><div class="sp-12"></div>
+    <h1 class="display-m serif">Baseline</h1><div class="sp-8"></div>
+    <p class="body-dim">Five numbers, one time. After this it is two taps a day, nothing to type.</p>
+    <div class="sp-24"></div>
+    <div class="field"><label for="onb-weight">Body weight (kg)</label><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="78.4"></div>
+    <div class="field"><label for="onb-pushup">Max strict pushups (one set)</label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="12"></div>
+    <div class="field"><label for="onb-walk">Longest continuous walk (minutes)</label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="35"></div>
+    <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="34"></div>
+    <div class="sp-16"></div>
+    <p class="label">Starting phase</p><div class="sp-8"></div>
+    ${[{i:0,t:'Phase 0 — Infrastructure',s:'Walking + PT, no strength yet'},{i:1,t:'Phase 1 — Foundation',s:'Strength enters the system'},{i:2,t:'Phase 2 — Run introduction',s:'Run-walk intervals begin'}].map(o=>`
+      <div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div>
+        <div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
+    <div class="sp-24"></div>
+    <button id="onb-continue">Continue</button>
+    <div class="sp-24"></div>
+    <p class="body-dim" style="font-size:13px;">Connect GitHub later in Settings for cross-device sync. Skip for now; your data stays safe in this browser.</p>
+  </div>`;
+}
+function bindOnboarding() {
+  const get = id => document.getElementById(id);
+  const upd = () => { state._onb.weight=get('onb-weight').value; state._onb.pushup=get('onb-pushup').value; state._onb.walk=get('onb-walk').value; state._onb.age=get('onb-age').value; };
+  ['onb-weight','onb-pushup','onb-walk','onb-age'].forEach(id => get(id).addEventListener('input', upd));
+  document.querySelectorAll('[data-phase]').forEach(el => el.addEventListener('click', () => {
+    state._onb.phase = Number(el.getAttribute('data-phase'));
+    document.querySelectorAll('[data-phase]').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }));
+  get('onb-continue').addEventListener('click', () => {
+    upd();
+    const w=parseFloat(state._onb.weight), pu=parseInt(state._onb.pushup,10), wk=parseInt(state._onb.walk,10), ag=parseInt(state._onb.age,10);
+    if (!(w>30 && pu>=0 && wk>=0 && ag>=13 && ag<=100)) { toast('Please enter valid numbers','error'); return; }
+    state.profile = { weightKg:w, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:state._onb.phase, createdAt:Date.now() };
+    state.phase = { phase:state._onb.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
+    markDirty('profile','phase');
+    delete state._onb;
+    navigate('today');
+  });
+}
+
+// ---------- TODAY ----------
+function renderToday() {
+  const phaseIdx = state.phase?.phase ?? 0;
+  const pd = PHASES[phaseIdx];
+  const dayInWeek = state.phase?.dayInWeek ?? 1;
+  const dayPlan = currentDayPlan();
+  const crumb = `Phase ${phaseIdx} · Wk ${state.phase?.week ?? 1} · Session ${dayInWeek}/${pd.week.length}`;
+  const todayChecks = state.checks.filter(c => c.date === isoToday());
+  const lastToday = todayChecks[todayChecks.length - 1];
+  return `<div class="screen">
+    <div class="screen-head">
+      <div class="col"><span class="crumb">${escHtml(crumb)}</span><div class="sp-4"></div><span class="sync"></span></div>
+      <button class="icon" data-go="settings" title="Settings">${svgUse('ic-settings',22)}</button>
+    </div>
+    <h1 class="display-m serif">${escHtml(pd.name)}</h1>
+    <div class="sp-4"></div>
+    <p class="title" style="color:var(--mobility);">${dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery'}</p>
+    <div class="sp-24"></div>
+    <p class="label">Today's goal</p><div class="sp-8"></div>
+    ${dayPlan.blocks.map(b=>`<div class="card-block ${b.kind}" style="margin-bottom:12px;"><div class="stripe"></div>
+      <div class="card" style="padding:14px 16px;"><span class="label">${escHtml(b.label)}</span><div class="sp-4"></div>
+      <div class="title">${escHtml(b.title)}</div>${b.detail?`<div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div>`:''}</div></div>`).join('')}
+    ${lastToday ? `<div class="sp-12"></div>
+      <div class="card-block ${OUTCOMES[lastToday.decision].cls}"><div class="stripe"></div>
+        <div class="card" style="padding:14px 16px;"><span class="label">Today's call</span><div class="sp-4"></div>
+        <div class="headline serif">${escHtml(OUTCOMES[lastToday.decision].title)}</div><div class="sp-4"></div>
+        <div class="body-dim">${escHtml(OUTCOMES[lastToday.decision].action)}</div></div></div>` : ''}
+    <div class="sp-32"></div>
+    <button data-go="check">${lastToday ? 'Check in again' : 'Daily check-in'}</button>
+    <div class="sp-16"></div>
+  </div>`;
+}
+
+// ---------- CHECK ----------
+function renderCheck() {
+  state._chk = state._chk || { goalMet: null, feel: null, hurt: false };
+  setTimeout(bindCheck, 0);
+  const t = state._chk;
+  const ready = t.goalMet && t.feel;
+  const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <h1 class="display-s serif">Daily check-in</h1>
+    <div class="sp-8"></div>
+    <p class="body-dim">Two taps. The app picks the call.</p>
+    <div class="sp-24"></div>
+    <p class="label">Did you meet today's goal?</p><div class="sp-8"></div>
+    <div class="chip-row" data-q="goal">
+      <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">Done</button>
+      <button class="chip ${t.goalMet==='partial'?'active':''}" data-val="partial">Partial</button>
+      <button class="chip no ${t.goalMet==='missed'?'active':''}" data-val="missed">Missed</button>
+    </div>
+    <div class="sp-24"></div>
+    <p class="label">How do you feel?</p><div class="sp-8"></div>
+    <div class="feel-grid" data-q="feel">
+      ${[5,4,3,2,1].map(v=>`<button class="feel ${t.feel===v?'active':''} feel-${v}" data-val="${v}">
+        <span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
+    </div>
+    <div class="sp-20"></div>
+    <button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Sharp pain flagged — tap to clear':'Something hurts (sharp pain)?'}</button>
+    <div class="sp-24"></div>
+    <button id="chk-go" ${ready?'':'disabled'}>See the call</button>
+    <div class="sp-16"></div>
+    <p class="body-dim" style="font-size:12px;">Readiness drives the decision. A single daily feel rating is a simplification of the 4-item Hooper Index (Hooper et al. 1995); subjective readiness tracks training response better than objective markers (Saw, Main &amp; Gastin, BJSM 2016).</p>
+  </div>`;
+}
+function bindCheck() {
+  const goal = document.querySelector('[data-q="goal"]');
+  goal.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    state._chk.goalMet = btn.getAttribute('data-val');
+    goal.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); refreshGo();
+  }));
+  const feel = document.querySelector('[data-q="feel"]');
+  feel.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    state._chk.feel = Number(btn.getAttribute('data-val'));
+    feel.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); refreshGo();
+  }));
+  const hurt = document.getElementById('chk-hurt');
+  hurt.addEventListener('click', () => {
+    state._chk.hurt = !state._chk.hurt;
+    hurt.classList.toggle('on', state._chk.hurt);
+    hurt.textContent = state._chk.hurt ? '⚠ Sharp pain flagged — tap to clear' : 'Something hurts (sharp pain)?';
+  });
+  function refreshGo() { document.getElementById('chk-go').disabled = !(state._chk.goalMet && state._chk.feel); }
+  document.getElementById('chk-go').addEventListener('click', () => {
+    const t = state._chk;
+    if (!(t.goalMet && t.feel)) return;
+    const outcome = applyCheck(t.goalMet, t.feel, t.hurt);
+    delete state._chk;
+    navigate('result', { outcome: outcome.key });
+  });
+}
+
+// ---------- RESULT ----------
+function renderResult(outcomeKey) {
+  const o = OUTCOMES[outcomeKey] || OUTCOMES.repeat;
+  let modifyHtml = '';
+  if (o.key === 'modify') {
+    const blocks = currentDayPlan().blocks.map(modifyBlock);
+    modifyHtml = `<div class="sp-20"></div><p class="label">Today, easier</p><div class="sp-8"></div>
+      ${blocks.map(b=>`<div class="card-block milestone" style="margin-bottom:10px;"><div class="stripe"></div>
+        <div class="card" style="padding:12px 14px;"><div class="title">${escHtml(b.title)}</div>
+        <div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div></div></div>`).join('')}`;
+  }
+  const advanced = o.key === 'progress';
+  return `<div class="screen no-nav">
+    <div class="sp-24"></div>
+    <p class="label">The call</p><div class="sp-8"></div>
+    <h1 class="display-l serif" style="color:var(--${o.cls});">${escHtml(o.title)}</h1>
+    <div class="sp-24"></div>
+    <p class="label">What to do</p><div class="sp-8"></div>
+    <p class="headline serif">${escHtml(o.action)}</p>
+    ${modifyHtml}
+    <div class="sp-24"></div>
+    <p class="label">Why</p><div class="sp-8"></div>
+    <p class="body">${escHtml(o.why)}</p>
+    <div class="sp-48"></div>
+    <button data-go="today">${advanced ? 'Start next session' : 'Got it'}</button>
+    <div class="sp-12"></div>
+    <p class="body-dim" style="font-size:12px;">Source: Saw, Main &amp; Gastin BJSM 2016. Hooper &amp; Mackinnon MSSE 1995. Lally et al. 2010 (a single miss does not erase progress).</p>
+  </div>`;
+}
+
+// ---------- LIBRARY ----------
+function renderLibrary() {
+  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Cardio'];
+  return `<div class="screen">
+    <p class="label">Exercise Library</p><div class="sp-8"></div>
+    <h1 class="display-s serif">Form, cues, prescriptions</h1><div class="sp-16"></div>
+    ${cats.map(cat=>{ const list=EXERCISES.filter(e=>e.cat===cat); if(!list.length) return '';
+      return `<div class="cat-header">${escHtml(cat)}</div>
+        ${list.map(ex=>`<button class="lib-row" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">
+          <div class="fig">${svgUse(ex.icon,44)}</div>
+          <div class="text"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div></div>
+          <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}`; }).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+function renderExerciseDetail(key) {
+  const ex = EXERCISES.find(e => e.key === key);
+  if (!ex) return `<div class="screen no-nav"><div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div><p>Not found.</p></div>`;
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
+    <h1 class="display-s serif">${escHtml(ex.name)}</h1><div class="sp-4"></div>
+    <p class="mono" style="color:var(--milestone); font-size:13px; letter-spacing:0.06em;">${escHtml(ex.rx)}</p>
+    <div class="fig-hero">${svgUse(ex.icon,170)}</div>
+    <p class="label">Steps</p><div class="sp-8"></div>
+    <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
+    <div class="divider"></div>
+    <p class="label" style="color:var(--milestone);">Cue</p><div class="sp-8"></div>
+    <p class="body">${escHtml(ex.cue)}</p>
+    <div class="sp-32"></div>
+  </div>`;
+}
+
+// ---------- PROGRESS ----------
+function renderProgress() {
+  setTimeout(drawReadiness, 0);
+  const cleared = state.phase?.sessionsCleared ?? 0;
+  const pd = PHASES[state.phase?.phase ?? 0];
+  const recent = state.checks.slice(-14);
+  const done = recent.filter(c=>c.goalMet==='done').length;
+  const partial = recent.filter(c=>c.goalMet==='partial').length;
+  const missed = recent.filter(c=>c.goalMet==='missed').length;
+  const mix = {
+    progress: state.checks.filter(c=>c.decision==='progress').length,
+    repeat:   state.checks.filter(c=>c.decision==='repeat').length,
+    modify:   state.checks.filter(c=>c.decision==='modify').length,
+    rest:     state.checks.filter(c=>c.decision==='rest').length,
+  };
+  return `<div class="screen">
+    <p class="label">Progress</p><div class="sp-8"></div>
+    <h1 class="display-s serif">Where you are.</h1><div class="sp-16"></div>
+    <div class="card" style="margin-bottom:12px;">
+      <span class="label">Program position</span><div class="sp-8"></div>
+      <div class="headline serif">${escHtml(pd.name)} · Week ${state.phase?.week ?? 1}</div>
+      <div class="body-dim" style="margin-top:4px;">Session ${state.phase?.dayInWeek ?? 1} of ${pd.week.length} · ${cleared} session${cleared===1?'':'s'} cleared total</div>
+    </div>
+    <div class="chart" data-chart="chart-readiness" data-color="cardio">
+      <div class="top"><div class="title">Readiness</div><div class="label-sm">feel 1–5</div></div>
+      <canvas id="chart-readiness" height="120"></canvas>
+      <div class="bottom" id="chart-readiness-bottom"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <span class="label">Last 14 check-ins</span><div class="sp-12"></div>
+      <div class="row between"><span class="body">Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <span class="label">All-time calls</span><div class="sp-12"></div>
+      <div class="row between"><span class="body">Progressed</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Repeated</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Modified</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Rested</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
+    </div>
+    <div class="sp-32"></div>
+  </div>`;
+}
+function drawReadiness() {
+  const canvas = document.getElementById('chart-readiness');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cssColor = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
+  const values = state.checks.slice(-20).map(c => c.feel);
+  const w = canvas.clientWidth, h = 120;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+  const bottom = document.getElementById('chart-readiness-bottom');
+  if (values.length < 2) {
+    ctx.fillStyle = cssColor('paper-low'); ctx.font = "13px 'IBM Plex Sans', sans-serif"; ctx.textAlign='center';
+    ctx.fillText(values.length===0 ? 'Check in to see readiness' : 'Need two check-ins', w/2, h/2);
+    if (bottom) bottom.innerHTML = ''; return;
+  }
+  const pad = 8, mn = 1, mx = 5, span = mx - mn;
+  ctx.strokeStyle = cssColor('rule'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  [2].forEach(y => { const ny = pad + (h-pad*2) - ((y-mn)/span)*(h-pad*2); ctx.beginPath(); ctx.moveTo(pad,ny); ctx.lineTo(w-pad,ny); ctx.stroke(); });
+  ctx.setLineDash([]);
+  ctx.strokeStyle = cssColor('cardio'); ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath();
+  values.forEach((v,i)=>{ const x=pad+(i/(values.length-1))*(w-pad*2); const y=pad+(h-pad*2)-((v-mn)/span)*(h-pad*2); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.stroke();
+  ctx.fillStyle = cssColor('cardio');
+  values.forEach((v,i)=>{ const x=pad+(i/(values.length-1))*(w-pad*2); const y=pad+(h-pad*2)-((v-mn)/span)*(h-pad*2); ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); });
+  if (bottom) { const last = values[values.length-1]; bottom.innerHTML = `<span>Latest ${FEEL_LABELS[last]}</span><span>${values.length} check-ins</span>`; }
+}
+window.addEventListener('resize', () => { if (state.ui.screen === 'progress') drawReadiness(); });
+
+// ---------- PHASE LIST / DETAIL ----------
+function renderPhaseList() {
+  const curIdx = state.phase?.phase ?? 0;
+  return `<div class="screen">
+    <p class="label">Full Progression</p><div class="sp-8"></div>
+    <h1 class="display-s serif">Five phases.<br>Each earns the next.</h1><div class="sp-20"></div>
+    ${PHASES.map(p=>`<button class="lib-row" data-go="phaseDetail" data-p-index="${p.index}" style="grid-template-columns:1fr 16px; height:auto; padding:14px 16px; ${p.index===curIdx?'background:var(--surface-1);border:1px solid var(--milestone);':''}">
+      <div class="text"><div class="row between"><span class="label">PHASE 0${p.index}</span>${p.index===curIdx?'<span class="label" style="color:var(--milestone);">CURRENT</span>':''}</div>
+      <div class="headline serif" style="margin-top:4px;">${escHtml(p.name)}</div>
+      <div class="body-dim" style="margin-top:2px;">${escHtml(p.weeks)}</div>
+      <div class="body-dim" style="margin-top:8px;">${escHtml(p.summary)}</div></div>
+      <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+function renderPhaseDetail(index) {
+  const p = PHASES[Number(index)||0];
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <p class="label">Phase 0${p.index}</p><div class="sp-8"></div>
+    <h1 class="display-s serif">${escHtml(p.name)}</h1><div class="sp-4"></div>
+    <p class="label-sm" style="color:var(--milestone);">${escHtml(p.weeks)}</p><div class="sp-16"></div>
+    <p class="body">${escHtml(p.summary)}</p>
+    <div class="sp-24"></div><p class="label">Focus this phase</p><div class="sp-8"></div>
+    ${p.focus.map(f=>`<p class="body" style="margin:4px 0;">•  ${escHtml(f)}</p>`).join('')}
+    <div class="sp-20"></div><p class="label">Exit criteria</p><div class="sp-8"></div>
+    ${p.exit.map(f=>`<p class="body" style="margin:4px 0;">•  ${escHtml(f)}</p>`).join('')}
+    <div class="divider"></div><p class="label">Sample week</p><div class="sp-12"></div>
+    ${p.week.map(d=>`<div style="margin-bottom:12px;"><div class="title-sm" style="color:var(--paper-dim); margin-bottom:6px;">${escHtml(d.day)}</div>
+      ${d.blocks.map(b=>`<div class="card-block ${b.kind}" style="margin-bottom:6px;"><div class="stripe"></div>
+        <div class="card" style="padding:10px 12px;"><span class="label">${escHtml(b.label)}</span><div style="margin-top:2px;font-size:14px;">${escHtml(b.title)}</div></div></div>`).join('')}
+      </div>`).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+
+// ---------- SETTINGS ----------
+function renderSettings() {
+  const s = state.settings;
+  setTimeout(bindSettings, 0);
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <h1 class="display-s serif">Settings</h1><div class="sp-20"></div>
+    <p class="label">GitHub Sync</p><div class="sp-8"></div>
+    <p class="body-dim" style="font-size:13px;">Optional. When set, every check commits to a repo so you can use the app from any device. Without this, data stays in this browser only.</p>
+    <div class="sp-12"></div>
+    <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
+    <div class="sp-8"></div>
+    <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
+    <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
+    <div class="sp-24"></div>
+    <div class="row between"><div><div class="title">Auto-sync</div><div class="body-dim" style="font-size:13px;">Push every change automatically.</div></div>
+      <label class="switch"><input type="checkbox" id="s-autosync" ${s.autoSync?'checked':''}><span class="slider"></span></label></div>
+    <div class="divider"></div>
+    <p class="label">Data</p><div class="sp-12"></div>
+    <button class="secondary" id="s-export">Export JSON</button><div class="sp-8"></div>
+    <button class="danger" id="s-reset">Reset all local data…</button>
+    <div class="divider"></div>
+    <p class="label">How the call is made</p><div class="sp-8"></div>
+    <p class="body-dim" style="font-size:13px;">Each day you answer two things: did you meet the goal, and how do you feel. The app maps that to one of four calls. Progress only when you did the work and feel good or great. Feel rough, it gives an easier version. Feel wrecked or flag pain, it rests you. Anything in between repeats the session so you consolidate before adding load.</p>
+    <div class="divider"></div>
+    <p class="label">About</p><div class="sp-8"></div>
+    <p class="body">Foundation Protocol v${APP_VERSION}.</p>
+    <p class="body-dim" style="font-size:13px; margin-top:4px;">Evidence-based 40-week framework. Local-first, no telemetry. Sync optional via GitHub Contents API.</p>
+    <div class="sp-16"></div>
+    <p class="label">Evidence base</p><div class="sp-8"></div>
+    ${['Hooper SL et al. Markers for monitoring overtraining and recovery. Med Sci Sports Exerc 1995;27(1):106–112.',
+       'Saw AE, Main LC, Gastin PB. Subjective self-reported measures trump objective measures: a systematic review. Br J Sports Med 2016;50(5):281–291.',
+       'Lally P et al. How are habits formed: modelling habit formation in the real world. Eur J Soc Psychol 2010;40(6):998–1009.',
+       'Kokkinos P et al. J Am Coll Cardiol 2022;80(6):598–609.',
+       'Kokura Y et al. Clin Nutr ESPEN 2024;63:417–426.',
+       'Nielsen Norman Group. Dark Mode: How Users Think About It. 2023.'
+      ].map(c=>`<p class="body-dim" style="font-size:12px; margin:4px 0;">${escHtml(c)}</p>`).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+function bindSettings() {
+  const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
+  repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
+  pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
+  autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
+  document.getElementById('s-test').addEventListener('click', async () => {
+    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    state.pending = Object.keys(DATA_FILES); await syncToRemote();
+    toast(state.ui.syncStatus==='online'?'Pushed to GitHub':'Sync failed — check repo and token', state.ui.syncStatus==='online'?'success':'error');
+  });
+  document.getElementById('s-pull').addEventListener('click', async () => {
+    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    if (!confirm('Replace local data with what is in GitHub?')) return;
+    await syncFromRemote(); render(); toast('Pulled from GitHub','success');
+  });
+  document.getElementById('s-export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), appVersion:APP_VERSION, profile:state.profile, phase:state.phase, checks:state.checks }, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=`foundation-export-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
+    toast('Downloaded','success');
+  });
+  document.getElementById('s-reset').addEventListener('click', () => {
+    if (!confirm('Delete the local profile, checks, and progress on this device? GitHub data is untouched.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
+    navigate('onboarding'); toast('Local data cleared','success');
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  loadLocal();
+  navigate(state.profile ? 'today' : 'onboarding');
+  if (isConfigured()) {
+    if (state.profile == null) { await syncFromRemote(); if (state.profile) navigate('today'); }
+    else if (state.pending.length) await syncToRemote();
+    else setSync('online','Synced');
+  } else setSync('offline','Local only');
+}
+window.addEventListener('online',  () => { setSync('syncing','Reconnecting'); syncToRemote(); });
+window.addEventListener('offline', () => { setSync('offline','Offline'); });
+init();
+
+</script>
+
+</body>
+</html>
