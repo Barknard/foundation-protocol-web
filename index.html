@@ -437,13 +437,20 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 /* ---------- ANIMATED FIGURE ---------- */
 .afig { position: relative; display: inline-block; color: var(--paper); line-height: 0; }
 .afig svg { display: block; }
-.afig svg.b { position: absolute; inset: 0; opacity: 0; }
+.afig svg.b, .afig svg.c { position: absolute; inset: 0; opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .afig.anim svg.a { animation: afigA 1.9s ease-in-out infinite; }
   .afig.anim svg.b { animation: afigB 1.9s ease-in-out infinite; }
+  /* 3-frame flip-book (walk/run): plays a→b→c then reverses (shared passing frame = clean gait) */
+  .afig.anim3 svg.a { animation: afig3a 0.85s ease-in-out infinite alternate; }
+  .afig.anim3 svg.b { animation: afig3b 0.85s ease-in-out infinite alternate; }
+  .afig.anim3 svg.c { animation: afig3c 0.85s ease-in-out infinite alternate; }
 }
 @keyframes afigA { 0%,28% { opacity: 1; } 50%,78% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes afigB { 0%,28% { opacity: 0; } 50%,78% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes afig3a { 0% { opacity: 1; } 50%,100% { opacity: 0; } }
+@keyframes afig3b { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+@keyframes afig3c { 0%,50% { opacity: 0; } 100% { opacity: 1; } }
 
 /* ---------- TODAY: EXPANDABLE PRESCRIPTION ---------- */
 .today-block { width: 100%; text-align: left; background: transparent; border: none; padding: 0; margin: 0; display: block; height: auto; color: var(--paper); cursor: pointer; }
@@ -647,15 +654,15 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-calf-stretch" viewBox="0 0 50 60">
-    <circle cx="14" cy="14" r="3.5" fill="currentColor"/>
+    <circle cx="17" cy="13" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="16" y1="17" x2="28" y2="37"/>
-      <path d="M 16 19 L 22 19 L 30 18"/>
-      <path d="M 16 21 L 22 22 L 30 22"/>
-      <path d="M 28 37 L 34 47 L 38 54"/>
-      <line x1="28" y1="37" x2="20" y2="54"/>
-      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2" stroke="#D9A24E"/>
-      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5" stroke="#807868"/>
+      <line x1="18" y1="16" x2="26" y2="34"/>
+      <path d="M 20 19 L 30 21 L 40 22"/>
+      <path d="M 20 22 L 30 25 L 40 25"/>
+      <path d="M 26 34 L 31 44 L 33 54"/>
+      <path d="M 26 34 L 19 45 L 14 54"/>
+      <line x1="42" y1="6" x2="42" y2="54" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="54" x2="42" y2="54" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <!-- Strength Day A -->
@@ -751,8 +758,8 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
       <line x1="19" y1="17" x2="16" y2="33"/>
       <line x1="25" y1="17" x2="28" y2="33"/>
     </g>
-    <rect x="12" y="33" width="8" height="3" fill="currentColor"/>
-    <rect x="24" y="33" width="8" height="3" fill="currentColor"/>
+    <rect x="12" y="33" width="8" height="3" fill="#D9A24E"/>
+    <rect x="24" y="33" width="8" height="3" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 22 33 L 17 44 L 14 55"/>
       <path d="M 22 33 L 32 42 L 42 46"/>
@@ -775,27 +782,29 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
   </symbol>
   <!-- Cardio -->
   <symbol id="ic-walking" viewBox="0 0 50 60">
-    <circle cx="25" cy="8" r="3.5" fill="currentColor"/>
+    <circle cx="27" cy="9" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="25" y1="11.5" x2="25" y2="32"/>
-      <path d="M 25 16 L 32 22 L 35 28"/>
-      <path d="M 25 16 L 18 22 L 16 30"/>
-      <path d="M 25 32 L 30 44 L 35 54"/>
-      <path d="M 25 32 L 22 44 L 17 52"/>
+      <line x1="26" y1="12.5" x2="24" y2="33"/>
+      <path d="M 25 17 L 31 23"/>
+      <path d="M 25 17 L 20 24"/>
+      <path d="M 24 33 L 30 43 L 34 53"/>
+      <path d="M 24 33 L 19 44 L 15 53"/>
+      <path d="M 34 53 L 37 53" stroke-width="1.5"/>
+      <path d="M 13 53 L 16 53" stroke-width="1.5"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-running" viewBox="0 0 50 60">
-    <circle cx="22" cy="10" r="3.5" fill="currentColor"/>
+    <circle cx="30" cy="11" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="22" y1="13.5" x2="25" y2="32"/>
-      <path d="M 23 18 L 34 22 L 36 16"/>
-      <path d="M 23 18 L 14 24 L 12 30"/>
-      <path d="M 25 32 L 33 40 L 40 46"/>
-      <path d="M 25 32 L 19 42 L 15 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
-      <path d="M 5 16 L 11 16" stroke-width="1" stroke="#6A93C8"/>
-      <path d="M 5 22 L 11 22" stroke-width="1" stroke="#6A93C8"/>
+      <line x1="28" y1="14" x2="23" y2="33"/>
+      <path d="M 27 18 L 33 19 L 35 24"/>
+      <path d="M 27 18 L 21 21 L 19 26"/>
+      <path d="M 23 33 L 31 38 L 33 46"/>
+      <path d="M 23 33 L 17 40 L 19 49"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 5 18 L 12 18" stroke-width="1" stroke="#6A93C8"/>
+      <path d="M 4 24 L 11 24" stroke-width="1" stroke="#6A93C8"/>
     </g>
   </symbol>
 
@@ -928,32 +937,32 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-calf-stretch-2" viewBox="0 0 50 60">
-    <circle cx="15" cy="14" r="3.5" fill="currentColor"/>
+    <circle cx="17" cy="13" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="17" y1="16" x2="28" y2="37"/>
-      <path d="M 17 18 L 23 18 L 30 17"/>
-      <path d="M 17 20 L 23 21 L 30 21"/>
-      <path d="M 28 37 L 31.5 48 L 37 54"/>
-      <line x1="28" y1="37" x2="20" y2="54"/>
-      <line x1="33" y1="6" x2="33" y2="54" stroke-width="2" stroke="#D9A24E"/>
-      <line x1="2" y1="54" x2="33" y2="54" stroke-width="1.5" stroke="#807868"/>
+      <line x1="18" y1="16" x2="26" y2="34"/>
+      <path d="M 20 19 L 30 21 L 40 22"/>
+      <path d="M 20 22 L 30 25 L 40 25"/>
+      <path d="M 26 34 L 31 44 L 33 54"/>
+      <path d="M 26 34 L 20 44 L 16 54"/>
+      <line x1="42" y1="6" x2="42" y2="54" stroke-width="2" stroke="#D9A24E"/>
+      <line x1="2" y1="54" x2="42" y2="54" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-goblet-sq-2" viewBox="0 0 50 60">
     <circle cx="25" cy="23" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <line x1="25" y1="26.5" x2="25" y2="41"/>
-      <path d="M 25 29 L 21 35 L 23 40"/>
-      <path d="M 25 29 L 29 35 L 27 40"/>
+      <path d="M 25 29 L 22 38 L 24 46"/>
+      <path d="M 25 29 L 28 38 L 26 46"/>
     </g>
-    <rect x="20" y="38" width="10" height="6" rx="1" fill="#D9A24E"/>
+    <rect x="20" y="45" width="10" height="6" rx="1" fill="#D9A24E"/>
     <g stroke="#D9A24E" stroke-width="1.2" stroke-linecap="round" fill="none">
-      <line x1="22" y1="38" x2="22" y2="36"/>
-      <line x1="28" y1="38" x2="28" y2="36"/>
+      <line x1="22" y1="45" x2="22" y2="43"/>
+      <line x1="28" y1="45" x2="28" y2="43"/>
     </g>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path d="M 25 41 L 12 43 L 14 55"/>
-      <path d="M 25 41 L 38 43 L 36 55"/>
+      <path d="M 25 41 L 13 44 L 15 55"/>
+      <path d="M 25 41 L 37 44 L 35 55"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
@@ -1030,8 +1039,8 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
       <line x1="19" y1="25" x2="16" y2="41"/>
       <line x1="25" y1="25" x2="28" y2="41"/>
     </g>
-    <rect x="12" y="41" width="8" height="3" fill="currentColor"/>
-    <rect x="24" y="41" width="8" height="3" fill="currentColor"/>
+    <rect x="12" y="41" width="8" height="3" fill="#D9A24E"/>
+    <rect x="24" y="41" width="8" height="3" fill="#D9A24E"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
       <path d="M 22 41 L 11 45.5 L 14 55"/>
       <path d="M 22 41 L 32.5 49.5 L 42 46"/>
@@ -1053,27 +1062,55 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
     </g>
   </symbol>
   <symbol id="ic-walking-2" viewBox="0 0 50 60">
-    <circle cx="25" cy="8" r="3.5" fill="currentColor"/>
+    <circle cx="27" cy="9" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="25" y1="11.5" x2="25" y2="32"/>
-      <path d="M 25 16 L 18 22 L 15 28"/>
-      <path d="M 25 16 L 32 22 L 34 30"/>
-      <path d="M 25 32 L 20 44 L 15 54"/>
-      <path d="M 25 32 L 28 44 L 33 52"/>
+      <line x1="26" y1="12.5" x2="24" y2="33"/>
+      <path d="M 25 17 L 20 23"/>
+      <path d="M 25 17 L 31 24"/>
+      <path d="M 24 33 L 19 43 L 15 53"/>
+      <path d="M 24 33 L 30 44 L 34 53"/>
+      <path d="M 34 53 L 37 53" stroke-width="1.5"/>
+      <path d="M 13 53 L 16 53" stroke-width="1.5"/>
+      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
+    </g>
+  </symbol>
+  <symbol id="ic-walking-3" viewBox="0 0 50 60">
+    <circle cx="26" cy="8" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="26" y1="11.5" x2="25" y2="32"/>
+      <path d="M 25 17 L 28 25"/>
+      <path d="M 25 17 L 22 25"/>
+      <path d="M 25 32 L 23 44 L 22 54"/>
+      <path d="M 25 32 L 27 44 L 29 54"/>
+      <path d="M 20 54 L 23 54" stroke-width="1.5"/>
+      <path d="M 27 54 L 30 54" stroke-width="1.5"/>
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
   <symbol id="ic-running-2" viewBox="0 0 50 60">
-    <circle cx="22" cy="10" r="3.5" fill="currentColor"/>
+    <circle cx="30" cy="11" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="22" y1="13.5" x2="25" y2="32"/>
-      <path d="M 23 18 L 12 22 L 10 16"/>
-      <path d="M 23 18 L 32 24 L 34 30"/>
-      <path d="M 25 32 L 17 40 L 10 46"/>
-      <path d="M 25 32 L 31 42 L 35 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
-      <path d="M 5 16 L 11 16" stroke-width="1" stroke="#6A93C8"/>
-      <path d="M 5 22 L 11 22" stroke-width="1" stroke="#6A93C8"/>
+      <line x1="28" y1="14" x2="23" y2="33"/>
+      <path d="M 27 18 L 21 19 L 19 24"/>
+      <path d="M 27 18 L 33 21 L 35 26"/>
+      <path d="M 23 33 L 17 38 L 15 46"/>
+      <path d="M 23 33 L 30 40 L 32 49"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 5 18 L 12 18" stroke-width="1" stroke="#6A93C8"/>
+      <path d="M 4 24 L 11 24" stroke-width="1" stroke="#6A93C8"/>
+    </g>
+  </symbol>
+  <symbol id="ic-running-3" viewBox="0 0 50 60">
+    <circle cx="29" cy="11" r="3.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="28" y1="14" x2="24" y2="33"/>
+      <path d="M 27 18 L 31 22 L 33 27"/>
+      <path d="M 27 18 L 23 22 L 21 27"/>
+      <path d="M 24 33 L 27 41 L 25 49"/>
+      <path d="M 24 33 L 21 41 L 23 49"/>
+      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
+      <path d="M 5 18 L 12 18" stroke-width="1" stroke="#6A93C8"/>
+      <path d="M 4 24 L 11 24" stroke-width="1" stroke="#6A93C8"/>
     </g>
   </symbol>
 </svg>
@@ -1143,18 +1180,18 @@ const state = {
 const BLOCKS = {
   ptFull:   { kind: 'mobility',  label: 'PT • 10 min',       title: 'Neuromuscular + Hip', detail: 'Balance • Hip • Tibialis • Calf' },
   ptLight:  { kind: 'mobility',  label: 'PT • 8 min',        title: 'Quick mobility',      detail: 'Hips + ankles • Optional' },
-  walk30:   { kind: 'cardio',    label: 'Z2 • 30 min',       title: 'Walk, conversational', detail: 'Talk-test pace' },
-  walk40:   { kind: 'cardio',    label: 'Z2 • 40 min',       title: 'Walk, conversational', detail: 'Small hills if available' },
-  walk45:   { kind: 'cardio',    label: 'Z2 • 45 min',       title: 'Walk, conversational', detail: 'Full sentences while walking' },
-  walk60:   { kind: 'cardio',    label: 'Z2 • 60 min',       title: 'Long walk',           detail: 'Mixed terrain' },
+  walk30:   { kind: 'cardio',    label: 'Easy • 30 min',       title: 'Walk, conversational', detail: 'Talk-test pace' },
+  walk40:   { kind: 'cardio',    label: 'Easy • 40 min',       title: 'Walk, conversational', detail: 'Small hills if available' },
+  walk45:   { kind: 'cardio',    label: 'Easy • 45 min',       title: 'Walk, conversational', detail: 'Full sentences while walking' },
+  walk60:   { kind: 'cardio',    label: 'Easy • 60 min',       title: 'Long walk',           detail: 'Mixed terrain' },
   rest:     { kind: 'rest',      label: 'Rest',              title: 'Full recovery',       detail: 'Sleep 7+ • Hydrate' },
   strA:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day A — Push / Squat', detail: 'Goblet sq • Pushup • Row • Plank' },
   strB:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day B — Hinge / Press', detail: 'RDL • OH press • Split sq • Plank' },
   rw1:      { kind: 'cardio',    label: 'Run-walk • 30',     title: '1 min run / 4 min walk', detail: '5 rounds • Stop if shin pain' },
   rw2:      { kind: 'cardio',    label: 'Run-walk • 35',     title: '2 min run / 3 min walk', detail: '5 rounds • Build gradually' },
   rw3:      { kind: 'cardio',    label: 'Run-walk • 40',     title: '3 min run / 2 min walk', detail: 'Form check at mile 1' },
-  easyRun:  { kind: 'cardio',    label: 'Easy run • 30',     title: 'Continuous Z2',        detail: 'Talk-test • HR priority' },
-  longRun:  { kind: 'cardio',    label: 'Long run • 45',     title: 'Z2 continuous',        detail: 'Cap at +10% vs 30-day longest' },
+  easyRun:  { kind: 'cardio',    label: 'Easy run • 30',     title: 'Continuous easy',        detail: 'Talk-test • HR priority' },
+  longRun:  { kind: 'cardio',    label: 'Long run • 45',     title: 'Easy, continuous',        detail: 'Cap at +10% vs 30-day longest' },
   tempo:    { kind: 'cardio',    label: 'Intervals • 35',    title: '4 × 4 min hard / 3 min easy', detail: 'Max 20% of weekly volume' },
   opmAm:    { kind: 'strength',  label: 'OPM • AM',          title: '100 push / 100 squat', detail: 'Spread across day' },
   opmCore:  { kind: 'strength',  label: 'Core • PM',         title: 'Plank + carries',      detail: 'Anti-extension core' },
@@ -1176,8 +1213,8 @@ const PHASES = [
   },
   {
     index: 1, name: 'Foundation', weeks: 'Weeks 5 – 12', totalWeeks: 8,
-    summary: 'Strength enters the system. Two full-body sessions per week, alternating Day A (push/squat) and Day B (hinge/press). Zone 2 walking volume builds toward 60 minutes. Daily PT continues.',
-    focus: ['Strength 2× weekly, Day A and Day B', 'Z2 walking 3 – 4× weekly', 'Daily 10-min PT', 'Sunday review'],
+    summary: 'Strength enters the system. Two full-body sessions per week, alternating Day A (push/squat) and Day B (hinge/press). easy, conversational-pace walking builds toward 60 minutes. Daily PT continues.',
+    focus: ['Strength 2× weekly, Day A and Day B', 'Easy walks 3 – 4× weekly', 'Daily 10-min PT', 'Sunday review'],
     exit:  ['Single-leg glute bridge × 10 each side', 'Pushup with knees off the floor', 'Walk 75 min comfortably'],
     week: [ day('Mon',['ptFull','strA']), day('Tue',['ptFull','walk45']), day('Wed',['ptFull','strB']),
             day('Thu',['ptFull','walk45']), day('Fri',['ptLight','rest']), day('Sat',['ptFull','walk60']),
@@ -1264,11 +1301,11 @@ const EXERCISES = [
   { key:'dead_bug', name:'Dead Bug', rx:'2 × 6 each, slow', icon:'ic-dead-bug', cat:'Mobility',
     steps:['On back, arms up over shoulders, knees over hips.','Press lower back gently flat against the floor.','Slowly reach opposite arm and leg away, breathing out.','Return with control. Easy and slow — a mobilizer, not a grind.'],
     cue:'A gentle spine mobilizer. Keep it slow and pain-free.' },
-  { key:'walk', name:'Z2 Walk', rx:'30 – 60 min', icon:'ic-walking', cat:'Cardio',
+  { key:'walk', name:'Easy Walk', rx:'30 – 60 min', icon:'ic-walking', cat:'Cardio',
     steps:['Conversational pace. Full sentences while moving.','Talk test is the only intensity gauge needed.','Mixed terrain when ready.'],
     cue:'If you cannot finish a sentence, you are over pace.' },
   { key:'run', name:'Easy Run', rx:'30 – 60 min', icon:'ic-running', cat:'Cardio',
-    steps:['Continuous Zone 2 pace, talk test holds.','HR over pace as the priority.','+10% rule: never more than 110% of 30-day longest.'],
+    steps:['Easy, conversational pace — you can talk in full sentences.','HR over pace as the priority.','+10% rule: never more than 110% of 30-day longest.'],
     cue:'Easy runs feel suspiciously slow. That is the point.' },
 ];
 
@@ -1321,6 +1358,16 @@ const BODY_PARTS = ['neck','shoulder','upper back','lower back','elbow','wrist',
 function injuryActive() { return !!(state.injury && (!state.injury.clearedAt)); }
 function injuryInRice() { return injuryActive() && state.injury.riceUntil && Date.now() < state.injury.riceUntil; }
 function clearInjury() { if (state.injury) { state.injury.clearedAt = Date.now(); } state.injury = null; saveLocal(); }
+// A call that persists across the days it covers (e.g. an injury rest spans the whole protect window).
+function standingCall() {
+  if (!injuryActive()) return null;
+  const since = state.injury.since || Date.now();
+  const days = Math.max(1, Math.round((state.injury.riceUntil - since) / 86400000));
+  const dayNum = Math.min(days, Math.floor((Date.now() - since) / 86400000) + 1);
+  const parts = (state.injury.parts || []).join(', ') || 'injury';
+  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}`, title: 'Rest & protect', action: 'Protect &amp; gently load the area — keep moving everything that does not hurt (PEACE &amp; LOVE).' };
+  return { cls: 'milestone', label: `Recovering · ${parts} · easing back`, title: 'Ease back in', action: 'Pain-monitored loading — keep pain at or under ~3–5/10 and gone by next morning.' };
+}
 
 // ---- Audit / activity log ----
 function logEvent(type, text) {
@@ -1352,8 +1399,8 @@ const FRAMES = {
   'ic-oh-press': ['ic-oh-press','ic-oh-press-2'],
   'ic-split-sq': ['ic-split-sq','ic-split-sq-2'],
   'ic-dead-bug': ['ic-dead-bug','ic-dead-bug-2'],
-  'ic-walking': ['ic-walking','ic-walking-2'],
-  'ic-running': ['ic-running','ic-running-2'],
+  'ic-walking': ['ic-walking','ic-walking-3','ic-walking-2'],
+  'ic-running': ['ic-running','ic-running-3','ic-running-2'],
 };
 EXERCISES.forEach(e => { e.frames = FRAMES[e.icon] || [e.icon]; });
 
@@ -1701,10 +1748,11 @@ function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height
 function animatedFigure(ex, size) {
   const s = size || 44;
   const frames = (ex && ex.frames && ex.frames.length) ? ex.frames : [ex.icon];
-  const a = `<svg class="a" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(frames[0])}"/></svg>`;
-  if (frames.length < 2) return `<span class="afig" style="width:${s}px;height:${s}px;">${a}</span>`;
-  const b = `<svg class="b" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(frames[1])}"/></svg>`;
-  return `<span class="afig anim" style="width:${s}px;height:${s}px;">${a}${b}</span>`;
+  const svg = (cls, id) => `<svg class="${cls}" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`;
+  const box = (cls, inner) => `<span class="${cls}" style="width:${s}px;height:${s}px;">${inner}</span>`;
+  if (frames.length >= 3) return box('afig anim3', svg('a',frames[0]) + svg('b',frames[1]) + svg('c',frames[2]));
+  if (frames.length === 2) return box('afig anim', svg('a',frames[0]) + svg('b',frames[1]));
+  return box('afig', svg('a', frames[0]));
 }
 function toast(message, kind) {
   const el = document.getElementById('toast');
@@ -1930,7 +1978,7 @@ function dayWhy() {
     "Leave ~2-3 good reps in the tank (RIR 2-3); add load only after you hit your reps cleanly two sessions in a row.",
     "The heavy, slow calf and leg work is tendon-prep — it stiffens the tendons running will pound (Bohm/Arampatzis, 2015)." ] };
   if (hasWalk) return { line: "Easy, conversational cardio builds the aerobic base you can sustain without breaking down.", points: [
-    "Zone 2 (you can talk in full sentences) grows the engine with minimal injury risk.",
+    "Easy, conversational pace (you can talk in full sentences) grows the engine with minimal injury risk.",
     "Aerobic fitness (VO2max) is among the strongest predictors of long-term health (Kokkinos, JACC 2022).",
     "This volume is the foundation your runs are built on." ] };
   return { line: "Recovery outranks everything — today's job is to let adaptation happen.", points: [
@@ -1982,7 +2030,7 @@ function renderToday() {
     </div>
     ${layoff ? `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>` : ''}
     ${(!layoff && deloadActive()) ? `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>` : ''}
-    ${injuryActive() ? `<div class="card-block strength" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--strength);">Recovering · ${escHtml((state.injury.parts||[]).join(', ')||'injury')}</span><div class="sp-4"></div><div class="body-dim">${injuryInRice()?'Protect &amp; gently load the area for now (PEACE &amp; LOVE). Keep moving everything that does not hurt.':'Ease back with pain-monitored loading — keep pain at or under ~3-5/10 and settled by next morning.'} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>` : ''}
+    ${(() => { const sc = standingCall(); return sc ? `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>` : ''; })()}
     <p class="label">Today's goal${counts.total?` · <span class="rx-count">${counts.done}/${counts.total} done</span>`:''}</p><div class="sp-8"></div>
     ${dayPlan.blocks.map((b,i)=>{
       const exs = exercisesForBlock(b.key);
@@ -2004,11 +2052,15 @@ function renderToday() {
       </div>`;
       return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
     }).join('')}
-    ${lastToday ? `<div class="sp-12"></div>
-      <div class="card-block ${OUTCOMES[lastToday.decision].cls}"><div class="stripe"></div>
-        <div class="card" style="padding:14px 16px;"><span class="label">Today's call</span><div class="sp-4"></div>
-        <div class="headline serif">${escHtml(OUTCOMES[lastToday.decision].title)}</div><div class="sp-4"></div>
-        <div class="body-dim">${escHtml(OUTCOMES[lastToday.decision].action)}</div></div></div>` : ''}
+    ${(() => {
+      if (standingCall()) return '';   // the recovering card above is the active call
+      const lastAny = state.checks[state.checks.length - 1];
+      const carried = (!lastToday && lastAny && lastAny.date !== isoToday() && ['rest','modify','repeat'].includes(lastAny.decision)) ? lastAny : null;
+      const c = lastToday || carried; if (!c) return '';
+      const o = OUTCOMES[c.decision] || OUTCOMES.repeat;
+      const lbl = lastToday ? "Today's call" : 'Still standing · your last call';
+      return `<div class="sp-12"></div><div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${lbl}</span><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>`;
+    })()}
     <div class="sp-32"></div>
     <button data-go="check">${lastToday ? 'Check in again' : 'Daily check-in'}</button>
     <div class="sp-16"></div>
