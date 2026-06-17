@@ -63,7 +63,7 @@ Public is needed for free GitHub Pages. Your data is mild (a readiness rating an
 
 Repo -> **Settings -> Pages -> Source: Deploy from a branch -> Branch: `main` / root -> Save**.
 
-GitHub prints a URL like `https://yourname.github.io/foundation-protocol-web/`. That is your app. Open it on any device.
+GitHub prints a URL like `https://barknard.github.io/foundation-protocol-web/`. That is your app. Open it on any device.
 
 ### 3. Create a Personal Access Token
 
@@ -80,7 +80,7 @@ Generate, copy the `github_pat_...` value.
 
 Open your app URL, finish the one-time onboarding (weight, max pushup, longest walk, age, starting phase), then tap the gear -> Settings.
 
-- **Repository:** `yourname/foundation-protocol-web`
+- **Repository:** `Barknard/foundation-protocol-web`
 - **Personal Access Token:** paste it
 - Tap **Test and sync now**. "Pushed to GitHub" means it worked. Your repo now has `data/profile.json`, `data/phase.json`, `data/checks.json`.
 
@@ -97,8 +97,8 @@ Opens like a native app. The favicon (a Fraunces "F" on warm dark) becomes the i
 
 ## The four tabs
 
-- **Today** — the current session's plan (PT + strength/cardio + walk), a single "Daily check-in" button, and once you have checked in, today's call.
-- **Library** — all 19 exercises with stick-figure poses, grouped by category. Tap any for steps and a coaching cue.
+- **Today** — the current session's plan (PT + strength/cardio + walk). Tap any prescription item to reveal its exercises inline, each with an animated figure, prescription, and coaching cue. A single "Daily check-in" button, and once you have checked in, today's call.
+- **Library** — all 19 exercises with animated step figures (each cycles between two poses to show the movement), grouped by category. Tap any for steps and a coaching cue.
 - **Progress** — where you are in the program, a readiness trend line (your "how do you feel" over time), adherence over the last 14 check-ins, and the all-time tally of the four calls. All of it built from the two-tap data; nothing to enter.
 - **Phase** — all five phases (Infrastructure -> Foundation -> Run Introduction -> Build -> Target) with summary, focus, exit criteria, and the full sample week.
 
