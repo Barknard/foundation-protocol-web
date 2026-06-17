@@ -460,6 +460,12 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .bm-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .bm-chip { height: 38px; padding: 0 14px; min-width: 0; width: auto; border-radius: 20px; border: 1px solid var(--rule); background: var(--surface-1); color: var(--paper-dim); font-size: 14px; font-weight: 500; }
 .bm-chip.sel { background: var(--strength); border-color: var(--strength); color: var(--paper); }
+/* activity log */
+.logrow { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.logtime { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--paper-low); }
+.logbody { font-size: 14px; color: var(--paper); line-height: 1.45; }
+.logtype { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; border-radius: 6px; margin-right: 8px; background: var(--surface-2); color: var(--paper-dim); }
+.logtype.progress { color: var(--mobility); } .logtype.injury { color: var(--strength); } .logtype.layoff { color: var(--milestone); } .logtype.sync, .logtype.persona { color: var(--cardio); } .logtype.profile { color: var(--milestone); }
 .ex-card .meta .name { font-size: 17px; font-weight: 600; color: var(--paper); }
 .ex-card .meta .rx { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
 .ex-card .meta .cue { font-size: 14px; color: var(--paper-dim); margin-top: 6px; line-height: 1.4; }
@@ -1110,6 +1116,7 @@ const state = {
   activeUser: null, // slug of the active persona
   session: null,    // { date, done: { exKey: true } } — per-day exercise completion
   injury: null,     // { parts:[], since, riceUntil, kind } — active injury tracking
+  log: [],          // audit log: [{ ts, type, text }]
   settings: { repo: '', pat: '', autoSync: true, units: 'imperial' },
   ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '', openBlocks: {} },
 };
@@ -1298,6 +1305,18 @@ const BODY_PARTS = ['neck','shoulder','upper back','lower back','elbow','wrist',
 function injuryActive() { return !!(state.injury && (!state.injury.clearedAt)); }
 function injuryInRice() { return injuryActive() && state.injury.riceUntil && Date.now() < state.injury.riceUntil; }
 function clearInjury() { if (state.injury) { state.injury.clearedAt = Date.now(); } state.injury = null; saveLocal(); }
+
+// ---- Audit / activity log ----
+function logEvent(type, text) {
+  if (!state.log) state.log = [];
+  state.log.push({ ts: Date.now(), type, text });
+  if (state.log.length > 500) state.log = state.log.slice(-500);
+  saveLocal();
+}
+function fmtLogTime(ts) {
+  try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+  catch (_) { return ''; }
+}
 // Animation frames per exercise (frame A = base icon, frame B = authored complementary pose)
 const FRAMES = {
   'ic-sl-stance': ['ic-sl-stance','ic-sl-stance-2'],
@@ -1424,12 +1443,19 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   };
   if (alreadyCheckedToday) state.checks[existingIdx] = entry; else state.checks.push(entry);
   // advance at most once per local day, only on Progress, never while hurt/injured
-  if (outcome.key === 'progress' && !alreadyCheckedToday) {
+  const willAdvance = outcome.key === 'progress' && !alreadyCheckedToday;
+  if (willAdvance) {
     advancePointer();
   } else {
     if (!state.phase) state.phase = { phase: 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };
     state.phase.lastDecision = new Date().toISOString();
   }
+  // --- audit log ---
+  const pl = (parts && parts.length) ? ` [${parts.join(', ')}${redFlag ? '; red flag' : ''}]` : '';
+  logEvent('check', `Goal ${goalMet}, feel ${feel}/5${hurt ? ' · hurt' + pl : ''} → ${outcome.title}`);
+  if (willAdvance) logEvent('progress', `Advanced → Phase ${state.phase.phase} · Wk ${state.phase.week} · Session ${state.phase.dayInWeek}`);
+  if (hurt) logEvent('injury', `Injury logged${pl}${redFlag ? ' — routed to clinician' : ''}`);
+  else if (lay) logEvent('layoff', `${lay.gap} days off — eased back in (no load jump)`);
   markDirty('checks', 'phase');
   return outcome;
 }
@@ -1438,11 +1464,11 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
 // STORAGE
 // ============================================================
 function loadUserState(slug) {
-  state.profile = null; state.phase = null; state.checks = []; state.pending = []; state.session = null; state.injury = null;
+  state.profile = null; state.phase = null; state.checks = []; state.pending = []; state.session = null; state.injury = null; state.log = [];
   if (!slug) return;
   try {
     const raw = localStorage.getItem(userStateKey(slug));
-    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; state.session = d.session || null; state.injury = d.injury || null; }
+    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; state.session = d.session || null; state.injury = d.injury || null; state.log = d.log || []; }
   } catch (e) { console.error('loadUserState failed', e); }
 }
 function loadLocal() {
@@ -1476,7 +1502,7 @@ function saveLocal() {
     if (slug) {
       state.activeUser = slug;
       localStorage.setItem(ACTIVE_KEY, slug);
-      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending, session: state.session, injury: state.injury }));
+      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending, session: state.session, injury: state.injury, log: state.log }));
     }
   } catch (e) { console.error('saveLocal failed', e); }
 }
@@ -1632,6 +1658,7 @@ function render() {
     case 'phaseDetail':    html = renderPhaseDetail(state.ui.params.index); break;
     case 'exerciseDetail': html = renderExerciseDetail(state.ui.params.key); break;
     case 'settings':       html = renderSettings(); break;
+    case 'log':            html = renderLog(); break;
     default:               html = renderLoading();
   }
   if (tabScreens.includes(screen)) html += renderNav(screen);
@@ -1704,8 +1731,13 @@ function renderOnboarding() {
     <div class="field"><label for="onb-walk">Longest continuous walk (minutes)</label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="35"></div>
     <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="34"></div>
     <div class="sp-16"></div>
-    <p class="label">Starting phase</p><div class="sp-8"></div>
-    ${[{i:0,t:'Phase 0 — Infrastructure',s:'Walking + PT, no strength yet'},{i:1,t:'Phase 1 — Foundation',s:'Strength enters the system'},{i:2,t:'Phase 2 — Run introduction',s:'Run-walk intervals begin'}].map(o=>`
+    <p class="label">Where are you starting from?</p><div class="sp-4"></div>
+    <p class="body-dim" style="font-size:14px;">Not sure? Pick the first one. Starting at the base is the safe, evidence-based default — the app moves you up as fast as you are ready.</p><div class="sp-8"></div>
+    ${[
+      {i:0,t:'New to this — or back after a long break',s:'Start at the base: daily walking + mobility, then strength. Builds the tendons and bones running will need (recommended).'},
+      {i:1,t:'I already exercise sometimes',s:'Occasional walks or gym. Begin strength training 2× a week alongside easy cardio.'},
+      {i:2,t:'I train regularly already',s:'Consistent lifting and/or running. Jump to run-walk intervals, with strength continuing underneath.'}
+     ].map(o=>`
       <div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div>
         <div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
     <div class="sp-24"></div>
@@ -1716,6 +1748,7 @@ function renderOnboarding() {
 }
 function bindOnboarding() {
   const get = id => document.getElementById(id);
+  if (!get('onb-username')) return;   // DOM moved on before this deferred bind ran
   const upd = () => { state._onb.username=get('onb-username').value; state._onb.weight=get('onb-weight').value; state._onb.pushup=get('onb-pushup').value; state._onb.walk=get('onb-walk').value; state._onb.age=get('onb-age').value; };
   const updConv = () => {
     const conv = get('onb-weight-conv'); if (!conv) return;
@@ -1757,6 +1790,7 @@ function bindOnboarding() {
     state.phase = { phase:state._onb.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
     state.pending = [];
     markDirty('profile','phase');
+    logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[state._onb.phase].name}`);
     delete state._onb;
     navigate('today');
   });
@@ -1932,6 +1966,7 @@ function renderCheck() {
 }
 function bindCheck() {
   const goal = document.querySelector('[data-q="goal"]');
+  if (!goal) return;   // DOM moved on before this deferred bind ran
   goal.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
     state._chk.goalMet = btn.getAttribute('data-val');
     goal.querySelectorAll('button').forEach(b => b.classList.remove('active'));
@@ -2137,6 +2172,31 @@ function renderPhaseDetail(index) {
   </div>`;
 }
 
+// ---------- ACTIVITY LOG ----------
+function renderLog() {
+  setTimeout(bindLog, 0);
+  const log = (state.log || []).slice().reverse();
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <h1 class="display-s serif">Activity log</h1><div class="sp-8"></div>
+    <p class="body-dim">A timestamped record of every check-in, call, progression, injury, layoff, and sync for ${escHtml(state.profile?.username || 'this persona')}.</p>
+    <div class="sp-16"></div>
+    ${log.length ? log.map(e => `<div class="logrow"><div class="logtime">${escHtml(fmtLogTime(e.ts))}</div><div class="logbody"><span class="logtype ${escHtml(e.type)}">${escHtml(e.type)}</span>${escHtml(e.text)}</div></div>`).join('') : '<p class="body-dim">No activity yet — your first check-in will show up here.</p>'}
+    <div class="sp-20"></div>
+    <button class="secondary" id="log-export">Export log (JSON)</button>
+    <div class="sp-32"></div>
+  </div>`;
+}
+function bindLog() {
+  const ex = document.getElementById('log-export');
+  if (ex) ex.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), user: state.profile?.username, log: state.log || [] }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = `foundation-log-${activeSlug()||'me'}-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
+    toast('Log downloaded', 'success');
+  });
+}
+
 // ---------- SETTINGS ----------
 function renderSettings() {
   const s = state.settings;
@@ -2163,6 +2223,7 @@ function renderSettings() {
       <label class="switch"><input type="checkbox" id="s-autosync" ${s.autoSync?'checked':''}><span class="slider"></span></label></div>
     <div class="divider"></div>
     <p class="label">Data</p><div class="sp-12"></div>
+    <button class="secondary" data-go="log">Activity log</button><div class="sp-8"></div>
     <button class="secondary" id="s-export">Export JSON</button><div class="sp-8"></div>
     <button class="danger" id="s-reset">Reset all local data…</button>
     <div class="divider"></div>
@@ -2186,6 +2247,7 @@ function renderSettings() {
 }
 function bindSettings() {
   const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
+  if (!repo || !pat) return;   // DOM moved on before this deferred bind ran
   repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
   pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
   autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
@@ -2200,6 +2262,7 @@ function bindSettings() {
     loadUserState(slug);            // use any local copy first
     await syncFromRemote();         // then pull the latest for this persona
     saveLocal();
+    if (state.profile) logEvent('persona', `Loaded persona "${slug}" from GitHub`);
     navigate(state.profile ? 'today' : 'onboarding');
     toast(state.profile ? `Loaded persona ${slug}` : `No data yet for ${slug} — set it up`, state.profile ? 'success' : 'error');
   });
@@ -2207,12 +2270,13 @@ function bindSettings() {
     if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
     if (!activeSlug()) { toast('Set a username first (finish onboarding)','error'); return; }
     state.pending = [...DATA_KEYS]; await syncToRemote();
+    if (state.ui.syncStatus==='online') logEvent('sync', 'Pushed all data to GitHub');
     toast(state.ui.syncStatus==='online'?'Pushed to GitHub':'Sync failed — check repo and token', state.ui.syncStatus==='online'?'success':'error');
   });
   document.getElementById('s-pull').addEventListener('click', async () => {
     if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
     if (!confirm('Replace local data with what is in GitHub?')) return;
-    await syncFromRemote(); render(); toast('Pulled from GitHub','success');
+    await syncFromRemote(); logEvent('sync', 'Pulled all data from GitHub'); render(); toast('Pulled from GitHub','success');
   });
   document.getElementById('s-export').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), appVersion:APP_VERSION, profile:state.profile, phase:state.phase, checks:state.checks }, null, 2)], { type:'application/json' });
