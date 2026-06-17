@@ -25,18 +25,18 @@ function renderOnboarding() {
   if (r === 1) body = `
     <div class="brand"><img class="brand-logo" src="logo.png" alt="The Hard Part"></div>
     <div class="sp-16"></div>
-    <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="Sisyphus" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
-    <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="42"><div class="help">Keeps your plan age-appropriate — recovery, deloads, and pacing scale with age.</div></div>`;
+    <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. Sisyphus" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
+    <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="e.g. 42"><div class="help">Keeps your plan age-appropriate — recovery, deloads, and pacing scale with age.</div></div>`;
   else if (r === 2) body = `
     <h1 class="display-s serif">Your numbers</h1><div class="sp-4"></div>
     <p class="body-dim">Two quick self-tests + your weight. Best guess is fine — leave any blank.</p>
     <div class="sp-16"></div>
     <div class="field"><div class="unit-row"><label for="onb-weight">Body weight</label>
       <div class="seg" id="onb-unit"><button type="button" data-u="imperial" class="${imp?'on':''}">lb</button><button type="button" data-u="metric" class="${imp?'':'on'}">kg</button></div></div>
-      <div class="conv-wrap"><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="${imp?'173':'78.4'}"><span class="conv" id="onb-weight-conv"></span></div>
+      <div class="conv-wrap"><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="${imp?'e.g. 173':'e.g. 78.4'}"><span class="conv" id="onb-weight-conv"></span></div>
       <div class="help">Sets your starting strength loads.</div></div>
-    <div class="field"><label for="onb-pushup">Pushup test <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="how many?"><div class="help">Good-form reps only — stop when form slips, never to failure or pain.</div></div>
-    <div class="field"><label for="onb-walk">Walk test <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="minutes"><div class="help">Longest you can walk nonstop at an easy, can-still-talk pace.</div></div>`;
+    <div class="field"><label for="onb-pushup">Pushup test <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="e.g. 20"><div class="help">Good-form reps only — stop when form slips, never to failure or pain.</div></div>
+    <div class="field"><label for="onb-walk">Walk test <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="e.g. 20 min"><div class="help">Longest you can walk nonstop at an easy, can-still-talk pace.</div></div>`;
   else body = `
     <h1 class="display-s serif">Where are you starting from?</h1><div class="sp-4"></div>
     <p class="body-dim" style="font-size:14px;">Not sure? Pick the first — the safe default. The app moves you up as fast as you are ready.</p><div class="sp-12"></div>
@@ -65,7 +65,7 @@ function bindOnboarding() {
     if (cur > 0) wEl.value = u === 'metric' ? fmt1(lbToKg(cur)) : fmt1(kgToLb(cur));
     o.unit = u;
     document.querySelectorAll('#onb-unit button').forEach(x => x.classList.toggle('on', x.getAttribute('data-u') === u));
-    wEl.placeholder = u === 'imperial' ? '173' : '78.4';
+    wEl.placeholder = u === 'imperial' ? 'e.g. 173' : 'e.g. 78.4';
     upd(); updConv();
   }));
   document.querySelectorAll('[data-phase]').forEach(el => el.addEventListener('click', () => {
