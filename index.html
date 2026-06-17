@@ -1415,18 +1415,27 @@ function deloadActive() { return isDeloadWeek() || underRecoveryTrend(); }
 
 // ---- Injury (PEACE & LOVE / overuse loading; red-flag screen) ----
 const BODY_PARTS = ['neck','shoulder','upper back','lower back','elbow','wrist','hip','groin','glute','quad','hamstring','knee','shin','calf','ankle','foot'];
-function injuryActive() { return !!(state.injury && (!state.injury.clearedAt)); }
+function injuryEnd(inj) { return (inj && inj.easeUntil) || (inj ? inj.since + 10 * 86400000 : 0); }   // overall recovery-window end
+function injuryActive() { return !!(state.injury && !state.injury.clearedAt && Date.now() <= injuryEnd(state.injury)); }   // false once out of range
 function injuryInRice() { return injuryActive() && state.injury.riceUntil && Date.now() < state.injury.riceUntil; }
 function clearInjury() { if (state.injury) { state.injury.clearedAt = Date.now(); } state.injury = null; saveLocal(); }
-// A call that persists across the days it covers (e.g. an injury rest spans the whole protect window).
+// Auto-expire a stale injury whose recovery window has fully elapsed (out of range → exclude it).
+function pruneInjury() {
+  if (state.injury && !state.injury.clearedAt && Date.now() > injuryEnd(state.injury)) {
+    logEvent('injury', `Recovery window ended (${fmtDate(state.injury.since)}–${fmtDate(injuryEnd(state.injury))}) — back to normal training`);
+    clearInjury();
+  }
+}
+// A call that persists across the days it covers, bounded by explicit start/end dates.
 function standingCall() {
   if (!injuryActive()) return null;
-  const since = state.injury.since || Date.now();
-  const days = Math.max(1, Math.round((state.injury.riceUntil - since) / 86400000));
-  const dayNum = Math.min(days, Math.floor((Date.now() - since) / 86400000) + 1);
-  const parts = (state.injury.parts || []).join(', ') || 'injury';
-  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}`, title: 'Rest & protect', action: 'Protect &amp; gently load the area — keep moving everything that does not hurt (PEACE &amp; LOVE).' };
-  return { cls: 'milestone', label: `Recovering · ${parts} · easing back`, title: 'Ease back in', action: 'Pain-monitored loading — keep pain at or under ~3–5/10 and gone by next morning.' };
+  const inj = state.injury, since = inj.since || Date.now(), D = 86400000;
+  const days = Math.max(1, Math.round((inj.riceUntil - since) / D));
+  const dayNum = Math.min(days, Math.floor((Date.now() - since) / D) + 1);
+  const parts = (inj.parts || []).join(', ') || 'injury';
+  const ext = inj.extended ? ` · extended ×${inj.extended}` : '';
+  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest & protect', action: `Protect &amp; gently load the area — keep moving everything that does not hurt (PEACE &amp; LOVE). Protect window through ${fmtDate(inj.riceUntil)}.` };
+  return { cls: 'milestone', label: `Recovering · ${parts} · easing back${ext}`, title: 'Ease back in', action: `Pain-monitored loading — keep pain at or under ~3–5/10 and gone by next morning. Re-check by ${fmtDate(injuryEnd(inj))}.` };
 }
 
 // ---- Audit / activity log ----
@@ -1438,6 +1447,10 @@ function logEvent(type, text) {
 }
 function fmtLogTime(ts) {
   try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+  catch (_) { return ''; }
+}
+function fmtDate(ts) {
+  try { return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
   catch (_) { return ''; }
 }
 // Animation frames per exercise (frame A = base icon, frame B = authored complementary pose)
@@ -1551,8 +1564,9 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   // --- Injury handling (PEACE & LOVE / red-flag screen) ---
   const wasInRice = injuryInRice();
   if (hurt) {
-    outcome = redFlag ? INJURY_FLAG : INJURY_REST;
-    state.injury = { parts: parts || [], since: Date.now(), riceUntil: Date.now() + 3 * 86400000, kind: 'acute', redFlag: !!redFlag };
+    const prev = (state.injury && !state.injury.clearedAt) ? state.injury : null;   // re-flagging extends the window
+    const now = Date.now();
+    state.injury = { parts: parts || [], since: now, riceUntil: now + 3 * 86400000, easeUntil: now + 10 * 86400000, kind: 'acute', redFlag: !!redFlag, extended: prev ? (prev.extended || 0) + 1 : 0, firstSince: prev ? (prev.firstSince || prev.since) : now };
   } else if (injuryActive()) {
     // re-checked with no pain: the injury is settling — clear it and resume
     state.injury = null;
@@ -1579,7 +1593,7 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   const pl = (parts && parts.length) ? ` [${parts.join(', ')}${redFlag ? '; red flag' : ''}]` : '';
   logEvent('check', `Goal ${goalMet}, feel ${feel}/5${hurt ? ' · hurt' + pl : ''} → ${outcome.title}`);
   if (willAdvance) logEvent('progress', `Advanced → Phase ${state.phase.phase} · Wk ${state.phase.week} · Session ${state.phase.dayInWeek}`);
-  if (hurt) logEvent('injury', `Injury logged${pl}${redFlag ? ' — routed to clinician' : ''}`);
+  if (hurt) logEvent('injury', `Injury logged${pl}${redFlag ? ' — routed to clinician' : ''} · protect through ${fmtDate(state.injury.riceUntil)}, re-check by ${fmtDate(state.injury.easeUntil)}${state.injury.extended ? ` (extended ×${state.injury.extended})` : ''}`);
   else if (lay) logEvent('layoff', `${lay.gap} days off — eased back in (no load jump)`);
   markDirty('checks', 'phase');
   return outcome;
@@ -2050,6 +2064,7 @@ function dayWhy() {
 
 function renderToday() {
   ensureSession();
+  pruneInjury();
   const phaseIdx = state.phase?.phase ?? 0;
   const pd = PHASES[phaseIdx];
   const dayInWeek = state.phase?.dayInWeek ?? 1;
@@ -2532,6 +2547,7 @@ function bindSettings() {
 // ============================================================
 async function init() {
   loadLocal();
+  pruneInjury();
   navigate(state.profile ? 'today' : 'onboarding');
   if (isConfigured()) {
     if (state.profile == null && state.activeUser) { await syncFromRemote(); if (state.profile) navigate('today'); else if (state.ui.syncStatus !== 'error') setSync('offline', 'Local only'); }
