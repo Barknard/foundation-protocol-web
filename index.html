@@ -8,6 +8,7 @@
 <title>Foundation Protocol</title>
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path fill='%23E8E2D2' d='M24,16 L78,16 L78,30 L68,30 L68,24 L40,24 L40,42 L62,42 L62,52 L40,52 L40,80 L24,80 Z'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%231A1614'/><path fill='%23E8E2D2' d='M24,16 L78,16 L78,30 L68,30 L68,24 L40,24 L40,42 L62,42 L62,52 L40,52 L40,80 L24,80 Z'/></svg>">
+<link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -467,6 +468,16 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- REDUCED MOTION ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 </style>
 </head>
@@ -1053,7 +1064,7 @@ const state = {
   checks: [],      // [{ ts, date, goalMet, feel, hurt, decision, phase, week, dayInWeek }]
   pending: [],
   settings: { repo: '', pat: '', autoSync: true },
-  ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '' },
+  ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '', openBlocks: {} },
 };
 
 // ============================================================
@@ -1303,11 +1314,16 @@ function advancePointer() {
 function applyCheck(goalMet, feel, hurt) {
   const outcome = decide(goalMet, feel, hurt);
   const cur = state.phase || {};
-  state.checks.push({
-    ts: Date.now(), date: isoToday(), goalMet, feel, hurt: !!hurt,
+  const today = isoToday();
+  const existingIdx = state.checks.findIndex(c => c.date === today);
+  const alreadyCheckedToday = existingIdx >= 0;
+  const entry = {
+    ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt,
     decision: outcome.key, phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1,
-  });
-  if (outcome.key === 'progress') {
+  };
+  if (alreadyCheckedToday) state.checks[existingIdx] = entry; else state.checks.push(entry);
+  // advance at most once per local day, and only on a Progress call (re-checking the same day never double-advances)
+  if (outcome.key === 'progress' && !alreadyCheckedToday) {
     advancePointer();
   } else {
     if (!state.phase) state.phase = { phase: 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };
@@ -1352,47 +1368,79 @@ function ghHeaders() { return { 'Accept': 'application/vnd.github+json', 'X-GitH
 function b64encode(s) { return btoa(unescape(encodeURIComponent(s))); }
 function b64decode(s) { return decodeURIComponent(escape(atob(s.replace(/\s/g, '')))); }
 const fileShaCache = {};
-async function ghGet(path) {
+async function ghGetRaw(path) {
   const resp = await fetch(ghUrl(path), { headers: ghHeaders() });
   if (resp.status === 404) return null;
+  if (resp.status === 401 || resp.status === 403) throw new Error('GitHub auth failed — check the token (needs Contents: Read & Write).');
   if (!resp.ok) throw new Error(`GitHub GET ${path} → ${resp.status}`);
   const json = await resp.json();
   fileShaCache[path] = json.sha;
-  return JSON.parse(b64decode(json.content));
+  return { content: JSON.parse(b64decode(json.content)), sha: json.sha };
 }
+async function ghGet(path) { const r = await ghGetRaw(path); return r ? r.content : null; }
 async function ghPut(path, data) {
   let sha = fileShaCache[path];
-  if (!sha) { try { const resp = await fetch(ghUrl(path), { headers: ghHeaders() }); if (resp.ok) { const j = await resp.json(); sha = j.sha; fileShaCache[path] = sha; } } catch (_) {} }
-  const body = { message: `Update ${path}`, content: b64encode(JSON.stringify(data, null, 2)) };
-  if (sha) body.sha = sha;
-  const resp = await fetch(ghUrl(path), { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!sha) { try { const r = await ghGetRaw(path); if (r) sha = r.sha; } catch (_) {} }
+  const send = (useSha) => {
+    const body = { message: `Update ${path}`, content: b64encode(JSON.stringify(data, null, 2)) };
+    if (useSha) body.sha = useSha;
+    return fetch(ghUrl(path), { method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  };
+  let resp = await send(sha);
+  if (resp.status === 409 || resp.status === 422) {
+    // stale sha (file changed on another device / the web UI) — refresh and retry once
+    delete fileShaCache[path];
+    let fresh = null;
+    try { const r = await ghGetRaw(path); if (r) fresh = r.sha; } catch (_) {}
+    resp = await send(fresh);
+  }
   if (!resp.ok) { const t = await resp.text(); throw new Error(`GitHub PUT ${path} → ${resp.status}: ${t.slice(0,200)}`); }
   const json = await resp.json();
   fileShaCache[path] = json.content.sha;
 }
 function isConfigured() { return Boolean(state.settings.repo && state.settings.pat); }
+function mergeChecks(remote, local) {
+  const byTs = new Map();
+  (Array.isArray(remote) ? remote : []).forEach(c => { if (c && c.ts != null) byTs.set(c.ts, c); });
+  (Array.isArray(local)  ? local  : []).forEach(c => { if (c && c.ts != null) byTs.set(c.ts, c); }); // local wins ties
+  return [...byTs.values()].sort((a, b) => a.ts - b.ts);
+}
 async function syncFromRemote() {
   if (!isConfigured()) return;
   setSync('syncing', 'Loading from GitHub');
   try {
-    const [profile, phase, checks] = await Promise.all([ ghGet(DATA_FILES.profile), ghGet(DATA_FILES.phase), ghGet(DATA_FILES.checks) ]);
-    if (profile) state.profile = profile;
-    if (phase)   state.phase   = phase;
-    if (Array.isArray(checks)) state.checks = checks;
-    saveLocal(); setSync('online', 'Synced');
+    const [profile, phase, checks] = await Promise.allSettled([ ghGet(DATA_FILES.profile), ghGet(DATA_FILES.phase), ghGet(DATA_FILES.checks) ]);
+    if (profile.status === 'fulfilled' && profile.value) state.profile = profile.value;
+    if (phase.status   === 'fulfilled' && phase.value)   state.phase   = phase.value;
+    if (checks.status  === 'fulfilled' && Array.isArray(checks.value)) state.checks = checks.value;
+    const failed = [profile, phase, checks].find(r => r.status === 'rejected');
+    saveLocal();
+    if (failed) setSync('error', (failed.reason && failed.reason.message) ? failed.reason.message : 'Sync issue');
+    else setSync('online', 'Synced');
   } catch (e) { console.error(e); setSync('error', e.message); }
 }
+let _syncing = false, _syncQueued = false;
 async function syncToRemote() {
   if (!isConfigured() || state.pending.length === 0) return;
+  if (_syncing) { _syncQueued = true; return; }      // serialize: avoid overlapping push loops
+  _syncing = true;
   setSync('syncing', `Pushing ${state.pending.length} change${state.pending.length===1?'':'s'}`);
   try {
     for (const key of [...state.pending]) {
+      if (key === 'checks') {
+        // union with any checks pushed from another device so cross-device entries are never clobbered
+        try { const remote = await ghGet(DATA_FILES.checks); if (Array.isArray(remote)) state.checks = mergeChecks(remote, state.checks); } catch (_) {}
+      }
       await ghPut(DATA_FILES[key], state[key]);
       state.pending = state.pending.filter(k => k !== key);
       saveLocal();
     }
     setSync('online', 'Synced');
   } catch (e) { console.error(e); setSync('error', e.message); }
+  finally {
+    _syncing = false;
+    if (_syncQueued) { _syncQueued = false; if (state.pending.length) syncToRemote(); }
+  }
 }
 function setSync(status, message) {
   state.ui.syncStatus = status; state.ui.syncMessage = message;
@@ -1405,15 +1453,15 @@ function setSync(status, message) {
 // ============================================================
 // UTIL
 // ============================================================
-function isoToday() { return new Date().toISOString().slice(0,10); }
+function isoToday() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function escHtml(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height="${s}" aria-hidden="true"><use href="#${id}"/></svg>`; }
+function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`; }
 function animatedFigure(ex, size) {
   const s = size || 44;
   const frames = (ex && ex.frames && ex.frames.length) ? ex.frames : [ex.icon];
-  const a = `<svg class="a" width="${s}" height="${s}" aria-hidden="true"><use href="#${frames[0]}"/></svg>`;
+  const a = `<svg class="a" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(frames[0])}"/></svg>`;
   if (frames.length < 2) return `<span class="afig" style="width:${s}px;height:${s}px;">${a}</span>`;
-  const b = `<svg class="b" width="${s}" height="${s}" aria-hidden="true"><use href="#${frames[1]}"/></svg>`;
+  const b = `<svg class="b" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(frames[1])}"/></svg>`;
   return `<span class="afig anim" style="width:${s}px;height:${s}px;">${a}${b}</span>`;
 }
 function toast(message, kind) {
@@ -1481,11 +1529,13 @@ function bindEvents() {
     navigate(target, params);
   }));
   document.querySelectorAll('[data-back]').forEach(el => el.addEventListener('click', () => goBack('today')));
-  document.querySelectorAll('[data-exp]').forEach(el => el.addEventListener('click', (e) => {
-    if (e.target.closest('[data-go]')) return;
-    const panel = document.getElementById('ex-panel-' + el.getAttribute('data-exp'));
+  document.querySelectorAll('[data-exp]').forEach(el => el.addEventListener('click', () => {
+    const i = el.getAttribute('data-exp');
+    const panel = document.getElementById('ex-panel-' + i);
     if (!panel) return;
-    el.setAttribute('aria-expanded', panel.classList.toggle('open') ? 'true' : 'false');
+    const open = panel.classList.toggle('open');
+    el.setAttribute('aria-expanded', open ? 'true' : 'false');
+    state.ui.openBlocks[i] = open;   // persist so it survives re-renders
   }));
 }
 
@@ -1534,7 +1584,10 @@ function bindOnboarding() {
   get('onb-continue').addEventListener('click', () => {
     upd();
     const w=parseFloat(state._onb.weight), pu=parseInt(state._onb.pushup,10), wk=parseInt(state._onb.walk,10), ag=parseInt(state._onb.age,10);
-    if (!(w>30 && pu>=0 && wk>=0 && ag>=13 && ag<=100)) { toast('Please enter valid numbers','error'); return; }
+    if (!(w>=20 && w<=400))      { toast('Enter a valid body weight in kg','error'); return; }
+    if (!(pu>=0 && pu<=300))     { toast('Enter your max pushups (a number)','error'); return; }
+    if (!(wk>=0 && wk<=600))     { toast('Enter your longest walk in minutes','error'); return; }
+    if (!(ag>=13 && ag<=100))    { toast('Enter a valid age (13–100)','error'); return; }
     state.profile = { weightKg:w, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:state._onb.phase, createdAt:Date.now() };
     state.phase = { phase:state._onb.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
     markDirty('profile','phase');
@@ -1570,8 +1623,9 @@ function renderToday() {
           <div class="title">${escHtml(b.title)}</div>${b.detail?`<div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div>`:''}
         </div>${exs.length?`<div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div>`;
       if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
-      const panel = `<div class="ex-panel" id="ex-panel-${i}">${exs.map(ex=>`<div class="ex-card"><div class="fig">${animatedFigure(ex,48)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div></div>`).join('')}</div>`;
-      return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="false">${head}</button>${panel}</div>`;
+      const open = !!state.ui.openBlocks[i];
+      const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">${exs.map(ex=>`<div class="ex-card"><div class="fig">${animatedFigure(ex,48)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div></div>`).join('')}</div>`;
+      return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
     }).join('')}
     ${lastToday ? `<div class="sp-12"></div>
       <div class="card-block ${OUTCOMES[lastToday.decision].cls}"><div class="stripe"></div>
@@ -1901,6 +1955,10 @@ async function init() {
 }
 window.addEventListener('online',  () => { setSync('syncing','Reconnecting'); syncToRemote(); });
 window.addEventListener('offline', () => { setSync('offline','Offline'); });
+// Offline support: cache the app shell so it opens without a network connection.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+}
 init();
 
 </script>
