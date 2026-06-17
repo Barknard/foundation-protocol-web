@@ -38,7 +38,7 @@ body {
   background: var(--ink);
   color: var(--paper);
   font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  font-size: 16px;
+  font-size: 19px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -50,17 +50,17 @@ body {
 /* ---------- TYPE SCALE ---------- */
 .serif { font-family: 'Fraunces', Georgia, serif; }
 .mono  { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-.display-l { font-family: 'Fraunces', serif; font-weight: 900; font-size: 44px; line-height: 1; letter-spacing: -0.02em; }
-.display-m { font-family: 'Fraunces', serif; font-weight: 900; font-size: 32px; line-height: 1.05; letter-spacing: -0.015em; }
-.display-s { font-family: 'Fraunces', serif; font-weight: 700; font-size: 24px; line-height: 1.1; letter-spacing: -0.01em; }
-.headline  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; line-height: 1.15; }
-.title     { font-weight: 600; font-size: 16px; line-height: 1.3; }
-.title-sm  { font-weight: 500; font-size: 14px; line-height: 1.3; }
-.body      { font-size: 15px; line-height: 1.5; color: var(--paper); }
-.body-dim  { font-size: 14px; line-height: 1.45; color: var(--paper-dim); }
-.label     { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
-.label-sm  { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-low); }
-.metric    { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--paper); }
+.display-l { font-family: 'Fraunces', serif; font-weight: 900; font-size: 53px; line-height: 1; letter-spacing: -0.02em; }
+.display-m { font-family: 'Fraunces', serif; font-weight: 900; font-size: 38px; line-height: 1.05; letter-spacing: -0.015em; }
+.display-s { font-family: 'Fraunces', serif; font-weight: 700; font-size: 29px; line-height: 1.1; letter-spacing: -0.01em; }
+.headline  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 24px; line-height: 1.15; }
+.title     { font-weight: 600; font-size: 19px; line-height: 1.3; }
+.title-sm  { font-weight: 500; font-size: 17px; line-height: 1.3; }
+.body      { font-size: 18px; line-height: 1.5; color: var(--paper); }
+.body-dim  { font-size: 17px; line-height: 1.45; color: var(--paper-dim); }
+.label     { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
+.label-sm  { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-low); }
+.metric    { font-family: 'IBM Plex Mono', monospace; font-size: 17px; color: var(--paper); }
 
 /* ---------- LAYOUT ---------- */
 #app {
@@ -95,7 +95,7 @@ body {
 /* ---------- BUTTONS / CHIPS ---------- */
 button, .btn {
   font-family: inherit;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   border: none;
   background: var(--milestone);
@@ -119,7 +119,7 @@ button:active:not(:disabled) { transform: scale(0.98); }
 button.secondary { background: var(--surface-1); color: var(--paper); }
 button.ghost { background: transparent; color: var(--paper); border: 1px solid var(--rule); }
 button.danger { background: transparent; color: var(--strength); border: 1px solid var(--strength); }
-button.compact { height: 44px; width: auto; padding: 0 16px; font-size: 14px; }
+button.compact { height: 44px; width: auto; padding: 0 16px; font-size: 17px; }
 button.icon { width: 48px; height: 48px; padding: 0; background: transparent; color: var(--paper-dim); border-radius: 12px; }
 
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -128,7 +128,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   height: 48px; padding: 0 18px;
   background: var(--surface-1); color: var(--paper-dim);
   border: 1px solid var(--rule); border-radius: 24px;
-  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-size: 17px; font-weight: 500; cursor: pointer;
   flex: 1; min-width: 80px;
   transition: all 120ms ease;
 }
@@ -155,8 +155,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   width: 100%;
   transition: all 120ms ease;
 }
-.feel .feel-face { font-size: 26px; line-height: 1; filter: grayscale(0.35); transition: filter 120ms ease; }
-.feel .feel-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--paper-low); }
+.feel .feel-face { font-size: 31px; line-height: 1; filter: grayscale(0.35); transition: filter 120ms ease; }
+.feel .feel-label { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--paper-low); }
 .feel.active { border-color: var(--milestone); background: var(--surface-2); color: var(--paper); }
 .feel.active .feel-face { filter: grayscale(0); transform: scale(1.08); }
 .feel.active .feel-label { color: var(--paper); }
@@ -177,7 +177,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   border: 1px solid var(--rule);
   border-radius: 12px;
   color: var(--paper-dim);
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   cursor: pointer;
   transition: all 120ms ease;
@@ -215,8 +215,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   padding: 18px 18px; border-radius: 14px; border: 1.5px solid;
   align-items: center;
 }
-.zone .score { font-family: 'Fraunces', serif; font-weight: 900; font-size: 32px; line-height: 1; }
-.zone .label-line { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.zone .score { font-family: 'Fraunces', serif; font-weight: 900; font-size: 38px; line-height: 1; }
+.zone .label-line { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; }
 .zone.green  { border-color: var(--mobility);  background: color-mix(in srgb, var(--mobility) 12%, transparent); }
 .zone.green  .score, .zone.green  .label-line { color: var(--mobility); }
 .zone.yellow { border-color: var(--milestone); background: color-mix(in srgb, var(--milestone) 12%, transparent); }
@@ -230,9 +230,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   display: flex; flex-direction: column; gap: 6px;
   margin-bottom: 8px;
 }
-.field label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
+.field label { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
 .field input[type=text], .field input[type=number], .field input[type=password], .field textarea {
-  font-family: inherit; font-size: 16px;
+  font-family: inherit; font-size: 19px;
   background: var(--surface-1);
   color: var(--paper);
   border: 1px solid var(--rule);
@@ -245,7 +245,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 }
 .field input:focus, .field textarea:focus { border-color: var(--milestone); }
 .field textarea { resize: vertical; min-height: 80px; }
-.field .help { font-size: 12px; color: var(--paper-low); }
+.field .help { font-size: 14px; color: var(--paper-low); }
 
 /* radio cards */
 .radio-card {
@@ -269,8 +269,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 /* slider */
 .slider-row { padding: 10px 0; }
 .slider-row .top { display: flex; align-items: center; justify-content: space-between; }
-.slider-row .top .name { font-weight: 600; font-size: 16px; }
-.slider-row .top .val  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 22px; color: var(--milestone); }
+.slider-row .top .name { font-weight: 600; font-size: 19px; }
+.slider-row .top .val  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; color: var(--milestone); }
 .slider-row input[type=range] {
   -webkit-appearance: none; appearance: none;
   width: 100%; height: 48px;
@@ -296,15 +296,15 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   cursor: pointer;
   border: 4px solid var(--ink);
 }
-.slider-row .anchors { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--paper-low); text-transform: uppercase; margin-top: -8px; }
+.slider-row .anchors { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: var(--paper-low); text-transform: uppercase; margin-top: -8px; }
 
 /* switch */
 .switch-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 0;
 }
-.switch-row .info .name { font-weight: 600; font-size: 16px; }
-.switch-row .info .help { font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
+.switch-row .info .name { font-weight: 600; font-size: 19px; }
+.switch-row .info .help { font-size: 16px; color: var(--paper-dim); margin-top: 2px; }
 .switch {
   --w: 52px;
   --h: 30px;
@@ -336,7 +336,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .nav .tab {
   flex: 1; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   background: transparent; border: none; color: var(--paper-low); cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
   width: auto; border-radius: 0;
 }
 .nav .tab.active { color: var(--milestone); }
@@ -344,16 +344,16 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 
 /* ---------- HEADER ---------- */
 .screen-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.screen-head .crumb { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
+.screen-head .crumb { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
 .back-row { display: flex; align-items: center; gap: 8px; margin-left: -8px; margin-bottom: 12px; }
-.back-row button { background: transparent; color: var(--paper-dim); height: 40px; width: auto; padding: 0 8px; font-size: 14px; gap: 4px; }
+.back-row button { background: transparent; color: var(--paper-dim); height: 40px; width: auto; padding: 0 8px; font-size: 17px; gap: 4px; }
 .back-row button:hover { color: var(--paper); }
 
 /* ---------- TOAST ---------- */
 .toast {
   position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%);
   background: var(--surface-2); color: var(--paper); padding: 12px 18px;
-  border-radius: 12px; font-size: 14px; border: 1px solid var(--rule);
+  border-radius: 12px; font-size: 17px; border: 1px solid var(--rule);
   z-index: 100; box-shadow: var(--shadow-card);
   opacity: 0; transition: opacity 200ms ease;
   pointer-events: none; max-width: 360px;
@@ -388,11 +388,11 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 }
 .lib-row .fig svg { width: 44px; height: 44px; color: var(--paper); }
 .lib-row .text { display: flex; flex-direction: column; }
-.lib-row .text .name { font-size: 15px; font-weight: 600; color: var(--paper); }
-.lib-row .text .rx { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-dim); margin-top: 2px; }
+.lib-row .text .name { font-size: 18px; font-weight: 600; color: var(--paper); }
+.lib-row .text .rx { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
 .lib-row .chev { color: var(--paper-low); }
 
-.cat-header { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--milestone); margin-top: 16px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.cat-header { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--milestone); margin-top: 16px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
 
 /* exercise detail */
 .fig-hero {
@@ -404,8 +404,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 }
 .fig-hero svg { height: 170px; width: 170px; color: var(--paper); }
 .step-list { display: grid; grid-template-columns: 28px 1fr; gap: 8px 12px; }
-.step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-low); padding-top: 3px; }
-.step-list .t { font-size: 14px; color: var(--paper); line-height: 1.5; padding-bottom: 6px; }
+.step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-low); padding-top: 3px; }
+.step-list .t { font-size: 17px; color: var(--paper); line-height: 1.5; padding-bottom: 6px; }
 
 /* ---------- CHART ---------- */
 .chart {
@@ -416,13 +416,13 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 }
 .chart .top { display: flex; justify-content: space-between; align-items: baseline; }
 .chart canvas { width: 100%; height: 120px; display: block; margin-top: 8px; }
-.chart .bottom { display: flex; justify-content: space-between; margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-dim); }
-.chart .empty { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--paper-low); font-size: 13px; }
+.chart .bottom { display: flex; justify-content: space-between; margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); }
+.chart .empty { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--paper-low); font-size: 16px; }
 
 /* status pip */
 .sync {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
   color: var(--paper-low); letter-spacing: 0.08em; text-transform: uppercase;
 }
 .sync::before {
@@ -1192,7 +1192,7 @@ function renderOnboarding() {
     <div class="sp-24"></div>
     <button id="onb-continue">Continue</button>
     <div class="sp-24"></div>
-    <p class="body-dim" style="font-size:13px;">Connect GitHub later in Settings for cross-device sync. Skip for now; your data stays safe in this browser.</p>
+    <p class="body-dim" style="font-size: 16px;">Connect GitHub later in Settings for cross-device sync. Skip for now; your data stays safe in this browser.</p>
   </div>`;
 }
 function bindOnboarding() {
@@ -1279,7 +1279,7 @@ function renderCheck() {
     <div class="sp-24"></div>
     <button id="chk-go" ${ready?'':'disabled'}>See the call</button>
     <div class="sp-16"></div>
-    <p class="body-dim" style="font-size:12px;">Readiness drives the decision. A single daily feel rating is a simplification of the 4-item Hooper Index (Hooper et al. 1995); subjective readiness tracks training response better than objective markers (Saw, Main &amp; Gastin, BJSM 2016).</p>
+    <p class="body-dim" style="font-size: 14px;">Readiness drives the decision. A single daily feel rating is a simplification of the 4-item Hooper Index (Hooper et al. 1995); subjective readiness tracks training response better than objective markers (Saw, Main &amp; Gastin, BJSM 2016).</p>
   </div>`;
 }
 function bindCheck() {
@@ -1337,7 +1337,7 @@ function renderResult(outcomeKey) {
     <div class="sp-48"></div>
     <button data-go="today">${advanced ? 'Start next session' : 'Got it'}</button>
     <div class="sp-12"></div>
-    <p class="body-dim" style="font-size:12px;">Source: Saw, Main &amp; Gastin BJSM 2016. Hooper &amp; Mackinnon MSSE 1995. Lally et al. 2010 (a single miss does not erase progress).</p>
+    <p class="body-dim" style="font-size: 14px;">Source: Saw, Main &amp; Gastin BJSM 2016. Hooper &amp; Mackinnon MSSE 1995. Lally et al. 2010 (a single miss does not erase progress).</p>
   </div>`;
 }
 
@@ -1363,7 +1363,7 @@ function renderExerciseDetail(key) {
     <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
     <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
     <h1 class="display-s serif">${escHtml(ex.name)}</h1><div class="sp-4"></div>
-    <p class="mono" style="color:var(--milestone); font-size:13px; letter-spacing:0.06em;">${escHtml(ex.rx)}</p>
+    <p class="mono" style="color:var(--milestone); font-size: 16px; letter-spacing:0.06em;">${escHtml(ex.rx)}</p>
     <div class="fig-hero">${svgUse(ex.icon,170)}</div>
     <p class="label">Steps</p><div class="sp-8"></div>
     <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
@@ -1476,7 +1476,7 @@ function renderPhaseDetail(index) {
     <div class="divider"></div><p class="label">Sample week</p><div class="sp-12"></div>
     ${p.week.map(d=>`<div style="margin-bottom:12px;"><div class="title-sm" style="color:var(--paper-dim); margin-bottom:6px;">${escHtml(d.day)}</div>
       ${d.blocks.map(b=>`<div class="card-block ${b.kind}" style="margin-bottom:6px;"><div class="stripe"></div>
-        <div class="card" style="padding:10px 12px;"><span class="label">${escHtml(b.label)}</span><div style="margin-top:2px;font-size:14px;">${escHtml(b.title)}</div></div></div>`).join('')}
+        <div class="card" style="padding:10px 12px;"><span class="label">${escHtml(b.label)}</span><div style="margin-top:2px;font-size: 17px;">${escHtml(b.title)}</div></div></div>`).join('')}
       </div>`).join('')}
     <div class="sp-32"></div>
   </div>`;
@@ -1490,7 +1490,7 @@ function renderSettings() {
     <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
     <h1 class="display-s serif">Settings</h1><div class="sp-20"></div>
     <p class="label">GitHub Sync</p><div class="sp-8"></div>
-    <p class="body-dim" style="font-size:13px;">Optional. When set, every check commits to a repo so you can use the app from any device. Without this, data stays in this browser only.</p>
+    <p class="body-dim" style="font-size: 16px;">Optional. When set, every check commits to a repo so you can use the app from any device. Without this, data stays in this browser only.</p>
     <div class="sp-12"></div>
     <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
     <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
@@ -1498,7 +1498,7 @@ function renderSettings() {
     <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
     <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
     <div class="sp-24"></div>
-    <div class="row between"><div><div class="title">Auto-sync</div><div class="body-dim" style="font-size:13px;">Push every change automatically.</div></div>
+    <div class="row between"><div><div class="title">Auto-sync</div><div class="body-dim" style="font-size: 16px;">Push every change automatically.</div></div>
       <label class="switch"><input type="checkbox" id="s-autosync" ${s.autoSync?'checked':''}><span class="slider"></span></label></div>
     <div class="divider"></div>
     <p class="label">Data</p><div class="sp-12"></div>
@@ -1506,11 +1506,11 @@ function renderSettings() {
     <button class="danger" id="s-reset">Reset all local data…</button>
     <div class="divider"></div>
     <p class="label">How the call is made</p><div class="sp-8"></div>
-    <p class="body-dim" style="font-size:13px;">Each day you answer two things: did you meet the goal, and how do you feel. The app maps that to one of four calls. Progress only when you did the work and feel good or great. Feel rough, it gives an easier version. Feel wrecked or flag pain, it rests you. Anything in between repeats the session so you consolidate before adding load.</p>
+    <p class="body-dim" style="font-size: 16px;">Each day you answer two things: did you meet the goal, and how do you feel. The app maps that to one of four calls. Progress only when you did the work and feel good or great. Feel rough, it gives an easier version. Feel wrecked or flag pain, it rests you. Anything in between repeats the session so you consolidate before adding load.</p>
     <div class="divider"></div>
     <p class="label">About</p><div class="sp-8"></div>
     <p class="body">Foundation Protocol v${APP_VERSION}.</p>
-    <p class="body-dim" style="font-size:13px; margin-top:4px;">Evidence-based 40-week framework. Local-first, no telemetry. Sync optional via GitHub Contents API.</p>
+    <p class="body-dim" style="font-size: 16px; margin-top:4px;">Evidence-based 40-week framework. Local-first, no telemetry. Sync optional via GitHub Contents API.</p>
     <div class="sp-16"></div>
     <p class="label">Evidence base</p><div class="sp-8"></div>
     ${['Hooper SL et al. Markers for monitoring overtraining and recovery. Med Sci Sports Exerc 1995;27(1):106–112.',
@@ -1519,7 +1519,7 @@ function renderSettings() {
        'Kokkinos P et al. J Am Coll Cardiol 2022;80(6):598–609.',
        'Kokura Y et al. Clin Nutr ESPEN 2024;63:417–426.',
        'Nielsen Norman Group. Dark Mode: How Users Think About It. 2023.'
-      ].map(c=>`<p class="body-dim" style="font-size:12px; margin:4px 0;">${escHtml(c)}</p>`).join('')}
+      ].map(c=>`<p class="body-dim" style="font-size: 14px; margin:4px 0;">${escHtml(c)}</p>`).join('')}
     <div class="sp-32"></div>
   </div>`;
 }
