@@ -1369,7 +1369,9 @@ function b64encode(s) { return btoa(unescape(encodeURIComponent(s))); }
 function b64decode(s) { return decodeURIComponent(escape(atob(s.replace(/\s/g, '')))); }
 const fileShaCache = {};
 async function ghGetRaw(path) {
-  const resp = await fetch(ghUrl(path), { headers: ghHeaders() });
+  // no-store: GitHub sends Cache-Control max-age on authed GETs; the browser would
+  // otherwise serve a stale sha/content and defeat conflict-retry and fresh pulls.
+  const resp = await fetch(ghUrl(path), { headers: ghHeaders(), cache: 'no-store' });
   if (resp.status === 404) return null;
   if (resp.status === 401 || resp.status === 403) throw new Error('GitHub auth failed — check the token (needs Contents: Read & Write).');
   if (!resp.ok) throw new Error(`GitHub GET ${path} → ${resp.status}`);
