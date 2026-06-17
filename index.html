@@ -248,6 +248,17 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .field textarea { resize: vertical; min-height: 80px; }
 .field .help { font-size: 14px; color: var(--paper-low); }
 
+/* onboarding wizard progress */
+.wiz-head { display: flex; flex-direction: column; gap: 8px; }
+.wiz-bar { display: flex; gap: 6px; }
+.wiz-seg { flex: 1; height: 6px; border-radius: 999px; background: var(--rule); transition: background 260ms ease; }
+.wiz-seg.on { background: var(--milestone); }
+.wiz-step { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-dim); }
+.adv { margin-top: 2px; }
+.adv summary { cursor: pointer; color: var(--paper-dim); font-size: 14px; font-family: 'IBM Plex Mono', monospace; }
+.plan-preview { background: color-mix(in srgb, var(--mobility) 12%, transparent); border: 1px solid var(--mobility); border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
+.crown { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; background: color-mix(in srgb, var(--ink) 88%, transparent); animation: fade-in 240ms ease; }
+
 /* brand logo (homepage) */
 .brand { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .brand-logo { width: clamp(76px, 24vw, 104px); height: clamp(76px, 24vw, 104px); object-fit: contain; margin-bottom: 10px; }
@@ -1094,6 +1105,11 @@ const STORAGE_KEY = 'foundation-protocol-state-v2';        // legacy single-user
 const SETTINGS_KEY = 'foundation-protocol-settings-v2';
 const ACTIVE_KEY = 'foundation-protocol-active-user';
 const DATA_KEYS = ['profile', 'phase', 'checks'];
+// "Sign in with GitHub" (OAuth device flow). Fill these once after the 5-min setup in docs/SETUP-OAUTH.md.
+// GH_CLIENT_ID = your GitHub OAuth App client id (public, safe to embed). GH_OAUTH_PROXY = the deployed CORS worker URL.
+const GH_CLIENT_ID = '';
+const GH_OAUTH_PROXY = '';
+function oauthEnabled() { return !!(GH_CLIENT_ID && GH_OAUTH_PROXY); }
 // Each persona's data lives in its own folder: data/users/<slug>/{profile,phase,checks}.json
 function slugify(s) { return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); }
 function activeSlug() { return state.activeUser || (state.profile && state.profile.usernameSlug) || ''; }
@@ -1133,7 +1149,7 @@ const BLOCKS = {
   walk60:   { kind: 'cardio',    label: 'Z2 • 60 min',       title: 'Long walk',           detail: 'Mixed terrain' },
   rest:     { kind: 'rest',      label: 'Rest',              title: 'Full recovery',       detail: 'Sleep 7+ • Hydrate' },
   strA:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day A — Push / Squat', detail: 'Goblet sq • Pushup • Row • Plank' },
-  strB:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day B — Hinge / Press', detail: 'RDL • OH press • Split sq • Dead bug' },
+  strB:     { kind: 'strength',  label: 'Strength • 35',     title: 'Day B — Hinge / Press', detail: 'RDL • OH press • Split sq • Plank' },
   rw1:      { kind: 'cardio',    label: 'Run-walk • 30',     title: '1 min run / 4 min walk', detail: '5 rounds • Stop if shin pain' },
   rw2:      { kind: 'cardio',    label: 'Run-walk • 35',     title: '2 min run / 3 min walk', detail: '5 rounds • Build gradually' },
   rw3:      { kind: 'cardio',    label: 'Run-walk • 40',     title: '3 min run / 2 min walk', detail: 'Form check at mile 1' },
@@ -1141,7 +1157,7 @@ const BLOCKS = {
   longRun:  { kind: 'cardio',    label: 'Long run • 45',     title: 'Z2 continuous',        detail: 'Cap at +10% vs 30-day longest' },
   tempo:    { kind: 'cardio',    label: 'Intervals • 35',    title: '4 × 4 min hard / 3 min easy', detail: 'Max 20% of weekly volume' },
   opmAm:    { kind: 'strength',  label: 'OPM • AM',          title: '100 push / 100 squat', detail: 'Spread across day' },
-  opmCore:  { kind: 'strength',  label: 'OPM • PM',          title: '100 situp + plank',    detail: 'Dead bug / Hollow' },
+  opmCore:  { kind: 'strength',  label: 'Core • PM',         title: 'Plank + carries',      detail: 'Anti-extension core' },
   loaded:   { kind: 'strength',  label: 'Loaded • 45',       title: 'Barbell / DB progression', detail: 'Switch from bodyweight stim' },
   longRun10k:{ kind: 'cardio',   label: 'Long run • 60+',    title: 'Building to 10K',      detail: 'Cap vs 30-day longest' },
   hooper:   { kind: 'milestone', label: 'Check-in',          title: 'Weekly review',        detail: 'Reflect on the week' },
@@ -1187,9 +1203,9 @@ const PHASES = [
   },
   {
     index: 4, name: 'Target', weeks: 'Weeks 41+', totalWeeks: 99,
-    summary: 'OPM milestone enters daily practice: 100 pushups, 100 situp variants, 100 squats — split across the day as needed. 10K running capacity built progressively. Strength transitions to loaded work.',
-    focus: ['OPM split AM and PM', '4 runs weekly: 2 easy, 1 tempo, 1 long', 'Loaded strength 2× weekly', '+10% rule still applies'],
-    exit:  ['Daily 100 / 100 / 100 sustained for 4 weeks', '10K continuous run under 60 minutes', 'Loaded strength replaces bodyweight'],
+    summary: 'Build toward THE capstone — 10K run + 100 pushups + 100 situps + 100 squats, completed in a single session. You get there with quality strength sets (RIR 2-3), a little power, and the 10K build — not by grinding hundreds of reps every day, which raises injury risk at 40+ for no extra gain.',
+    focus: ['Train the capstone movements with quality sets, not daily max volume', '4 runs weekly: 2 easy, 1 tempo, 1 long — building to 10K', 'Strength + a little power 2-3× weekly', '+10% session cap and the lighter week still apply'],
+    exit:  ['THE CAPSTONE: 10K run + 100 pushups + 100 situps + 100 squats in one session', '10K continuous run under ~60 minutes', 'Strength + power held with a deload every ~5 weeks'],
     week: [ day('Mon',['opmAm','loaded']), day('Tue',['opmCore','easyRun']), day('Wed',['opmAm','loaded']),
             day('Thu',['opmCore','tempo']), day('Fri',['opmAm','rest']), day('Sat',['ptFull','longRun10k']),
             day('Sun',['opmCore','hooper']) ],
@@ -1245,9 +1261,9 @@ const EXERCISES = [
   { key:'split_sq', name:'Bulgarian Split Squat', rx:'3 × 8 each', icon:'ic-split-sq', cat:'Day B',
     steps:['Rear foot on bench, laces down.','Front foot far enough forward to track over mid-foot.','~70 percent of bodyweight on front leg.','Drive through front heel to stand.'],
     cue:'Start bodyweight. Add DBs only after 8 clean per leg.' },
-  { key:'dead_bug', name:'Dead Bug', rx:'3 × 8 each', icon:'ic-dead-bug', cat:'Day B',
-    steps:['On back, arms up over shoulders, knees over hips.','Press lower back flat against floor.','Lower opposite arm and leg slowly.','Return with control. Alternate sides.'],
-    cue:'Trains anti-extension. Protects spine when running.' },
+  { key:'dead_bug', name:'Dead Bug', rx:'2 × 6 each, slow', icon:'ic-dead-bug', cat:'Mobility',
+    steps:['On back, arms up over shoulders, knees over hips.','Press lower back gently flat against the floor.','Slowly reach opposite arm and leg away, breathing out.','Return with control. Easy and slow — a mobilizer, not a grind.'],
+    cue:'A gentle spine mobilizer. Keep it slow and pain-free.' },
   { key:'walk', name:'Z2 Walk', rx:'30 – 60 min', icon:'ic-walking', cat:'Cardio',
     steps:['Conversational pace. Full sentences while moving.','Talk test is the only intensity gauge needed.','Mixed terrain when ready.'],
     cue:'If you cannot finish a sentence, you are over pace.' },
@@ -1259,13 +1275,13 @@ const EXERCISES = [
 // Maps each session block to the library exercises it contains (Today tap-to-reveal)
 const BLOCK_EX = {
   ptFull:  ['sl_stance','hip_abd','glute_bridge','band_walk','calf_raise','calf_stretch'],
-  ptLight: ['sl_stance','hip_abd','calf_stretch'],
+  ptLight: ['sl_stance','hip_abd','calf_stretch','dead_bug'],
   walk30:  ['walk'], walk40: ['walk'], walk45: ['walk'], walk60: ['walk'],
   strA:    ['goblet_sq','pushup','db_row','plank'],
-  strB:    ['rdl','oh_press','split_sq','dead_bug'],
+  strB:    ['rdl','oh_press','split_sq','plank'],
   rw1:     ['run','walk'], rw2: ['run','walk'], rw3: ['run','walk'],
   easyRun: ['run'], longRun: ['run'], tempo: ['run'], longRun10k: ['run'],
-  opmAm:   ['pushup','goblet_sq'], opmCore: ['dead_bug','plank'],
+  opmAm:   ['pushup','goblet_sq'], opmCore: ['plank'],
   loaded:  ['goblet_sq','rdl','oh_press'],
   rest:    [], hooper: [],
 };
@@ -1551,6 +1567,80 @@ async function ghPut(path, data) {
   fileShaCache[path] = json.content.sha;
 }
 function isConfigured() { return Boolean(state.settings.repo && state.settings.pat); }
+
+// ---- "Sign in with GitHub" (OAuth device flow via CORS proxy; no client secret) ----
+function showDeviceModal(code, uri) {
+  hideDeviceModal();
+  const ov = document.createElement('div'); ov.id = 'device-modal'; ov.className = 'crown';
+  ov.innerHTML = `<div style="max-width:340px;"><p class="label" style="color:var(--milestone);">Authorize on GitHub</p><div class="sp-8"></div>
+    <p class="body">On the GitHub page, enter this code:</p><div class="sp-8"></div>
+    <div class="display-m serif" style="letter-spacing:0.18em;color:var(--milestone);">${escHtml(code)}</div><div class="sp-16"></div>
+    <button class="secondary" id="dm-open">Open GitHub page</button><div class="sp-8"></div>
+    <button class="ghost" id="dm-cancel">Cancel</button>
+    <div class="sp-12"></div><p class="body-dim" style="font-size:13px;">Waiting for you to authorize…</p></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('dm-open').onclick = () => { try { window.open(uri, '_blank'); } catch (_) {} };
+  document.getElementById('dm-cancel').onclick = () => { state._signinCancel = true; hideDeviceModal(); setSync('offline', 'Local only'); };
+}
+function hideDeviceModal() { const e = document.getElementById('device-modal'); if (e) e.remove(); }
+function celebrate(line, then) {
+  const ov = document.createElement('div'); ov.className = 'crown';
+  ov.innerHTML = `<div style="max-width:340px;"><div class="display-l serif" style="color:var(--milestone);">✦</div><div class="sp-12"></div><p class="headline serif">${escHtml(line)}</p></div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { ov.remove(); if (then) then(); }, 1500);
+}
+async function ghSignIn() {
+  if (!oauthEnabled()) { toast('GitHub sign-in is not set up yet','error'); return; }
+  const base = GH_OAUTH_PROXY.replace(/\/$/, '');
+  state._signinCancel = false;
+  try {
+    setSync('syncing', 'Starting GitHub sign-in');
+    const r = await fetch(base + '/device/code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ client_id: GH_CLIENT_ID, scope: 'repo' }) });
+    const d = await r.json();
+    if (!d.device_code) throw new Error('Could not start sign-in');
+    const uri = d.verification_uri || 'https://github.com/login/device';
+    showDeviceModal(d.user_code, uri);
+    try { window.open(uri, '_blank'); } catch (_) {}
+    const token = await ghPollToken(base, d.device_code, d.interval || 5, d.expires_in || 900);
+    hideDeviceModal();
+    if (state._signinCancel) return;
+    if (!token) { setSync('error', 'Sign-in timed out'); toast('Sign-in timed out — try again','error'); return; }
+    state.settings.pat = token;
+    const me = await fetch('https://api.github.com/user', { headers: ghHeaders() }).then(x => x.json());
+    const login = me && me.login ? me.login : '';
+    if (login) await ghEnsureDataRepo(login);
+    saveLocal();
+    if (login) logEvent('persona', `Connected GitHub as ${login}`);
+    if (state._onb && !slugify(state._onb.username) && login) { state._onb.username = login; }
+    if (state.profile && !state.profile.username && login) { state.profile.username = login; state.profile.usernameSlug = slugify(login); }
+    setSync('online', 'Connected');
+    toast('Connected to GitHub as ' + (login || 'you'), 'success');
+    render();
+  } catch (e) { console.error(e); hideDeviceModal(); setSync('error', e.message); toast('Sign-in failed — try again', 'error'); }
+}
+async function ghPollToken(base, device_code, interval, expires) {
+  const end = Date.now() + expires * 1000; let wait = Math.max(5, interval) * 1000;
+  while (Date.now() < end) {
+    await new Promise(r => setTimeout(r, wait));
+    try {
+      const r = await fetch(base + '/access_token', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ client_id: GH_CLIENT_ID, device_code, grant_type: 'urn:ietf:params:oauth:grant-type:device_code' }) });
+      const d = await r.json();
+      if (d.access_token) return d.access_token;
+      if (d.error === 'slow_down') wait += 5000;
+      else if (d.error && d.error !== 'authorization_pending') return null;
+    } catch (_) { /* keep polling */ }
+  }
+  return null;
+}
+async function ghEnsureDataRepo(login) {
+  state.settings.repo = `${login}/foundation-protocol-data`;
+  try {
+    const check = await fetch(`https://api.github.com/repos/${state.settings.repo}`, { headers: ghHeaders() });
+    if (check.status === 404) {
+      await fetch('https://api.github.com/user/repos', { method:'POST', headers:{ ...ghHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify({ name: 'foundation-protocol-data', private: true, auto_init: true, description: 'My Foundation Protocol training data' }) });
+    }
+  } catch (_) {}
+}
 function mergeChecks(remote, local) {
   const byTs = new Map();
   (Array.isArray(remote) ? remote : []).forEach(c => { if (c && c.ts != null) byTs.set(c.ts, c); });
@@ -1710,89 +1800,107 @@ function renderLoading() {
     <h1 class="display-l serif" style="text-align:center;">F</h1></div>`;
 }
 
-// ---------- ONBOARDING ----------
+// ---------- ONBOARDING (stepped wizard; research: docs/EVIDENCE-REVIEW.md + onboarding research) ----------
+const ONB_LABELS = ['Welcome', 'Numbers', 'Plan'];
+const ONB_REAL = 3;
+function planPreviewHtml(phase) {
+  if (phase == null) return '';
+  return `<div class="plan-preview"><span class="label" style="color:var(--mobility);">Your plan</span><div class="sp-4"></div><div class="body">Got it — here's <strong>your</strong> plan: <strong>${escHtml(PHASES[phase].name)}</strong>. We'll move you up the moment you're ready — never before.</div></div>`;
+}
 function renderOnboarding() {
-  const p = state._onb = state._onb || { username: (state.profile && state.profile.username) || state.activeUser || '', weight:'', pushup:'', walk:'', age:'', phase:0, unit: state.settings.units || 'imperial' };
+  const p = state._onb = state._onb || { step:1, username: (state.profile && state.profile.username) || state.activeUser || '', weight:'', pushup:'', walk:'', age:'', phase:0, unit: state.settings.units || 'imperial' };
+  if (!p.step) p.step = 1;
   setTimeout(bindOnboarding, 0);
   const imp = p.unit === 'imperial';
-  return `<div class="screen no-nav">
+  const r = Math.min(p.step, ONB_REAL), total = ONB_LABELS.length;   // r is 1..3
+  const crumb = `<div class="wiz-head"><div class="wiz-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${r}">${ONB_LABELS.map((_,i)=>`<span class="wiz-seg${i<r?' on':''}"></span>`).join('')}</div><div class="wiz-step">Step ${r} of ${total} · ${ONB_LABELS[r-1]}</div></div>`;
+  let body = '';
+  if (r === 1) body = `
     <div class="brand"><img class="brand-logo" src="logo.png" alt=""><p class="label">Foundation Protocol</p></div>
     <div class="sp-12"></div>
-    <h1 class="display-m serif">Baseline</h1><div class="sp-8"></div>
-    <p class="body-dim">A name and a few numbers, one time. After this it is two taps a day, nothing to type.</p>
-    <div class="sp-24"></div>
-    <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. eddie" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Your profile saves under this name as its own persona (its own file). Pick something you'll remember.</div></div>
-    <div class="field">
-      <div class="unit-row"><label for="onb-weight">Body weight</label>
-        <div class="seg" id="onb-unit"><button type="button" data-u="imperial" class="${imp?'on':''}">lb</button><button type="button" data-u="metric" class="${imp?'':'on'}">kg</button></div></div>
-      <div class="conv-wrap"><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="${imp?'173':'78.4'}"><span class="conv" id="onb-weight-conv"></span></div>
-    </div>
-    <div class="field"><label for="onb-pushup">Max strict pushups (one set)</label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="12"></div>
-    <div class="field"><label for="onb-walk">Longest continuous walk (minutes)</label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="35"></div>
-    <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="34"></div>
-    <div class="sp-16"></div>
-    <p class="label">Where are you starting from?</p><div class="sp-4"></div>
-    <p class="body-dim" style="font-size:14px;">Not sure? Pick the first one. Starting at the base is the safe, evidence-based default — the app moves you up as fast as you are ready.</p><div class="sp-8"></div>
+    <h1 class="display-m serif">Welcome</h1><div class="sp-4"></div>
+    <p class="body-dim">You're already in. Two quick screens and you're training.</p>
+    <div class="sp-20"></div>
+    ${oauthEnabled() ? `<button class="secondary" id="onb-github">${svgUse('ic-settings',18)} Continue with GitHub</button><p class="help" style="margin-top:6px;">We'll fill in your name, nothing else. Optional — or just type one below.</p><div class="sp-12"></div>` : ''}
+    <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. eddie" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
+    <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="42"><div class="help">Roughly is fine — it only sets a sensible starting load.</div></div>`;
+  else if (r === 2) body = `
+    <h1 class="display-s serif">Your numbers</h1><div class="sp-4"></div>
+    <p class="body-dim">Don't overthink these. Leave any blank and we'll start you gentle — the app learns your real level in the first week.</p>
+    <div class="sp-20"></div>
+    <div class="field"><div class="unit-row"><label for="onb-weight">Body weight</label>
+      <div class="seg" id="onb-unit"><button type="button" data-u="imperial" class="${imp?'on':''}">lb</button><button type="button" data-u="metric" class="${imp?'':'on'}">kg</button></div></div>
+      <div class="conv-wrap"><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="${imp?'173':'78.4'}"><span class="conv" id="onb-weight-conv"></span></div></div>
+    <div class="field"><label for="onb-pushup">Max pushups in one set <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="12"><div class="help">Even 1 counts. 0 is a perfectly good place to start.</div></div>
+    <div class="field"><label for="onb-walk">Longest nonstop walk, minutes <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="35"><div class="help">A 5-minute walk is a real answer — we build from wherever you are.</div></div>`;
+  else body = `
+    <h1 class="display-s serif">Where are you starting from?</h1><div class="sp-4"></div>
+    <p class="body-dim" style="font-size:14px;">Not sure? Pick the first — the safe default. The app moves you up as fast as you are ready.</p><div class="sp-12"></div>
     ${[
-      {i:0,t:'New to this — or back after a long break',s:'Start at the base: daily walking + mobility, then strength. Builds the tendons and bones running will need (recommended).'},
-      {i:1,t:'I already exercise sometimes',s:'Occasional walks or gym. Begin strength training 2× a week alongside easy cardio.'},
-      {i:2,t:'I train regularly already',s:'Consistent lifting and/or running. Jump to run-walk intervals, with strength continuing underneath.'}
-     ].map(o=>`
-      <div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div>
-        <div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
-    <div class="sp-24"></div>
-    <button id="onb-continue">Continue</button>
-    <div class="sp-24"></div>
-    <p class="body-dim" style="font-size: 16px;">Connect GitHub later in Settings for cross-device sync. Skip for now; your data stays safe in this browser.</p>
-  </div>`;
+      {i:0,t:'New to this — or back after a long break',s:'Start at the base: walking + mobility, then strength. Builds the tendons and bones running needs (recommended).'},
+      {i:1,t:'I already exercise sometimes',s:'Occasional walks or gym. Begin strength 2× a week with easy cardio.'},
+      {i:2,t:'I train regularly already',s:'Consistent lifting and/or running. Start at run-walk, strength continuing underneath.'}
+     ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
+    <div id="plan-preview">${planPreviewHtml(p.phase)}</div>
+    <div class="sp-12"></div>
+    <p class="body-dim" style="font-size:14px;">The plan adjusts to you over your next few check-ins — the first week is calibration, not a test. One tap and your first session is ready.</p>`;
+  const isLast = r === ONB_REAL;
+  const nav = `<div class="sp-20"></div><div style="display:flex;gap:12px;">${r>1?`<button class="secondary" id="onb-back" style="width:auto;flex:0 0 auto;padding:0 22px;">Back</button>`:''}<button id="onb-next" style="flex:1;">${isLast?'Start my first session':'Next'}</button></div>`;
+  return `<div class="screen no-nav">${crumb}<div class="sp-16"></div>${body}${nav}</div>`;
 }
 function bindOnboarding() {
   const get = id => document.getElementById(id);
-  if (!get('onb-username')) return;   // DOM moved on before this deferred bind ran
-  const upd = () => { state._onb.username=get('onb-username').value; state._onb.weight=get('onb-weight').value; state._onb.pushup=get('onb-pushup').value; state._onb.walk=get('onb-walk').value; state._onb.age=get('onb-age').value; };
-  const updConv = () => {
-    const conv = get('onb-weight-conv'); if (!conv) return;
-    const v = parseFloat(get('onb-weight').value);
-    if (!(v > 0)) { conv.textContent = ''; return; }
-    conv.textContent = state._onb.unit === 'imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`;
-  };
-  ['onb-username','onb-weight','onb-pushup','onb-walk','onb-age'].forEach(id => get(id).addEventListener('input', upd));
-  get('onb-weight').addEventListener('input', updConv);
+  const next = get('onb-next'); if (!next) return;   // DOM moved on before this deferred bind ran
+  const o = state._onb;
+  const FIELDS = ['username','weight','pushup','walk','age'];
+  const upd = () => FIELDS.forEach(k => { const e = get('onb-'+k); if (e) o[k] = e.value; });
+  const updConv = () => { const conv = get('onb-weight-conv'); if (!conv) return; const v = parseFloat(get('onb-weight').value); conv.textContent = (v>0) ? (o.unit==='imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`) : ''; };
+  FIELDS.forEach(k => { const e = get('onb-'+k); if (e) e.addEventListener('input', upd); });
+  const wEl = get('onb-weight'); if (wEl) wEl.addEventListener('input', updConv);
+  const gh = get('onb-github'); if (gh) gh.addEventListener('click', ghSignIn);
   document.querySelectorAll('#onb-unit button').forEach(b => b.addEventListener('click', () => {
-    const u = b.getAttribute('data-u'); if (u === state._onb.unit) return;
-    const wEl = get('onb-weight'); const cur = parseFloat(wEl.value);
-    if (cur > 0) wEl.value = u === 'metric' ? fmt1(lbToKg(cur)) : fmt1(kgToLb(cur)); // keep the physical weight
-    state._onb.unit = u;
+    const u = b.getAttribute('data-u'); if (u === o.unit) return;
+    const cur = parseFloat(wEl.value);
+    if (cur > 0) wEl.value = u === 'metric' ? fmt1(lbToKg(cur)) : fmt1(kgToLb(cur));
+    o.unit = u;
     document.querySelectorAll('#onb-unit button').forEach(x => x.classList.toggle('on', x.getAttribute('data-u') === u));
     wEl.placeholder = u === 'imperial' ? '173' : '78.4';
     upd(); updConv();
   }));
   document.querySelectorAll('[data-phase]').forEach(el => el.addEventListener('click', () => {
-    state._onb.phase = Number(el.getAttribute('data-phase'));
-    document.querySelectorAll('[data-phase]').forEach(o => o.classList.remove('selected'));
+    o.phase = Number(el.getAttribute('data-phase'));
+    document.querySelectorAll('[data-phase]').forEach(x => x.classList.remove('selected'));
     el.classList.add('selected');
+    const pv = get('plan-preview'); if (pv) pv.innerHTML = planPreviewHtml(o.phase);
   }));
   updConv();
-  get('onb-continue').addEventListener('click', () => {
+  const back = get('onb-back'); if (back) back.addEventListener('click', () => { o.step = Math.max(1, (o.step||1) - 1); render(); });
+  next.addEventListener('click', () => {
     upd();
-    const slug = slugify(state._onb.username);
-    if (!slug) { toast('Choose a username','error'); return; }
-    const rawW = parseFloat(state._onb.weight);
-    const w = state._onb.unit === 'imperial' ? lbToKg(rawW) : rawW;   // store kg internally
-    const pu=parseInt(state._onb.pushup,10), wk=parseInt(state._onb.walk,10), ag=parseInt(state._onb.age,10);
-    if (!(w>=20 && w<=400))      { toast('Enter a valid body weight','error'); return; }
-    if (!(pu>=0 && pu<=300))     { toast('Enter your max pushups (a number)','error'); return; }
-    if (!(wk>=0 && wk<=600))     { toast('Enter your longest walk in minutes','error'); return; }
-    if (!(ag>=13 && ag<=100))    { toast('Enter a valid age (13–100)','error'); return; }
-    state.settings.units = state._onb.unit;
-    state.activeUser = slug;
-    state.profile = { username: state._onb.username.trim(), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:state._onb.phase, createdAt:Date.now() };
-    state.phase = { phase:state._onb.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
+    const r = o.step || 1;
+    if (r === 1) {
+      if (!slugify(o.username)) { toast('Pick a username to continue','error'); return; }
+      const ag = parseInt(o.age,10); if (!(ag>=13 && ag<=100)) { toast('Enter a valid age (13–100)','error'); return; }
+    }
+    if (r === 2) {
+      const w = o.unit==='imperial' ? lbToKg(parseFloat(o.weight)) : parseFloat(o.weight);
+      if (!(w>=20 && w<=400)) { toast('Enter a valid body weight','error'); return; }
+      const pu = o.pushup==='' ? 0 : parseInt(o.pushup,10), wk = o.walk==='' ? 0 : parseInt(o.walk,10);   // optional → 0
+      if (!(pu>=0 && pu<=300)) { toast('Pushups should be a number (or leave blank)','error'); return; }
+      if (!(wk>=0 && wk<=600)) { toast('Walk minutes should be a number (or leave blank)','error'); return; }
+    }
+    if (r < ONB_REAL) { o.step = r + 1; render(); return; }
+    // finish
+    const w = o.unit==='imperial' ? lbToKg(parseFloat(o.weight)) : parseFloat(o.weight);
+    const pu = o.pushup==='' ? 0 : parseInt(o.pushup,10), wk = o.walk==='' ? 0 : parseInt(o.walk,10), ag = parseInt(o.age,10), slug = slugify(o.username);
+    state.settings.units = o.unit; state.activeUser = slug;
+    state.profile = { username: o.username.trim(), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
+    state.phase = { phase:o.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
     state.pending = [];
     markDirty('profile','phase');
-    logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[state._onb.phase].name}`);
+    logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[o.phase].name}`);
     delete state._onb;
-    navigate('today');
+    celebrate("You're set up. Let's do today's session.", () => navigate('today'));
   });
 }
 
@@ -2033,7 +2141,7 @@ function renderResult(outcomeKey) {
 
 // ---------- LIBRARY ----------
 function renderLibrary() {
-  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Cardio'];
+  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Mobility','Cardio'];
   return `<div class="screen">
     <p class="label">Exercise Library</p><div class="sp-8"></div>
     <h1 class="display-s serif">Form, cues, prescriptions</h1><div class="sp-16"></div>
@@ -2211,10 +2319,19 @@ function renderSettings() {
     <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
     <div class="divider"></div>
     <p class="label">GitHub Sync</p><div class="sp-8"></div>
-    <p class="body-dim" style="font-size: 16px;">Optional. When set, every check commits to a repo so you can use the app from any device. Without this, data stays in this browser only.</p>
+    <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Without this, data stays in this browser only.</p>
     <div class="sp-12"></div>
-    <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
+    ${oauthEnabled() ? `
+      <button id="s-signin">${svgUse('ic-settings',18)} ${isConfigured() ? 'Reconnect GitHub' : 'Sign in with GitHub'}</button>
+      <div class="sp-8"></div>
+      ${isConfigured() ? `<p class="body-dim" style="font-size:14px;">Connected · syncing to <span class="mono" style="font-size:13px;">${escHtml(s.repo)}</span></p><div class="sp-8"></div>` : ''}
+      <details class="adv"><summary>Advanced: paste a token instead</summary><div class="sp-8"></div>
+        <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="you/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+        <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write.</div></div>
+      </details>
+    ` : `
+    <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>`}
     <div class="sp-8"></div>
     <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
     <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
@@ -2246,6 +2363,8 @@ function renderSettings() {
   </div>`;
 }
 function bindSettings() {
+  const signin = document.getElementById('s-signin');
+  if (signin) signin.addEventListener('click', ghSignIn);
   const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
   if (!repo || !pat) return;   // DOM moved on before this deferred bind ran
   repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
