@@ -1,0 +1,619 @@
+'use strict';
+// ============================================================
+// SCREENS
+// ============================================================
+function renderLoading() {
+  return `<div class="screen no-nav"><div class="sp-48"></div><div class="sp-48"></div>
+    <div style="text-align:center;"><img class="brand-logo" src="logo.png" alt="The Hard Part" style="max-width:220px;"></div></div>`;
+}
+
+// ---------- ONBOARDING (stepped wizard; research: docs/EVIDENCE-REVIEW.md + onboarding research) ----------
+const ONB_LABELS = ['Welcome', 'Numbers', 'Plan'];
+const ONB_REAL = 3;
+function planPreviewHtml(phase) {
+  if (phase == null) return '';
+  return `<div class="plan-preview"><span class="label" style="color:var(--mobility);">Your plan</span><div class="sp-4"></div><div class="body">Got it — here's <strong>your</strong> plan: <strong>${escHtml(PHASES[phase].name)}</strong>. We'll move you up the moment you're ready — never before.</div></div>`;
+}
+function renderOnboarding() {
+  const p = state._onb = state._onb || { step:1, username: (state.profile && state.profile.username) || state.activeUser || '', weight:'', pushup:'', walk:'', age:'', phase:0, unit: state.settings.units || 'imperial' };
+  if (!p.step) p.step = 1;
+  setTimeout(bindOnboarding, 0);
+  const imp = p.unit === 'imperial';
+  const r = Math.min(p.step, ONB_REAL), total = ONB_LABELS.length;   // r is 1..3
+  const crumb = `<div class="wiz-head"><div class="wiz-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${r}">${ONB_LABELS.map((_,i)=>`<span class="wiz-seg${i<r?' on':''}"></span>`).join('')}</div><div class="wiz-step">Step ${r} of ${total} · ${ONB_LABELS[r-1]}</div></div>`;
+  let body = '';
+  if (r === 1) body = `
+    <div class="brand"><img class="brand-logo" src="logo.png" alt="The Hard Part"></div>
+    <div class="sp-16"></div>
+    <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="Sisyphus" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
+    <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="42"><div class="help">Keeps your plan age-appropriate — recovery, deloads, and pacing scale with age.</div></div>`;
+  else if (r === 2) body = `
+    <h1 class="display-s serif">Your numbers</h1><div class="sp-4"></div>
+    <p class="body-dim">Two quick self-tests + your weight. Best guess is fine — leave any blank.</p>
+    <div class="sp-16"></div>
+    <div class="field"><div class="unit-row"><label for="onb-weight">Body weight</label>
+      <div class="seg" id="onb-unit"><button type="button" data-u="imperial" class="${imp?'on':''}">lb</button><button type="button" data-u="metric" class="${imp?'':'on'}">kg</button></div></div>
+      <div class="conv-wrap"><input type="number" inputmode="decimal" id="onb-weight" step="0.1" value="${p.weight}" placeholder="${imp?'173':'78.4'}"><span class="conv" id="onb-weight-conv"></span></div>
+      <div class="help">Sets your starting strength loads.</div></div>
+    <div class="field"><label for="onb-pushup">Pushup test <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-pushup" value="${p.pushup}" placeholder="how many?"><div class="help">Good-form reps only — stop when form slips, never to failure or pain.</div></div>
+    <div class="field"><label for="onb-walk">Walk test <span class="body-dim" style="font-size:12px;">· optional</span></label><input type="number" inputmode="numeric" id="onb-walk" value="${p.walk}" placeholder="minutes"><div class="help">Longest you can walk nonstop at an easy, can-still-talk pace.</div></div>`;
+  else body = `
+    <h1 class="display-s serif">Where are you starting from?</h1><div class="sp-4"></div>
+    <p class="body-dim" style="font-size:14px;">Not sure? Pick the first — the safe default. The app moves you up as fast as you are ready.</p><div class="sp-12"></div>
+    ${[
+      {i:0,t:'New — or back after a break',s:'Walking + mobility, then strength. Recommended.'},
+      {i:1,t:'I exercise sometimes',s:'Strength 2× a week with easy cardio.'},
+      {i:2,t:'I train regularly',s:'Run-walk, strength continuing underneath.'}
+     ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
+    <div id="plan-preview">${planPreviewHtml(p.phase)}</div>`;
+  const isLast = r === ONB_REAL;
+  const nav = `<div class="sp-20"></div><div style="display:flex;gap:12px;">${r>1?`<button class="secondary" id="onb-back" style="width:auto;flex:0 0 auto;padding:0 22px;">Back</button>`:''}<button id="onb-next" style="flex:1;">${isLast?'Start my first session':'Next'}</button></div>`;
+  return `<div class="screen no-nav onb">${crumb}<div class="sp-12"></div>${body}${nav}</div>`;
+}
+function bindOnboarding() {
+  const get = id => document.getElementById(id);
+  const next = get('onb-next'); if (!next) return;   // DOM moved on before this deferred bind ran
+  const o = state._onb;
+  const FIELDS = ['username','weight','pushup','walk','age'];
+  const upd = () => FIELDS.forEach(k => { const e = get('onb-'+k); if (e) o[k] = e.value; });
+  const updConv = () => { const conv = get('onb-weight-conv'); if (!conv) return; const v = parseFloat(get('onb-weight').value); conv.textContent = (v>0) ? (o.unit==='imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`) : ''; };
+  FIELDS.forEach(k => { const e = get('onb-'+k); if (e) e.addEventListener('input', upd); });
+  const wEl = get('onb-weight'); if (wEl) wEl.addEventListener('input', updConv);
+  document.querySelectorAll('#onb-unit button').forEach(b => b.addEventListener('click', () => {
+    const u = b.getAttribute('data-u'); if (u === o.unit) return;
+    const cur = parseFloat(wEl.value);
+    if (cur > 0) wEl.value = u === 'metric' ? fmt1(lbToKg(cur)) : fmt1(kgToLb(cur));
+    o.unit = u;
+    document.querySelectorAll('#onb-unit button').forEach(x => x.classList.toggle('on', x.getAttribute('data-u') === u));
+    wEl.placeholder = u === 'imperial' ? '173' : '78.4';
+    upd(); updConv();
+  }));
+  document.querySelectorAll('[data-phase]').forEach(el => el.addEventListener('click', () => {
+    o.phase = Number(el.getAttribute('data-phase'));
+    document.querySelectorAll('[data-phase]').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    const pv = get('plan-preview'); if (pv) pv.innerHTML = planPreviewHtml(o.phase);
+  }));
+  updConv();
+  const back = get('onb-back'); if (back) back.addEventListener('click', () => { o.step = Math.max(1, (o.step||1) - 1); render(); });
+  next.addEventListener('click', () => {
+    upd();
+    const r = o.step || 1;
+    if (r === 1) {
+      if (!slugify(o.username)) { toast('Pick a username to continue','error'); return; }
+      const slug = slugify(o.username);
+      // Block a name that collides with an existing persona on this device (distinct names can slugify the same),
+      // so onboarding never silently overwrites someone else's saved data.
+      if (slug !== state.activeUser && localStorage.getItem(userStateKey(slug))) { toast('That name is already used on this device — pick another, or load it from Settings.','error'); return; }
+      const ag = parseInt(o.age,10); if (!(ag>=13 && ag<=100)) { toast('Enter a valid age (13–100)','error'); return; }
+    }
+    if (r === 2) {
+      const w = o.unit==='imperial' ? lbToKg(parseFloat(o.weight)) : parseFloat(o.weight);
+      if (!(w>=20 && w<=400)) { toast('Enter a valid body weight','error'); return; }
+      const pu = o.pushup==='' ? 0 : parseInt(o.pushup,10), wk = o.walk==='' ? 0 : parseInt(o.walk,10);   // optional → 0
+      if (!(pu>=0 && pu<=300)) { toast('Pushups should be a number (or leave blank)','error'); return; }
+      if (!(wk>=0 && wk<=600)) { toast('Walk minutes should be a number (or leave blank)','error'); return; }
+    }
+    if (r < ONB_REAL) { o.step = r + 1; render(); return; }
+    // finish
+    const w = o.unit==='imperial' ? lbToKg(parseFloat(o.weight)) : parseFloat(o.weight);
+    const pu = o.pushup==='' ? 0 : parseInt(o.pushup,10), wk = o.walk==='' ? 0 : parseInt(o.walk,10), ag = parseInt(o.age,10), slug = slugify(o.username);
+    state.settings.units = o.unit; state.activeUser = slug;
+    state.profile = { username: o.username.trim().slice(0,40), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
+    state.phase = { phase:o.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
+    state.pending = [];
+    markDirty('profile','phase');
+    logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[o.phase].name}`);
+    delete state._onb;
+    celebrate("You're set up. Let's do today's session.", () => navigate('today'));
+  });
+}
+
+// ---------- TODAY ----------
+// Why-this-session rationale (grounded in docs/EVIDENCE-REVIEW.md)
+function dayWhy() {
+  const ph = state.phase?.phase ?? 0;
+  const blocks = currentDayPlan().blocks;
+  const hasStr = blocks.some(b => b.kind === 'strength');
+  const hasRun = blocks.some(b => /run/i.test(b.title) || /run/i.test(b.label));
+  const hasWalk = blocks.some(b => b.kind === 'cardio') && !hasRun;
+  if (ph === 0) return { line: "Build the slowest tissue first — tendons and bone lag your heart and muscles.", points: [
+    "Phase 0 is deliberately low-impact: daily walking, 10-min PT (balance, hips, calves), and protein — no loaded lifting or running yet.",
+    "Connective tissue and bone adapt over months while muscle and cardio adapt in weeks, so we prep the structure before the stress (Bohm/Arampatzis, Sports Med 2015).",
+    "Single-leg balance and hip work is the base that keeps knees and shins healthy once running starts." ] };
+  if (ph >= 4) return { line: "Get faster and more durable with quality sets and quick movements — not 100 grinding reps.", points: [
+    "Strength 2-3x/week at RIR 2-3 plus a little power (fast sit-to-stands, step-ups) and brief impact bone-snacks beats high-volume daily work for 40+.",
+    "Near-daily training to failure raises injury risk without extra benefit at this age — quality and recovery win.",
+    "Keep building toward 10K with the +10% session cap and a lighter week every 4-6 weeks." ] };
+  if (hasRun) return { line: "Each run grows at most ~10% over your longest recent run — no hero sessions.", points: [
+    "A single run that spikes far past what you have recently done is the strongest injury trigger, so we cap the jump, not the week (Johansen/Nielsen, BJSM 2025).",
+    "Run-walk on non-consecutive days keeps impact tolerable while tendons and bone catch up.",
+    "Novice and 40+ runners are the highest-risk group — easing in is the whole point." ] };
+  if (hasStr) return { line: "Strength is your #1 injury insurance — and we stop 2-3 reps short of failure.", points: [
+    "Resistance training cuts overuse injuries roughly in half (Lauersen, BJSM 2018) — the most evidence-backed thing in this program.",
+    "Leave ~2-3 good reps in the tank (RIR 2-3); add load only after you hit your reps cleanly two sessions in a row.",
+    "The heavy, slow calf and leg work is tendon-prep — it stiffens the tendons running will pound (Bohm/Arampatzis, 2015)." ] };
+  if (hasWalk) return { line: "Easy, conversational cardio builds the aerobic base you can sustain without breaking down.", points: [
+    "Easy, conversational pace (you can talk in full sentences) grows the engine with minimal injury risk.",
+    "Aerobic fitness (VO2max) is among the strongest predictors of long-term health (Kokkinos, JACC 2022).",
+    "This volume is the foundation your runs are built on." ] };
+  return { line: "Recovery outranks everything — today's job is to let adaptation happen.", points: [
+    "Rest and easy movement are when the work you did turns into fitness.",
+    "Sleep, hydration, and protein (~1.6 g/kg/day spread across meals) drive recovery, especially at 40+." ] };
+}
+
+function renderToday() {
+  ensureSession();
+  pruneInjury();
+  const phaseIdx = state.phase?.phase ?? 0;
+  const pd = PHASES[phaseIdx];
+  const dayInWeek = state.phase?.dayInWeek ?? 1;
+  const dayPlan = currentDayPlan();
+  const who = state.profile?.username ? `${state.profile.username} · ` : '';
+  const crumb = `${who}Phase ${phaseIdx} · Wk ${state.phase?.week ?? 1} · Session ${dayInWeek}/${pd.week.length}`;
+  const todayChecks = state.checks.filter(c => c.date === isoToday());
+  const lastToday = todayChecks[todayChecks.length - 1];
+  const why = dayWhy();
+  const whyOpen = !!state.ui.whyOpen;
+  const layoff = layoffTier();
+  const counts = sessionCounts();
+  const recent = state.checks.slice(-14);
+  let trend = '';
+  if (recent.length >= 2) {
+    const avg = recent.reduce((s,c)=>s+(c.feel||0),0)/recent.length;
+    const adh = Math.round(recent.filter(c=>c.goalMet==='done').length/recent.length*100);
+    trend = `Readiness ~${avg.toFixed(1)}/5 over your last ${recent.length} check-ins · ${adh}% sessions completed · ${state.phase?.sessionsCleared ?? 0} progressions so far.`;
+  }
+  return `<div class="screen">
+    <div class="screen-head">
+      <div class="col"><span class="crumb">${escHtml(crumb)}</span><div class="sp-4"></div><span class="sync"></span></div>
+      <button class="icon" data-go="settings" title="Settings">${svgUse('ic-settings',22)}</button>
+    </div>
+    <h1 class="display-m serif">${escHtml(pd.name)}</h1>
+    <div class="sp-4"></div>
+    <p class="title" style="color:var(--mobility);">${dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery'}</p>
+    <div class="sp-16"></div>
+    <div style="margin-bottom:12px;">
+      <button class="today-block" data-exp-why aria-expanded="${whyOpen?'true':'false'}">
+        <div class="card" style="padding:14px 16px;border:1px solid var(--rule);">
+          <div class="rx-head"><div class="col"><span class="label" style="color:var(--milestone);">Today · why</span><div class="sp-4"></div><div class="body">${escHtml(why.line)}</div></div><div class="rx-chev">${svgUse('ic-chev-right',20)}</div></div>
+        </div>
+      </button>
+      <div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:12px 14px;border:1px solid var(--rule);margin-top:8px;">
+        ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
+        ${trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(trend)}</p>`:''}
+        <div class="sp-8"></div><button class="more" data-go="settings">Full evidence base &rarr;</button>
+      </div></div>
+    </div>
+    ${layoff ? `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>` : ''}
+    ${(!layoff && !injuryActive() && deloadActive()) ? `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>` : ''}
+    ${(() => { const sc = standingCall(); return sc ? `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>` : ''; })()}
+    <p class="label">Today's goal${counts.total?` · <span class="rx-count">${counts.done}/${counts.total} done</span>`:''}</p><div class="sp-8"></div>
+    ${dayPlan.blocks.map((b,i)=>{
+      const exs = exercisesForBlock(b.key);
+      const bdone = exs.filter(e=>exDone(e.key)).length;
+      const head = `<div class="card-block ${b.kind}"><div class="stripe"></div>
+        <div class="card" style="padding:14px 16px;"><div class="rx-head"><div class="col">
+          <span class="label">${escHtml(b.label)}</span><div class="sp-4"></div>
+          <div class="title">${escHtml(b.title)}</div>${b.detail?`<div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div>`:''}
+        </div><div class="col" style="align-items:flex-end;gap:6px;">${exs.length?`<span class="rx-count">${bdone}/${exs.length}</span><div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div></div>`;
+      if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
+      const open = !!state.ui.openBlocks[i];
+      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
+      const todo = exs.filter(e=>!exDone(e.key));
+      const done = exs.filter(e=>exDone(e.key));
+      const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">
+        ${todo.length?`<div class="ex-grid">${todo.map(card).join('')}</div>`:''}
+        ${todo.length?`<button class="markall" data-markall="${escHtml(b.key)}">${svgUse('ic-check',14)} Mark all ${exs.length} complete</button>`:''}
+        ${done.length?`<div class="ex-done-label">${svgUse('ic-check',14)} Completed (${done.length})</div><div class="ex-grid">${done.map(card).join('')}</div>`:''}
+      </div>`;
+      return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
+    }).join('')}
+    ${(() => {
+      if (standingCall()) return '';   // the recovering card above is the active call
+      const lastAny = state.checks[state.checks.length - 1];
+      const carried = (!lastToday && !layoff && lastAny && lastAny.date !== isoToday() && daysSinceLastCheck() <= 2 && ['rest','modify','repeat'].includes(lastAny.decision)) ? lastAny : null;
+      const c = lastToday || carried; if (!c) return '';
+      const o = OUTCOMES[c.decision] || OUTCOMES.repeat;
+      const lbl = lastToday ? "Today's call" : 'Still standing · your last call';
+      return `<div class="sp-12"></div><div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${lbl}</span><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>`;
+    })()}
+    <div class="sp-32"></div>
+    <button data-go="check">${lastToday ? 'Check in again' : 'Daily check-in'}</button>
+    <div class="sp-16"></div>
+  </div>`;
+}
+
+// ---------- CHECK ----------
+function bodyMap(sel) {
+  const seg = (part,x,y,w,h)=>`<rect class="bm-seg${sel.includes(part)?' sel':''}" data-part="${part}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/>`;
+  return `<svg viewBox="0 0 100 188" class="bodymap" aria-label="Body map — tap where it hurts">
+    <circle class="bm-seg${sel.includes('head/neck')?' sel':''}" data-part="head/neck" cx="50" cy="13" r="10"/>
+    ${seg('left shoulder',26,26,16,9)}${seg('right shoulder',58,26,16,9)}
+    ${seg('chest',38,30,24,15)}${seg('core',39,47,22,15)}
+    ${seg('left arm',21,30,11,44)}${seg('right arm',68,30,11,44)}
+    ${seg('hip / groin',37,64,26,12)}
+    ${seg('left thigh',38,78,11,33)}${seg('right thigh',51,78,11,33)}
+    ${seg('left knee',38,112,11,9)}${seg('right knee',51,112,11,9)}
+    ${seg('left lower leg',39,122,10,36)}${seg('right lower leg',51,122,10,36)}
+    ${seg('left foot',35,159,13,9)}${seg('right foot',52,159,13,9)}
+  </svg>`;
+}
+function renderCheck() {
+  ensureSession();
+  const { done, total } = sessionCounts();
+  const allEx = total > 0 && done === total;
+  state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: [], redFlag: false };
+  if (!state._chk.parts) state._chk.parts = [];
+  setTimeout(bindCheck, 0);
+  const t = state._chk;
+  const ready = t.goalMet && t.feel;
+  const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
+  const reChk = injuryActive();
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <h1 class="display-s serif">${reChk ? 'Pain re-check' : 'Daily check-in'}</h1>
+    <div class="sp-8"></div>
+    <p class="body-dim">${reChk ? 'Still sore, or good to ease back in?' : 'A tap or two — the app picks the call.'}</p>
+    <div class="sp-24"></div>
+    <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
+    <div class="chip-row" data-q="goal">
+      <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">Done</button>
+      <button class="chip ${t.goalMet==='partial'?'active':''}" data-val="partial">Partial</button>
+      <button class="chip no ${t.goalMet==='missed'?'active':''}" data-val="missed">Missed</button>
+    </div>
+    <div class="sp-24"></div>
+    <p class="label">How do you feel?</p><div class="sp-8"></div>
+    <div class="feel-grid" data-q="feel">
+      ${[5,4,3,2,1].map(v=>`<button class="feel ${t.feel===v?'active':''} feel-${v}" data-val="${v}">
+        <span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
+    </div>
+    <div class="sp-20"></div>
+    <button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Something hurts — tap to clear':'Something hurts?'}</button>
+    ${t.hurt ? `<div class="sp-16"></div>
+      <p class="label">Where? Tap all that apply.</p><div class="sp-8"></div>
+      ${bodyMap(t.parts)}
+      <div class="bm-chips">${['lower back','glute','hamstring','calf','Achilles'].map(p=>`<button class="bm-chip${t.parts.includes(p)?' sel':''}" data-part="${p}">${p}</button>`).join('')}</div>
+      <div class="sp-16"></div>
+      <button class="hurt-toggle ${t.redFlag?'on':''}" id="chk-flag" style="text-align:left;padding:10px 14px;height:auto;min-height:56px;font-size:14px;">${t.redFlag?'⚠ Warning sign flagged — we will route you to a clinician':'Any of: cannot bear weight · bone-point tenderness · numbness · deformity · locking/giving way · a "pop" · rapid swelling?'}</button>` : ''}
+    <div class="sp-24"></div>
+    <button id="chk-go" ${ready?'':'disabled'}>See the call</button>
+    <div class="sp-16"></div>
+    <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016). Pain — or a flagged warning sign — routes you to rest/clinical care, and the program then eases you back with pain-monitored loading.</p>
+  </div>`;
+}
+function bindCheck() {
+  const goal = document.querySelector('[data-q="goal"]');
+  if (!goal) return;   // DOM moved on before this deferred bind ran
+  goal.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    state._chk.goalMet = btn.getAttribute('data-val');
+    goal.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); refreshGo();
+  }));
+  const feel = document.querySelector('[data-q="feel"]');
+  feel.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    state._chk.feel = Number(btn.getAttribute('data-val'));
+    feel.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); refreshGo();
+  }));
+  document.getElementById('chk-hurt').addEventListener('click', () => {
+    state._chk.hurt = !state._chk.hurt;
+    if (!state._chk.hurt) { state._chk.parts = []; state._chk.redFlag = false; }
+    render();
+  });
+  const flag = document.getElementById('chk-flag');
+  if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
+  document.querySelectorAll('[data-part]').forEach(el => el.addEventListener('click', () => {
+    const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
+    if (i >= 0) state._chk.parts.splice(i,1); else state._chk.parts.push(p);
+    el.classList.toggle('sel');
+  }));
+  function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
+  document.getElementById('chk-go').addEventListener('click', () => {
+    const t = state._chk;
+    if (!(t.goalMet && t.feel)) return;
+    const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
+    state.ui.resultOutcome = outcome;
+    delete state._chk;
+    navigate('result', { outcome: outcome.key });
+  });
+}
+
+// ---------- RESULT ----------
+function renderResult(outcomeKey) {
+  const o = (state.ui.resultOutcome && state.ui.resultOutcome.key === outcomeKey) ? state.ui.resultOutcome : (OUTCOMES[outcomeKey] || OUTCOMES.repeat);
+  let modifyHtml = '';
+  if (o.key === 'modify') {
+    const blocks = currentDayPlan().blocks.map(modifyBlock);
+    modifyHtml = `<div class="sp-20"></div><p class="label">Today, easier</p><div class="sp-8"></div>
+      ${blocks.map(b=>`<div class="card-block milestone" style="margin-bottom:10px;"><div class="stripe"></div>
+        <div class="card" style="padding:12px 14px;"><div class="title">${escHtml(b.title)}</div>
+        <div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div></div></div>`).join('')}`;
+  }
+  const advanced = o.key === 'progress';
+  return `<div class="screen no-nav">
+    <div class="sp-24"></div>
+    <p class="label">The call</p><div class="sp-8"></div>
+    <h1 class="display-l serif" style="color:var(--${o.cls});">${escHtml(o.title)}</h1>
+    <div class="sp-24"></div>
+    <p class="label">What to do</p><div class="sp-8"></div>
+    <p class="headline serif">${escHtml(o.action)}</p>
+    ${modifyHtml}
+    <div class="sp-24"></div>
+    <p class="label">Why</p><div class="sp-8"></div>
+    <p class="body">${escHtml(o.why)}</p>
+    <div class="sp-48"></div>
+    <button data-go="today">${advanced ? 'Start next session' : 'Got it'}</button>
+    <div class="sp-12"></div>
+    <p class="body-dim" style="font-size: 14px;">Source: Saw, Main &amp; Gastin BJSM 2016. Hooper &amp; Mackinnon MSSE 1995. Lally et al. 2010 (a single miss does not erase progress).</p>
+  </div>`;
+}
+
+// ---------- LIBRARY ----------
+function renderLibrary() {
+  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Kettlebell','Mobility','Cardio'];
+  return `<div class="screen">
+    <p class="label">Exercise Library</p><div class="sp-8"></div>
+    <h1 class="display-s serif">Form, cues, prescriptions</h1><div class="sp-16"></div>
+    ${cats.map(cat=>{ const list=EXERCISES.filter(e=>e.cat===cat); if(!list.length) return '';
+      return `<div class="cat-header">${escHtml(cat)}</div>
+        ${list.map(ex=>`<button class="lib-row" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">
+          <div class="fig">${animatedFigure(ex,44)}</div>
+          <div class="text"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div></div>
+          <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}`; }).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+function renderExerciseDetail(key) {
+  const ex = EXERCISES.find(e => e.key === key);
+  if (!ex) return `<div class="screen no-nav"><div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div><p>Not found.</p></div>`;
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
+    <h1 class="display-s serif">${escHtml(ex.name)}</h1><div class="sp-4"></div>
+    <p class="mono" style="color:var(--milestone); font-size: 16px; letter-spacing:0.06em;">${escHtml(ex.rx)}</p>
+    <div class="fig-hero">${animatedFigure(ex,170)}</div>
+    <p class="label">Steps</p><div class="sp-8"></div>
+    <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
+    <div class="divider"></div>
+    <p class="label" style="color:var(--milestone);">Cue</p><div class="sp-8"></div>
+    <p class="body">${escHtml(ex.cue)}</p>
+    <div class="sp-32"></div>
+  </div>`;
+}
+
+// ---------- PROGRESS ----------
+function renderProgress() {
+  setTimeout(drawReadiness, 0);
+  const cleared = state.phase?.sessionsCleared ?? 0;
+  const pd = PHASES[state.phase?.phase ?? 0];
+  const recent = state.checks.slice(-14);
+  const done = recent.filter(c=>c.goalMet==='done').length;
+  const partial = recent.filter(c=>c.goalMet==='partial').length;
+  const missed = recent.filter(c=>c.goalMet==='missed').length;
+  const mix = {
+    progress: state.checks.filter(c=>c.decision==='progress').length,
+    repeat:   state.checks.filter(c=>c.decision==='repeat').length,
+    modify:   state.checks.filter(c=>c.decision==='modify').length,
+    rest:     state.checks.filter(c=>c.decision==='rest').length,
+  };
+  return `<div class="screen">
+    <p class="label">Progress</p><div class="sp-8"></div>
+    <h1 class="display-s serif">Where you are.</h1><div class="sp-16"></div>
+    <div class="card" style="margin-bottom:12px;">
+      <span class="label">Program position</span><div class="sp-8"></div>
+      <div class="headline serif">${escHtml(pd.name)} · Week ${state.phase?.week ?? 1}</div>
+      <div class="body-dim" style="margin-top:4px;">Session ${state.phase?.dayInWeek ?? 1} of ${pd.week.length} · ${cleared} session${cleared===1?'':'s'} cleared total</div>
+    </div>
+    <div class="chart" data-chart="chart-readiness" data-color="cardio">
+      <div class="top"><div class="title">Readiness</div><div class="label-sm">feel 1–5</div></div>
+      <canvas id="chart-readiness" height="120"></canvas>
+      <div class="bottom" id="chart-readiness-bottom"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <span class="label">Last 14 check-ins</span><div class="sp-12"></div>
+      <div class="row between"><span class="body">Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <span class="label">All-time calls</span><div class="sp-12"></div>
+      <div class="row between"><span class="body">Progressed</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Repeated</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Modified</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div><div class="sp-4"></div>
+      <div class="row between"><span class="body">Rested</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
+    </div>
+    <div class="sp-32"></div>
+  </div>`;
+}
+function drawReadiness() {
+  const canvas = document.getElementById('chart-readiness');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cssColor = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
+  const values = state.checks.slice(-20).map(c => c.feel);
+  const w = canvas.clientWidth, h = 120;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+  const bottom = document.getElementById('chart-readiness-bottom');
+  if (values.length < 2) {
+    ctx.fillStyle = cssColor('paper-low'); ctx.font = "13px 'IBM Plex Sans', sans-serif"; ctx.textAlign='center';
+    ctx.fillText(values.length===0 ? 'Check in to see readiness' : 'Need two check-ins', w/2, h/2);
+    if (bottom) bottom.innerHTML = ''; return;
+  }
+  const pad = 8, mn = 1, mx = 5, span = mx - mn;
+  ctx.strokeStyle = cssColor('rule'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  [2].forEach(y => { const ny = pad + (h-pad*2) - ((y-mn)/span)*(h-pad*2); ctx.beginPath(); ctx.moveTo(pad,ny); ctx.lineTo(w-pad,ny); ctx.stroke(); });
+  ctx.setLineDash([]);
+  ctx.strokeStyle = cssColor('cardio'); ctx.lineWidth = 2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath();
+  values.forEach((v,i)=>{ const x=pad+(i/(values.length-1))*(w-pad*2); const y=pad+(h-pad*2)-((v-mn)/span)*(h-pad*2); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.stroke();
+  ctx.fillStyle = cssColor('cardio');
+  values.forEach((v,i)=>{ const x=pad+(i/(values.length-1))*(w-pad*2); const y=pad+(h-pad*2)-((v-mn)/span)*(h-pad*2); ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); });
+  if (bottom) { const last = values[values.length-1]; bottom.innerHTML = `<span>Latest ${FEEL_LABELS[last]}</span><span>${values.length} check-ins</span>`; }
+}
+window.addEventListener('resize', () => { if (state.ui.screen === 'progress') drawReadiness(); });
+
+// ---------- PHASE LIST / DETAIL ----------
+function renderPhaseList() {
+  const curIdx = state.phase?.phase ?? 0;
+  return `<div class="screen">
+    <p class="label">Full Progression</p><div class="sp-8"></div>
+    <h1 class="display-s serif">Five phases.<br>Each earns the next.</h1><div class="sp-20"></div>
+    ${PHASES.map(p=>`<button class="lib-row" data-go="phaseDetail" data-p-index="${p.index}" style="grid-template-columns:1fr 16px; height:auto; padding:14px 16px; ${p.index===curIdx?'background:var(--surface-1);border:1px solid var(--milestone);':''}">
+      <div class="text"><div class="row between"><span class="label">PHASE 0${p.index}</span>${p.index===curIdx?'<span class="label" style="color:var(--milestone);">CURRENT</span>':''}</div>
+      <div class="headline serif" style="margin-top:4px;">${escHtml(p.name)}</div>
+      <div class="body-dim" style="margin-top:2px;">${escHtml(p.weeks)}</div>
+      <div class="body-dim" style="margin-top:8px;">${escHtml(p.summary)}</div></div>
+      <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+function renderPhaseDetail(index) {
+  const p = PHASES[Number(index)||0];
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <p class="label">Phase 0${p.index}</p><div class="sp-8"></div>
+    <h1 class="display-s serif">${escHtml(p.name)}</h1><div class="sp-4"></div>
+    <p class="label-sm" style="color:var(--milestone);">${escHtml(p.weeks)}</p><div class="sp-16"></div>
+    <p class="body">${escHtml(p.summary)}</p>
+    <div class="sp-24"></div><p class="label">Focus this phase</p><div class="sp-8"></div>
+    ${p.focus.map(f=>`<p class="body" style="margin:4px 0;">•  ${escHtml(f)}</p>`).join('')}
+    <div class="sp-20"></div><p class="label">Exit criteria</p><div class="sp-8"></div>
+    ${p.exit.map(f=>`<p class="body" style="margin:4px 0;">•  ${escHtml(f)}</p>`).join('')}
+    <div class="divider"></div><p class="label">Sample week</p><div class="sp-12"></div>
+    ${p.week.map(d=>`<div style="margin-bottom:12px;"><div class="title-sm" style="color:var(--paper-dim); margin-bottom:6px;">${escHtml(d.day)}</div>
+      ${d.blocks.map(b=>`<div class="card-block ${b.kind}" style="margin-bottom:6px;"><div class="stripe"></div>
+        <div class="card" style="padding:10px 12px;"><span class="label">${escHtml(b.label)}</span><div style="margin-top:2px;font-size: 17px;">${escHtml(b.title)}</div></div></div>`).join('')}
+      </div>`).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+
+// ---------- ACTIVITY LOG ----------
+function renderLog() {
+  setTimeout(bindLog, 0);
+  const log = (state.log || []).slice().reverse();
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <h1 class="display-s serif">Activity log</h1><div class="sp-8"></div>
+    <p class="body-dim">A timestamped record of every check-in, call, progression, injury, layoff, and sync for ${escHtml(state.profile?.username || 'this persona')}.</p>
+    <div class="sp-16"></div>
+    ${log.length ? log.map(e => `<div class="logrow"><div class="logtime">${escHtml(fmtLogTime(e.ts))}</div><div class="logbody"><span class="logtype ${escHtml(e.type)}">${escHtml(e.type)}</span>${escHtml(e.text)}</div></div>`).join('') : '<p class="body-dim">No activity yet — your first check-in will show up here.</p>'}
+    <div class="sp-20"></div>
+    <button class="secondary" id="log-export">Export log (JSON)</button>
+    <div class="sp-32"></div>
+  </div>`;
+}
+function bindLog() {
+  const ex = document.getElementById('log-export');
+  if (ex) ex.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), user: state.profile?.username, log: state.log || [] }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = `foundation-log-${activeSlug()||'me'}-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
+    toast('Log downloaded', 'success');
+  });
+}
+
+// ---------- SETTINGS ----------
+function renderSettings() {
+  const s = state.settings;
+  setTimeout(bindSettings, 0);
+  return `<div class="screen no-nav">
+    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
+    <h1 class="display-s serif">Settings</h1><div class="sp-20"></div>
+    <p class="label">Persona</p><div class="sp-8"></div>
+    <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona keeps its own files in the repo: <span class="mono" style="font-size:13px;">data/users/${escHtml(activeSlug()||'…')}/</span></p>
+    <div class="sp-12"></div>
+    <div class="field"><label for="s-user">Switch / load a persona</label><input type="text" id="s-user" value="${escHtml(activeSlug())}" placeholder="username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Type a username, then load it from GitHub to use this device as that persona.</div></div>
+    <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
+    <div class="divider"></div>
+    <p class="label">GitHub Sync</p><div class="sp-8"></div>
+    <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Without this, data stays in this browser only.</p>
+    <div class="sp-12"></div>
+    ${isConfigured() ? `<p class="body-dim" style="font-size:14px;">Connected · syncing to <span class="mono" style="font-size:13px;">${escHtml(s.repo)}</span></p><div class="sp-8"></div>` : ''}
+    <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
+    <div class="sp-8"></div>
+    <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
+    <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
+    <div class="sp-24"></div>
+    <div class="row between"><div><div class="title">Auto-sync</div><div class="body-dim" style="font-size: 16px;">Push every change automatically.</div></div>
+      <label class="switch"><input type="checkbox" id="s-autosync" ${s.autoSync?'checked':''}><span class="slider"></span></label></div>
+    <div class="divider"></div>
+    <p class="label">Data</p><div class="sp-12"></div>
+    <button class="secondary" data-go="log">Activity log</button><div class="sp-8"></div>
+    <button class="secondary" id="s-export">Export JSON</button><div class="sp-8"></div>
+    <button class="danger" id="s-reset">Reset all local data…</button>
+    <div class="divider"></div>
+    <p class="label">How the call is made</p><div class="sp-8"></div>
+    <p class="body-dim" style="font-size: 16px;">Each day you answer two things: did you meet the goal, and how do you feel. The app maps that to one of four calls. Progress only when you did the work and feel good or great. Feel rough, it gives an easier version. Feel wrecked or flag pain, it rests you. Anything in between repeats the session so you consolidate before adding load.</p>
+    <div class="divider"></div>
+    <p class="label">About</p><div class="sp-8"></div>
+    <p class="body">The Hard Part v${APP_VERSION}.</p>
+    <p class="body-dim" style="font-size: 16px; margin-top:4px;">Evidence-based 40-week framework. Local-first, no telemetry. Sync optional via GitHub Contents API.</p>
+    <div class="sp-16"></div>
+    <p class="label">Evidence base</p><div class="sp-8"></div>
+    ${['Hooper SL et al. Markers for monitoring overtraining and recovery. Med Sci Sports Exerc 1995;27(1):106–112.',
+       'Saw AE, Main LC, Gastin PB. Subjective self-reported measures trump objective measures: a systematic review. Br J Sports Med 2016;50(5):281–291.',
+       'Lally P et al. How are habits formed: modelling habit formation in the real world. Eur J Soc Psychol 2010;40(6):998–1009.',
+       'Kokkinos P et al. J Am Coll Cardiol 2022;80(6):598–609.',
+       'Kokura Y et al. Clin Nutr ESPEN 2024;63:417–426.',
+       'Nielsen Norman Group. Dark Mode: How Users Think About It. 2023.'
+      ].map(c=>`<p class="body-dim" style="font-size: 14px; margin:4px 0;">${escHtml(c)}</p>`).join('')}
+    <div class="sp-32"></div>
+  </div>`;
+}
+function bindSettings() {
+  const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
+  if (!repo || !pat) return;   // DOM moved on before this deferred bind ran
+  repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
+  pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
+  autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
+  const loaduser = document.getElementById('s-loaduser');
+  if (loaduser) loaduser.addEventListener('click', async () => {
+    const slug = slugify(document.getElementById('s-user').value);
+    if (!slug) { toast('Enter a username','error'); return; }
+    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    if (!confirm(`Switch this device to persona "${slug}" and load its data from GitHub?`)) return;
+    state.activeUser = slug;
+    localStorage.setItem(ACTIVE_KEY, slug);
+    loadUserState(slug);            // use any local copy first
+    await syncFromRemote();         // then pull the latest for this persona
+    saveLocal();
+    if (state.profile) logEvent('persona', `Loaded persona "${slug}" from GitHub`);
+    navigate(state.profile ? 'today' : 'onboarding');
+    toast(state.profile ? `Loaded persona ${slug}` : `No data yet for ${slug} — set it up`, state.profile ? 'success' : 'error');
+  });
+  document.getElementById('s-test').addEventListener('click', async () => {
+    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    if (!activeSlug()) { toast('Set a username first (finish onboarding)','error'); return; }
+    state.pending = [...DATA_KEYS]; await syncToRemote();
+    if (state.ui.syncStatus==='online') logEvent('sync', 'Pushed all data to GitHub');
+    toast(state.ui.syncStatus==='online'?'Pushed to GitHub':'Sync failed — check repo and token', state.ui.syncStatus==='online'?'success':'error');
+  });
+  document.getElementById('s-pull').addEventListener('click', async () => {
+    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    if (!confirm('Replace local data with what is in GitHub?')) return;
+    await syncFromRemote(); logEvent('sync', 'Pulled all data from GitHub'); render(); toast('Pulled from GitHub','success');
+  });
+  document.getElementById('s-export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), appVersion:APP_VERSION, profile:state.profile, phase:state.phase, checks:state.checks }, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=`foundation-export-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
+    toast('Downloaded','success');
+  });
+  document.getElementById('s-reset').addEventListener('click', () => {
+    if (!confirm('Delete this persona\'s profile, checks, and progress on this device? GitHub data is untouched.')) return;
+    const slug = activeSlug();
+    if (slug) localStorage.removeItem(userStateKey(slug));
+    // Fully zero the in-memory persona (mirrors loadUserState('')) so nothing — log, injury, session,
+    // or the active-user pointer — bleeds into the next persona created from onboarding.
+    state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
+    state.session=null; state.injury=null; state.log=[]; state._preDay=null;
+    state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}
+    navigate('onboarding'); toast('Local data cleared','success');
+  });
+}
+
+// ============================================================
