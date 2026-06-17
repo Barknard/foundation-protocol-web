@@ -1,5 +1,16 @@
 [
   {
+    "ts": 1000,
+    "date": "2026-06-10",
+    "goalMet": "done",
+    "feel": 4,
+    "hurt": false,
+    "decision": "progress",
+    "phase": 1,
+    "week": 1,
+    "dayInWeek": 1
+  },
+  {
     "ts": 2000,
     "date": "2026-06-11",
     "goalMet": "done",
