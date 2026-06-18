@@ -92,5 +92,24 @@ button, .btn, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg
 html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in the PWA */
 @media (max-width: 380px) {
   :root { --pad: 18px; }
-  .screen { padding-top: 44px; }
 }
+
+/* ---------- TODAY: compact layout (button above the fold on phones) ---------- */
+.today-focus { font-family: 'Fraunces', serif; font-weight: 700; font-size: 21px; line-height: 1.15; color: var(--mobility); }
+.goal-row { display: flex; gap: 10px; align-items: stretch; }
+.goal-vert { flex: 0 0 auto; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper-dim); text-align: center; padding: 2px 0; }
+.goal-blocks { flex: 1; min-width: 0; }
+
+/* ---------- INTERACTION FEEDBACK: hover (pointer) + press (all) ---------- */
+button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .bm-chip, .ex-check, .hd-journey, .hd-gear, .hd-back {
+  transition: transform 90ms ease, filter 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+@media (hover: hover) {
+  button:hover, .chip:hover, .feel:hover, .lib-row:hover, .today-block:hover, .radio-card:hover, .seg button:hover, .more:hover, .hurt-toggle:hover, .nav .tab:hover, .bm-chip:hover, .ex-check:hover, .hd-journey:hover, .hd-gear:hover, .hd-back:hover { filter: brightness(1.14); cursor: pointer; }
+  .bm-seg:hover { fill-opacity: 0.82; cursor: pointer; }
+}
+button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active, .radio-card:active, .seg button:active, .more:active, .hurt-toggle:active, .nav .tab:active, .bm-chip:active, .ex-check:active { transform: scale(0.97); filter: brightness(0.93); }
+.bm-seg:active { fill-opacity: 0.65; }
+
+/* ---------- SETUP: never scroll when the content fits ---------- */
+html:has(.app-main.onb-main), body:has(.app-main.onb-main) { overflow: hidden; }

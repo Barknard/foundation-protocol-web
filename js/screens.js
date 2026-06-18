@@ -120,34 +120,55 @@ function bindOnboarding() {
 // ---------- TODAY ----------
 // Why-this-session rationale (grounded in docs/EVIDENCE-REVIEW.md)
 function dayWhy() {
-  const ph = state.phase?.phase ?? 0;
+  const ph = state.phase?.phase ?? state.profile?.startingPhase ?? 0;
+  const wk = state.phase?.week ?? 1;
+  const pd = PHASES[ph] || PHASES[0];
+  const age = state.profile?.age;
   const blocks = currentDayPlan().blocks;
   const hasStr = blocks.some(b => b.kind === 'strength');
   const hasRun = blocks.some(b => /run/i.test(b.title) || /run/i.test(b.label));
   const hasWalk = blocks.some(b => b.kind === 'cardio') && !hasRun;
-  if (ph === 0) return { line: "Build the slowest tissue first — tendons and bone lag your heart and muscles.", points: [
+  const recent = state.checks.slice(-14);
+  const avg = recent.length ? (recent.reduce((s,c)=>s+(c.feel||0),0)/recent.length) : null;
+  const cleared = state.phase?.sessionsCleared ?? 0;
+
+  // THE FORMULA — the exact rule that turns your two taps into today's call (shown so you trust it).
+  const formula = `Your call = f(goal met?, how you feel 1–5). Done + feel 4–5 → Progress (load steps up a notch). Done + feel 3 → Repeat (consolidate). Feel 2 → easier version, no added load. Feel 1, or any pain → Rest. Load only ever rises when you did the work AND feel recovered — never by the calendar. Coming back from a layoff or an injury window forces a Repeat first (no jump).`;
+
+  // WHERE THIS LEADS — personalised to phase/week/progress.
+  const lead = `You're in ${pd.name} — phase ${ph+1} of ${PHASES.length}, week ${wk}${cleared?`, ${cleared} progression${cleared===1?'':'s'} banked`:''}. Each phase earns the next, building toward the capstone: a 10K run plus 100 pushups, situps and squats in one session.`;
+
+  // Personalised trend / age pacing.
+  const trend = avg
+    ? `Your readiness has averaged ~${avg.toFixed(1)}/5 over your last ${recent.length} check-in${recent.length===1?'':'s'}${age?`, paced for age ${age}`:''} — that average is what tunes how fast you move.`
+    : (age ? `Paced for age ${age}: more recovery and a gentler ramp than a 25-year-old's program.` : '');
+
+  let line, points;
+  if (ph === 0) { line = "Build the slowest tissue first — tendons and bone lag your heart and muscles."; points = [
     "Phase 0 is deliberately low-impact: daily walking, 10-min PT (balance, hips, calves), and protein — no loaded lifting or running yet.",
-    "Connective tissue and bone adapt over months while muscle and cardio adapt in weeks, so we prep the structure before the stress (Bohm/Arampatzis, Sports Med 2015).",
-    "Single-leg balance and hip work is the base that keeps knees and shins healthy once running starts." ] };
-  if (ph >= 4) return { line: "Get faster and more durable with quality sets and quick movements — not 100 grinding reps.", points: [
-    "Strength 2-3x/week at RIR 2-3 plus a little power (fast sit-to-stands, step-ups) and brief impact bone-snacks beats high-volume daily work for 40+.",
+    "Connective tissue and bone adapt over months while muscle and cardio adapt in weeks, so we prep the structure before the stress (Bohm & Arampatzis, Sports Med 2015).",
+    "Single-leg balance and hip work is the base that keeps knees and shins healthy once running starts." ]; }
+  else if (ph >= 4) { line = "Get faster and more durable with quality sets and quick movements — not 100 grinding reps."; points = [
+    "Strength 2–3×/week at RIR 2–3 plus a little power (fast sit-to-stands, step-ups) and brief impact 'bone-snacks' beats high-volume daily work for 40+ (ACSM 2024; Pelland 2025).",
     "Near-daily training to failure raises injury risk without extra benefit at this age — quality and recovery win.",
-    "Keep building toward 10K with the +10% session cap and a lighter week every 4-6 weeks." ] };
-  if (hasRun) return { line: "Each run grows at most ~10% over your longest recent run — no hero sessions.", points: [
-    "A single run that spikes far past what you have recently done is the strongest injury trigger, so we cap the jump, not the week (Johansen/Nielsen, BJSM 2025).",
+    "Keep building toward the 10K with the +10% session cap and a lighter week every ~5 weeks." ]; }
+  else if (hasRun) { line = "Each run grows at most ~10% over your longest recent run — no hero sessions."; points = [
+    "A single run that spikes far past what you've recently done is the strongest injury trigger, so we cap the jump, not the week (Johansen & Nielsen, BJSM 2025).",
     "Run-walk on non-consecutive days keeps impact tolerable while tendons and bone catch up.",
-    "Novice and 40+ runners are the highest-risk group — easing in is the whole point." ] };
-  if (hasStr) return { line: "Strength is your #1 injury insurance — and we stop 2-3 reps short of failure.", points: [
+    "Novice and 40+ runners are the highest-risk group — easing in is the whole point." ]; }
+  else if (hasStr) { line = "Strength is your #1 injury insurance — and we stop 2–3 reps short of failure."; points = [
     "Resistance training cuts overuse injuries roughly in half (Lauersen, BJSM 2018) — the most evidence-backed thing in this program.",
-    "Leave ~2-3 good reps in the tank (RIR 2-3); add load only after you hit your reps cleanly two sessions in a row.",
-    "The heavy, slow calf and leg work is tendon-prep — it stiffens the tendons running will pound (Bohm/Arampatzis, 2015)." ] };
-  if (hasWalk) return { line: "Easy, conversational cardio builds the aerobic base you can sustain without breaking down.", points: [
+    "Leave ~2–3 good reps in the tank (RIR 2–3); add load only after you hit your reps cleanly.",
+    "The heavy, slow calf and leg work is tendon-prep — it stiffens the tendons running will pound (Bohm & Arampatzis, 2015)." ]; }
+  else if (hasWalk) { line = "Easy, conversational cardio builds the aerobic base you can sustain without breaking down."; points = [
     "Easy, conversational pace (you can talk in full sentences) grows the engine with minimal injury risk.",
-    "Aerobic fitness (VO2max) is among the strongest predictors of long-term health (Kokkinos, JACC 2022).",
-    "This volume is the foundation your runs are built on." ] };
-  return { line: "Recovery outranks everything — today's job is to let adaptation happen.", points: [
+    "Aerobic fitness (VO₂max) is among the strongest predictors of long-term health (Kokkinos, JACC 2022).",
+    "This volume is the foundation your runs are built on." ]; }
+  else { line = "Recovery outranks everything — today's job is to let adaptation happen."; points = [
     "Rest and easy movement are when the work you did turns into fitness.",
-    "Sleep, hydration, and protein (~1.6 g/kg/day spread across meals) drive recovery, especially at 40+." ] };
+    "Sleep, hydration, and protein (~1.6 g/kg/day spread across meals) drive recovery, especially at 40+." ]; }
+
+  return { line, points, formula, lead, trend };
 }
 
 function renderToday() {
@@ -204,8 +225,8 @@ function renderToday() {
       <div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
       ${whyCard}`;
     })() : `
-    <h1 class="display-s serif" style="color:var(--mobility);">${focus}</h1>
-    <div class="sp-12"></div>
+    <div class="today-focus serif">${focus}</div>
+    <div class="sp-8"></div>
     ${(() => {
       if (standingCall()) return '';   // the recovering card above is the active call
       const lastAny = state.checks[state.checks.length - 1];
@@ -214,8 +235,7 @@ function renderToday() {
       const o = OUTCOMES[carried.decision] || OUTCOMES.repeat;
       return `<div class="card-block ${o.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">Still standing · your last call</span><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>`;
     })()}
-    <p class="label">Today's goal${counts.total?` · <span class="rx-count">${counts.done}/${counts.total} done</span>`:''}</p><div class="sp-8"></div>
-    ${dayPlan.blocks.map((b,i)=>{
+    <div class="goal-row"><div class="goal-vert">Today's goal${counts.total?` · ${counts.done}/${counts.total}`:''}</div><div class="goal-blocks">${dayPlan.blocks.map((b,i)=>{
       const exs = exercisesForBlock(b.key);
       const bdone = exs.filter(e=>exDone(e.key)).length;
       const head = `<div class="card-block ${b.kind}"><div class="stripe"></div>
@@ -234,8 +254,8 @@ function renderToday() {
         ${done.length?`<div class="ex-done-label">${svgUse('ic-check',14)} Completed (${done.length})</div><div class="ex-grid">${done.map(card).join('')}</div>`:''}
       </div>`;
       return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
-    }).join('')}
-    <div class="sp-24"></div>
+    }).join('')}</div></div>
+    <div class="sp-12"></div>
     <button data-go="check">Daily check-in</button>
     ${whyCard}`}
     <div class="sp-16"></div>

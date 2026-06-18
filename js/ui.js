@@ -25,9 +25,8 @@ function journeyHeader() {
   const pd = PHASES[phaseIdx] || PHASES[0];
   const wk = state.phase?.week ?? 1;
   const dayInWeek = state.phase?.dayInWeek ?? 1;
-  return `<button class="hd-journey" data-go="progress" aria-label="Your progress and where you are">
-      <span class="hd-phase">Phase ${phaseIdx + 1} of ${PHASES.length} · ${escHtml(pd.name)}</span>
-      <span class="hd-sub">Wk ${wk} · Session ${dayInWeek}/${pd.week.length}</span>
+  return `<button class="hd-journey" data-go="progress" aria-label="Your progress — phase ${phaseIdx + 1} of ${PHASES.length}, ${escHtml(pd.name)}, week ${wk}, session ${dayInWeek} of ${pd.week.length}">
+      <span class="hd-phase">Phase ${phaseIdx + 1}/${PHASES.length} · ${escHtml(pd.name)} · Wk ${wk}</span>
     </button>`;
 }
 const SCREEN_TITLES = { settings: 'Settings', log: 'Activity log' };
