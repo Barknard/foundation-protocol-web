@@ -225,27 +225,26 @@ function hasFigurePose(key) { return !!FIG_POSES[key]; }
 // ============================================================
 function _gaitPose(kind, p) {
   const run = kind === 'run'; const TAU = Math.PI * 2;
-  const torsoA = 270 + (run ? 14 : 2);                      // up + forward lean
-  const bob = (run ? -1.5 : -1.2) * Math.cos(2 * TAU * p);  // 2× vertical bob
-  const hop = run ? -3.5 * Math.pow(Math.abs(Math.sin(TAU * p)), 1.5) : 0;
-  const hip = [25, 33 + bob + hop];
+  const torsoA = 270 + (run ? 14 : 3);                      // up + forward lean
+  const hip = [25, 33];                                     // final y set by contact-shift (natural bob)
   const shoulder = _pt(hip, torsoA, FIG.torso);
   const head = _pt(shoulder, torsoA, FIG.neck);
+  // ph=0 at foot-contact (leg forward); stance ph 0→0.5 (foot travels back), swing 0.5→1 (knee lifts).
   const leg = (ph) => {
-    const hipFlex = (run ? 34 : 22) * Math.sin(TAU * ph);   // + swings thigh forward
+    const hipFlex = (run ? 32 : 20) * Math.cos(TAU * ph);   // + forward at contact, − at toe-off
     const thighA = 90 - hipFlex;
-    const kneeBend = Math.max(4, (run ? 22 : 14) + 8 * Math.sin(TAU * ph + 0.3) + (run ? 42 : 24) * Math.sin(2 * TAU * ph + 1.2));
-    const shankA = thighA + kneeBend;
+    const swing = Math.max(0, Math.sin(TAU * (ph - 0.5)));  // 0 in stance, peaks mid-swing (ph 0.75)
+    const kneeBend = 6 + (run ? 58 : 34) * Math.pow(swing, 1.1);
+    const shankA = thighA + kneeBend;                       // shank folds BACK (correct flexion)
     const knee = _pt(hip, thighA, FIG.thigh);
     const ankle = _pt(knee, shankA, FIG.shank);
-    const toe = _pt(ankle, shankA - 75, FIG.foot);
+    const toe = _pt(ankle, shankA - 78, FIG.foot);
     return { knee, ankle, toe };
   };
   const arm = (ph) => {
-    const sw = (run ? 40 : 22) * Math.sin(TAU * ph);
-    const upperA = 90 - sw;
+    const upperA = 90 - (run ? 38 : 20) * Math.cos(TAU * ph);   // opposite to its (antiphase) leg
     const elbow = _pt(shoulder, upperA, FIG.uarm);
-    const hand = _pt(elbow, upperA - (run ? 85 : 22), FIG.farm);
+    const hand = _pt(elbow, upperA - (run ? 80 : 15), FIG.farm);
     return { elbow, hand };
   };
   const Lleg = leg(p), Rleg = leg((p + 0.5) % 1);
@@ -310,10 +309,10 @@ const FIG_POSES = {
           intensity:(J)=>({ at:[J.nearLeg.knee[0]-3, (J.nearLeg.knee[1]+J.nearLeg.ankle[1])/2], dir:180, r:2.6 }) },
   },
   // Glute bridge — lying on BACK, shoulders+feet on floor, hips lifted into a line.
-  glute_bridge: {
-    dur: 2000,
-    f1: { pelvis:[23,53], torso:160, head:186, nearArm:[16,2], farArm:[20,4], nearLeg:[350,93,0], farLeg:[346,93,0] },
-    f2: { pelvis:[27,43], torso:142, head:178, nearArm:[20,2], farArm:[24,4], nearLeg:[10,90,0],  farLeg:[6,90,0] },
+  glute_bridge: {   // head + shoulders stay planted on the floor; only the hips lift
+    dur: 2200,
+    f1: { pelvis:[27,52], torso:168, head:182, nearArm:[16,2], farArm:[20,4], nearLeg:[350,93,0], farLeg:[346,93,0] },
+    f2: { pelvis:[27,43], torso:145, head:176, nearArm:[20,2], farArm:[24,4], nearLeg:[10,90,0],  farLeg:[6,90,0] },
   },
   // Calf stretch — wall ahead (right); lean in, BACK leg straight (heel down) = stretch.
   calf_stretch: {
@@ -340,14 +339,14 @@ const FIG_POSES = {
     f1: { pelvis:[25,34], torso:271, head:271, nearArm:[98,62], farArm:[108,57], nearLeg:[90,90,5], farLeg:[345,98,0] },
     f2: { pelvis:[25,33], torso:270, head:270, nearArm:[100,60], farArm:[110,55], nearLeg:[90,90,5], farLeg:[340,95,0] },
   },
-  sl_squat: {
-    f1: { pelvis:[25,33], torso:270, head:270, nearArm:[95,92], farArm:[98,92], nearLeg:[90,90,5], farLeg:[110,60,20] },
-    f2: { pelvis:[25,36], torso:268, head:268, nearArm:[80,88], farArm:[83,88], nearLeg:[100,75,5], farLeg:[112,58,20] },
+  sl_squat: {   // stand on near leg, far leg lifted behind; mini-squat = knee tracks FORWARD (shank>thigh)
+    f1: { pelvis:[25,33], torso:272, head:272, nearArm:[95,92], farArm:[98,92], nearLeg:[90,90,5], farLeg:[118,150,20] },
+    f2: { pelvis:[25,37], torso:276, head:276, nearArm:[82,88], farArm:[85,88], nearLeg:[72,100,5], farLeg:[120,150,20] },
   },
-  sl_hop: {   // front view (single-leg balance/landing — one leg planted, other tucked up)
-    dur:1000,
-    f1: { view:'front', pelvis:[25,42], torso:265, hipW:7, leftLeg:[95,100], rightLeg:[80,300], leftArm:[150,165], rightArm:[30,15] },
-    f2: { view:'front', pelvis:[25,38], torso:268, hipW:7, leftLeg:[90,90], rightLeg:[80,300], leftArm:[140,150], rightArm:[40,28] },
+  sl_hop: {   // front view (single-leg HOP — crouch down then spring up; planted foot stays put)
+    dur:850,
+    f1: { view:'front', pelvis:[25,44], torso:266, hipW:7, leftLeg:[93,97], rightLeg:[80,300], leftArm:[148,160], rightArm:[32,20] },
+    f2: { view:'front', pelvis:[25,32], torso:270, hipW:7, leftLeg:[90,90], rightLeg:[83,296], leftArm:[134,140], rightArm:[46,40] },
   },
   // ---- hip ----
   hip_abd: {
@@ -368,10 +367,11 @@ const FIG_POSES = {
           propsBehind: propWall(44,8,57) },
   },
   // ---- strength ----
-  goblet_sq: {   // front view (symmetric squat, goblet at chest)
-    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, shoulderW:9, leftArm:[58,72], rightArm:[122,108], leftLeg:[94,90], rightLeg:[86,90],
+  goblet_sq: {   // front view — both hands hold the bell low/centered; squat = knees out
+    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, shoulderW:9, leftArm:[70,75], rightArm:[110,105], leftLeg:[94,90], rightLeg:[86,90],
           propsFront:(J)=>propGobletFront(J) },
-    f2: { view:'front', pelvis:[25,40], torso:272, hipW:8, shoulderW:9, leftArm:[58,72], rightArm:[122,108], leftLeg:[112,68], rightLeg:[68,112] },
+    f2: { view:'front', pelvis:[25,40], torso:272, hipW:8, shoulderW:9, leftArm:[78,85], rightArm:[102,95], leftLeg:[112,68], rightLeg:[68,112],
+          propsFront:(J)=>propGobletFront(J) },
   },
   pushup: {
     f1: { pelvis:[27,50], torso:8, head:8, nearArm:[100,95], farArm:[100,95], nearLeg:[170,170,90], farLeg:[170,170,90] },
@@ -392,10 +392,10 @@ const FIG_POSES = {
           propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far') },
     f2: { pelvis:[25,35], torso:270, head:270, nearArm:[272,272], farArm:[268,268], nearLeg:[90,90,5], farLeg:[90,90,5] },
   },
-  split_sq: {
-    f1: { pelvis:[25,38], torso:276, head:276, nearArm:[110,135], farArm:[115,140], nearLeg:[95,90,0], farLeg:[132,225,35],
+  split_sq: {   // rear foot on bench behind; FRONT leg lunges — knee forward (shank>thigh)
+    f1: { pelvis:[25,37], torso:278, head:278, nearArm:[100,120], farArm:[104,124], nearLeg:[86,96,0], farLeg:[132,225,35],
           propsBehind:(J)=>propBench(J.farLeg.ankle[0]-7, J.farLeg.ankle[1], 16, 3) },
-    f2: { pelvis:[24,42], torso:272, head:272, nearArm:[120,150], farArm:[125,155], nearLeg:[105,55,0], farLeg:[138,235,30] },
+    f2: { pelvis:[24,42], torso:280, head:280, nearArm:[104,128], farArm:[108,132], nearLeg:[70,100,0], farLeg:[138,235,30] },
   },
   // ---- mobility ----
   dead_bug: {
@@ -404,16 +404,16 @@ const FIG_POSES = {
   },
   // ---- kettlebell ----
   kb_swing: {
-    dur:1200,
-    f1: { pelvis:[26,40], torso:305, head:312, nearArm:[112,114], farArm:[108,110], nearLeg:[96,88,4], farLeg:[92,90,4],
+    dur:2200,
+    f1: { pelvis:[26,40], torso:305, head:312, nearArm:[112,114], farArm:[108,110], nearLeg:[98,100,4], farLeg:[94,98,4],
           propsFront:(J)=>propKettlebell(J,'near') },
     f2: { pelvis:[25,33], torso:270, head:270, nearArm:[357,357], farArm:[353,353], nearLeg:[90,90,5], farLeg:[90,90,5] },
   },
-  kb_carry: {   // front view — a kettlebell in EACH hand, tall posture, gentle march
-    dur:1500,
-    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[92,92], rightLeg:[84,108],
+  kb_carry: {   // front view — a kettlebell in EACH hand, standing tall (subtle posture shift)
+    dur:1800,
+    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[91,90], rightLeg:[89,90],
           propsFront:(J)=>propKbAt(J.leftArm.hand)+propKbAt(J.rightArm.hand) },
-    f2: { view:'front', pelvis:[25,33], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[96,108], rightLeg:[88,92] },
+    f2: { view:'front', pelvis:[25,33.6], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[89,90], rightLeg:[91,90] },
   },
 };
 

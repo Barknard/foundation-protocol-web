@@ -24,7 +24,7 @@ function renderOnboarding() {
   if (r === 1) body = `
     <div class="brand"><img class="brand-logo" src="logo.png" alt="The Hard Part"></div>
     <div class="sp-16"></div>
-    ${(() => { const others = savedPersonas(); if (!others.length) return ''; return `<div class="card" style="margin-bottom:14px;"><span class="label" style="color:var(--milestone);">Welcome back</span><div class="sp-8"></div>${others.map(s => `<button class="secondary" data-resume="${escHtml(s)}" style="width:100%;margin-bottom:6px;">Continue as ${escHtml(s)}</button>`).join('')}<div class="help">Or set up a new profile below.</div></div>`; })()}
+    ${(() => { const others = savedPersonas(); if (!others.length) return ''; return `<div class="card" style="margin-bottom:14px;"><span class="label" style="color:var(--milestone);">Welcome back</span><div class="sp-8"></div><div class="row gap-8"><select id="onb-resume-sel" style="flex:1;min-width:0;padding:11px 12px;background:var(--surface-1);color:var(--paper);border:1px solid var(--rule);border-radius:12px;font-size:16px;">${others.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('')}</select><button class="secondary" id="onb-resume-go" style="width:auto;flex:0 0 auto;">Continue</button></div><div class="help">Or set up a new profile below.</div></div>`; })()}
     <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. Sisyphus" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
     <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="e.g. 42"><div class="help">Keeps your plan age-appropriate — recovery, deloads, and pacing scale with age.</div></div>`;
   else if (r === 2) body = `
@@ -63,14 +63,15 @@ function bindOnboarding() {
   const get = id => document.getElementById(id);
   const next = get('onb-next'); if (!next) return;   // DOM moved on before this deferred bind ran
   const o = state._onb;
-  // "Welcome back — continue as <persona>" resume buttons (step 1)
-  document.querySelectorAll('[data-resume]').forEach(el => el.addEventListener('click', () => {
-    const slug = el.getAttribute('data-resume');
+  // "Welcome back" — resume a saved persona via the dropdown (step 1)
+  const resumeGo = get('onb-resume-go'), resumeSel = get('onb-resume-sel');
+  if (resumeGo && resumeSel) resumeGo.addEventListener('click', () => {
+    const slug = resumeSel.value;
     state.activeUser = slug; try { localStorage.setItem(ACTIVE_KEY, slug); } catch (_) {}
     loadUserState(slug); delete state._onb;
     navigate(state.profile ? 'today' : 'onboarding');
     if (state.profile) toast('Welcome back, ' + (state.profile.username || slug), 'success');
-  }));
+  });
   const FIELDS = ['username','weight','pushup','walk','age'];
   const upd = () => FIELDS.forEach(k => { const e = get('onb-'+k); if (e) o[k] = e.value; });
   const updConv = () => { const conv = get('onb-weight-conv'); if (!conv) return; const v = parseFloat(get('onb-weight').value); conv.textContent = (v>0) ? (o.unit==='imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`) : ''; };
