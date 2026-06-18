@@ -10,7 +10,8 @@ function escHtml(s) { if (s == null) return ''; return String(s).replace(/&/g,'&
 function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`; }
 function animatedFigure(ex, size) {
   const s = size || 44;
-  // Prefer the parametric skeleton pose when one exists for this exercise (skip walk/run — procedural).
+  // Procedural gait for walk/run; parametric skeleton pose for everything else with a pose.
+  if (ex && (ex.key === 'walk' || ex.key === 'run') && typeof gaitFigure === 'function') return gaitFigure(ex.key, s);
   if (ex && ex.key && typeof hasFigurePose === 'function' && hasFigurePose(ex.key)) return skeletonFigure(ex.key, s);
   const frames = (ex && ex.frames && ex.frames.length) ? ex.frames : [ex.icon];
   const svg = (cls, id) => `<svg class="${cls}" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`;

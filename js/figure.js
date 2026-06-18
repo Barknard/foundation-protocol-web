@@ -195,6 +195,14 @@ function _figFrame(ts) {
       const feel = reduce ? 1 : 0.35 + 0.65 * (0.5 - 0.5 * Math.cos((ts % 1100) / 1100 * 2 * Math.PI));
       el.innerHTML = figureInner(lerpPose(def.f1, def.f2, t), { feel });
     }
+    // procedural walk/run gait figures
+    for (const el of document.querySelectorAll('svg.gaitfig')) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom < -20 || r.top > vh + 20) continue;
+      const kind = el.dataset.gait; const dur = kind === 'run' ? 680 : 1050;
+      const p = reduce ? 0.12 : (ts % dur) / dur;
+      el.innerHTML = _gaitInner(_gaitPose(kind, p));
+    }
   }
   requestAnimationFrame(_figFrame);
 }
@@ -208,6 +216,60 @@ function skeletonFigure(key, size) {
 }
 function escAttr(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function hasFigurePose(key) { return !!FIG_POSES[key]; }
+
+// ============================================================
+// PROCEDURAL WALK / RUN GAIT — continuous joint-angle cycle (research wu9fztkf0).
+// Legs 180° out of phase; arms antiphase to the same-side leg; pelvis bobs at 2×;
+// run adds forward lean + body hop. Lowest foot is planted on the floor each frame
+// (fixes the floating-figure defect).
+// ============================================================
+function _gaitPose(kind, p) {
+  const run = kind === 'run'; const TAU = Math.PI * 2;
+  const torsoA = 270 + (run ? 14 : 2);                      // up + forward lean
+  const bob = (run ? -1.5 : -1.2) * Math.cos(2 * TAU * p);  // 2× vertical bob
+  const hop = run ? -3.5 * Math.pow(Math.abs(Math.sin(TAU * p)), 1.5) : 0;
+  const hip = [25, 33 + bob + hop];
+  const shoulder = _pt(hip, torsoA, FIG.torso);
+  const head = _pt(shoulder, torsoA, FIG.neck);
+  const leg = (ph) => {
+    const hipFlex = (run ? 34 : 22) * Math.sin(TAU * ph);   // + swings thigh forward
+    const thighA = 90 - hipFlex;
+    const kneeBend = Math.max(4, (run ? 22 : 14) + 8 * Math.sin(TAU * ph + 0.3) + (run ? 42 : 24) * Math.sin(2 * TAU * ph + 1.2));
+    const shankA = thighA + kneeBend;
+    const knee = _pt(hip, thighA, FIG.thigh);
+    const ankle = _pt(knee, shankA, FIG.shank);
+    const toe = _pt(ankle, shankA - 75, FIG.foot);
+    return { knee, ankle, toe };
+  };
+  const arm = (ph) => {
+    const sw = (run ? 40 : 22) * Math.sin(TAU * ph);
+    const upperA = 90 - sw;
+    const elbow = _pt(shoulder, upperA, FIG.uarm);
+    const hand = _pt(elbow, upperA - (run ? 85 : 22), FIG.farm);
+    return { elbow, hand };
+  };
+  const Lleg = leg(p), Rleg = leg((p + 0.5) % 1);
+  const Larm = arm((p + 0.5) % 1), Rarm = arm(p);           // arm opposes same-side leg
+  // plant the lowest foot on the floor (no floating)
+  const feet = [Lleg.ankle, Lleg.toe, Rleg.ankle, Rleg.toe];
+  let maxY = -1e9; feet.forEach(q => { if (q[1] > maxY) maxY = q[1]; });
+  const dy = maxY - FIG.ground;
+  [hip, shoulder, head, Lleg.knee, Lleg.ankle, Lleg.toe, Rleg.knee, Rleg.ankle, Rleg.toe, Larm.elbow, Larm.hand, Rarm.elbow, Rarm.hand].forEach(q => { q[1] -= dy; });
+  return { hip, shoulder, head, Lleg, Rleg, Larm, Rarm };
+}
+function _gaitInner(J) {
+  const SW = 2.5, DIM = 'var(--paper-dim)';
+  let out = `<line x1="2" y1="${FIG.ground}" x2="48" y2="${FIG.ground}" stroke-width="1.5" stroke="#807868"/>`;
+  out += `<g stroke="${DIM}" stroke-width="${SW}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
+  out += _poly([J.hip, J.Rleg.knee, J.Rleg.ankle, J.Rleg.toe]) + _poly([J.shoulder, J.Rarm.elbow, J.Rarm.hand]);
+  out += '</g>';
+  out += `<g stroke="currentColor" stroke-width="${SW}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
+  out += _L(J.hip, J.shoulder) + _poly([J.hip, J.Lleg.knee, J.Lleg.ankle, J.Lleg.toe]) + _poly([J.shoulder, J.Larm.elbow, J.Larm.hand]);
+  out += '</g>';
+  out += `<circle cx="${_n(J.head[0])}" cy="${_n(J.head[1])}" r="${FIG.headR}" fill="currentColor"/>`;
+  return out;
+}
+function gaitFigure(kind, size) { const s = size || 44; return `<span class="afig" style="width:${s}px;height:${s}px;display:inline-block;line-height:0;"><svg class="gaitfig" data-gait="${kind}" viewBox="0 0 50 60" width="${s}" height="${s}" aria-hidden="true">${_gaitInner(_gaitPose(kind, 0))}</svg></span>`; }
 
 // ============================================================
 // HOW TO ADD AN EXERCISE
