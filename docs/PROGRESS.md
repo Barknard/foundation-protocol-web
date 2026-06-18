@@ -75,6 +75,15 @@ No longer one giant HTML file. Now a **slim `index.html` spine** + modular asset
 
 **OAuth removed** entirely (GitHub-only, no third-party/paid services). **Cleanup:** removed `icon.svg`, `oauth-worker/`, `docs/SETUP-OAUTH.md`, `gen-logos/`, the Gemini source image.
 
+## 2026-06-18 — App shell, day-gate, action-first Today, data safety, a11y
+Research-driven (3 cited reviews in `docs/UX-RECOMMENDATIONS.md`). All in-browser tested.
+- **Frozen app shell:** every screen = fixed header ("where you are": journey on Today, title elsewhere) + scrolling main + fixed footer (nav, or action bar on onboarding/check). Header+footer share one solid color, width-capped 540 (fixed the "odd"/mismatched footer).
+- **Day-gate (timestamp):** one check-in per local calendar day. After check-in, Today shows the call + rest/hydrate + a live "next session opens in Xh Ym (tomorrow)" countdown; next session locked until the next real day. Killed the re-check loop. Edit = pencil on the call card (lock-with-edit).
+- **Action-first Today** (NN/g layer-cake, serial-position, progressive disclosure, Fogg): call/session hero leads, ONE filled primary, single banner (injury>layoff>deload), "why" collapsed at the bottom. Journey crumb is Today-only.
+- **Data safety (no-GitHub-needed):** lossless Export (incl. injury/session/log/units), Import backup, Restore-last-auto-backup, backup-before-destroy (Reset/Pull snapshot + Reset auto-downloads first).
+- **Accessibility:** :focus-visible rings; body-map keyboard/SR operable (role/aria-pressed/Enter-Space); toast aria-live; contrast bump; per-exercise aria-labels.
+- **Quick wins:** Library search; Progress empty-state; Back no longer cycles tabs; 3-way low-feel pain discriminator; logo fixed ~172px; "e.g." placeholders; default name "Sisyphus".
+
 ## Pending (from EVIDENCE-REVIEW.md, not yet wired into the engine)
 - Explicit **RIR 2–3 double-progression** for load advancement (currently in copy, not the engine).
 - **Situp training gap:** the capstone tests 100 situps but no situp/curl-up movement is trained (core block is plank+carries). Add a graded ab movement or reconcile the test.
