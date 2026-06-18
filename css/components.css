@@ -171,6 +171,21 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .onb .radio-card { padding: 10px 14px; margin-bottom: 7px; }
 .onb .radio-card .body-dim { font-size: 13px; line-height: 1.35; }
 .onb .plan-preview { padding: 10px 12px; margin-top: 8px; }
+/* setup bottom bar — same fixed, blurred, top-bordered feel as the main app's bottom nav */
+.wiz-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  max-width: 540px; margin: 0 auto;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--rule);
+  z-index: 50;
+  display: flex; gap: 12px; align-items: center;
+  padding: 12px var(--pad) calc(12px + env(safe-area-inset-bottom));
+}
+.wiz-nav button { height: 54px; margin: 0; }
+.wiz-nav .onb-next { flex: 1; }
+.wiz-nav .onb-back { flex: 0 0 auto; width: auto; padding: 0 22px; }
+.screen.onb { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
 .crown { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; background: color-mix(in srgb, var(--ink) 88%, transparent); animation: fade-in 240ms ease; }
 
 /* brand logo (homepage) */

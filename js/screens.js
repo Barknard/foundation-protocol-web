@@ -47,8 +47,8 @@ function renderOnboarding() {
      ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
     <div id="plan-preview">${planPreviewHtml(p.phase)}</div>`;
   const isLast = r === ONB_REAL;
-  const nav = `<div class="sp-20"></div><div style="display:flex;gap:12px;">${r>1?`<button class="secondary" id="onb-back" style="width:auto;flex:0 0 auto;padding:0 22px;">Back</button>`:''}<button id="onb-next" style="flex:1;">${isLast?'Start my first session':'Next'}</button></div>`;
-  return `<div class="screen no-nav onb">${crumb}<div class="sp-12"></div>${body}${nav}</div>`;
+  const navBar = `<div class="wiz-nav">${r>1?`<button class="secondary onb-back" id="onb-back">Back</button>`:''}<button class="onb-next" id="onb-next">${isLast?'Start my first session':'Next'}</button></div>`;
+  return `<div class="screen no-nav onb">${crumb}<div class="sp-12"></div>${body}</div>${navBar}`;
 }
 function bindOnboarding() {
   const get = id => document.getElementById(id);
@@ -219,7 +219,9 @@ function renderToday() {
       return `<div class="sp-12"></div><div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${lbl}</span><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>`;
     })()}
     <div class="sp-32"></div>
-    <button data-go="check">${lastToday ? 'Check in again' : 'Daily check-in'}</button>
+    ${lastToday
+      ? `<button data-go="progress">See where you are</button><div class="sp-8"></div><button class="more" data-go="check" data-p-edit="1">Made a mistake? Edit today's answer</button>`
+      : `<button data-go="check">Daily check-in</button>`}
     <div class="sp-16"></div>
   </div>`;
 }
@@ -243,6 +245,11 @@ function renderCheck() {
   ensureSession();
   const { done, total } = sessionCounts();
   const allEx = total > 0 && done === total;
+  // Editing today's answer: pre-fill from the existing record (research: lock-with-edit, not re-check).
+  const todayCheck = state.checks.find(c => c.date === isoToday());
+  if (state.ui.params && state.ui.params.edit && todayCheck && !state._chk) {
+    state._chk = { goalMet: todayCheck.goalMet, feel: todayCheck.feel, hurt: !!todayCheck.hurt, parts: (todayCheck.parts || []).slice(), redFlag: false, painChecked: true };
+  }
   state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: [], redFlag: false };
   if (!state._chk.parts) state._chk.parts = [];
   setTimeout(bindCheck, 0);
@@ -269,7 +276,18 @@ function renderCheck() {
         <span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
     </div>
     <div class="sp-20"></div>
-    <button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Something hurts — tap to clear':'Something hurts?'}</button>
+    ${(t.feel && t.feel <= 2 && !t.hurt && !t.painChecked) ? `
+      <div class="card-block strength pain-nudge"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
+        <div class="title">Low days are normal — is something actually hurting?</div>
+        <div class="body-dim" style="font-size:14px;margin-top:2px;">Tired or sore all over is fatigue, not injury. A joint, one spot, or sharp/new pain is different — soreness never lives inside a joint.</div>
+        <div class="sp-12"></div>
+        <div class="col" style="gap:8px;">
+          <button class="secondary" id="chk-pain-no">Just tired / sore all over</button>
+          <button class="secondary" id="chk-pain-spot">One spot hurts</button>
+          <button id="chk-pain-sharp">Sharp / new / worse pain</button>
+        </div>
+      </div></div>`
+    : `<button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Something hurts — tap to clear':'Something hurts?'}</button>`}
     ${t.hurt ? `<div class="sp-16"></div>
       <p class="label">Where? Tap all that apply.</p><div class="sp-8"></div>
       ${bodyMap(t.parts)}
@@ -293,14 +311,21 @@ function bindCheck() {
   const feel = document.querySelector('[data-q="feel"]');
   feel.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
     state._chk.feel = Number(btn.getAttribute('data-val'));
-    feel.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); refreshGo();
+    render();   // re-render so the low-feel pain nudge appears/updates for feel 1–2
   }));
-  document.getElementById('chk-hurt').addEventListener('click', () => {
+  const hurt = document.getElementById('chk-hurt');
+  if (hurt) hurt.addEventListener('click', () => {
     state._chk.hurt = !state._chk.hurt;
     if (!state._chk.hurt) { state._chk.parts = []; state._chk.redFlag = false; }
     render();
   });
+  // Low-feel pain discriminator (feel 1–2): 3-way, default fatigue — keeps soreness ≠ injury (DOMS isn't in a joint).
+  const pno = document.getElementById('chk-pain-no');
+  if (pno) pno.addEventListener('click', () => { state._chk.painChecked = true; state._chk.hurt = false; render(); });
+  const pspot = document.getElementById('chk-pain-spot');
+  if (pspot) pspot.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; render(); });
+  const psharp = document.getElementById('chk-pain-sharp');
+  if (psharp) psharp.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._chk.painSharp = true; render(); });
   const flag = document.getElementById('chk-flag');
   if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
   document.querySelectorAll('[data-part]').forEach(el => el.addEventListener('click', () => {
