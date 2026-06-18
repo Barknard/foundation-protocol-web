@@ -24,6 +24,7 @@ function renderOnboarding() {
   if (r === 1) body = `
     <div class="brand"><img class="brand-logo" src="logo.png" alt="The Hard Part"></div>
     <div class="sp-16"></div>
+    ${(() => { const others = savedPersonas(); if (!others.length) return ''; return `<div class="card" style="margin-bottom:14px;"><span class="label" style="color:var(--milestone);">Welcome back</span><div class="sp-8"></div>${others.map(s => `<button class="secondary" data-resume="${escHtml(s)}" style="width:100%;margin-bottom:6px;">Continue as ${escHtml(s)}</button>`).join('')}<div class="help">Or set up a new profile below.</div></div>`; })()}
     <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. Sisyphus" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
     <div class="field"><label for="onb-age">Age</label><input type="number" inputmode="numeric" id="onb-age" value="${p.age}" placeholder="e.g. 42"><div class="help">Keeps your plan age-appropriate — recovery, deloads, and pacing scale with age.</div></div>`;
   else if (r === 2) body = `
@@ -62,6 +63,14 @@ function bindOnboarding() {
   const get = id => document.getElementById(id);
   const next = get('onb-next'); if (!next) return;   // DOM moved on before this deferred bind ran
   const o = state._onb;
+  // "Welcome back — continue as <persona>" resume buttons (step 1)
+  document.querySelectorAll('[data-resume]').forEach(el => el.addEventListener('click', () => {
+    const slug = el.getAttribute('data-resume');
+    state.activeUser = slug; try { localStorage.setItem(ACTIVE_KEY, slug); } catch (_) {}
+    loadUserState(slug); delete state._onb;
+    navigate(state.profile ? 'today' : 'onboarding');
+    if (state.profile) toast('Welcome back, ' + (state.profile.username || slug), 'success');
+  }));
   const FIELDS = ['username','weight','pushup','walk','age'];
   const upd = () => FIELDS.forEach(k => { const e = get('onb-'+k); if (e) o[k] = e.value; });
   const updConv = () => { const conv = get('onb-weight-conv'); if (!conv) return; const v = parseFloat(get('onb-weight').value); conv.textContent = (v>0) ? (o.unit==='imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`) : ''; };
@@ -626,6 +635,9 @@ function renderSettings() {
     <div class="sp-12"></div>
     <div class="field"><label for="s-user">Switch / load a persona</label><input type="text" id="s-user" value="${escHtml(activeSlug())}" placeholder="username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Type a username, then load it from GitHub to use this device as that persona.</div></div>
     <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
+    <div class="sp-8"></div>
+    <button class="ghost" id="s-logout">Log out${state.profile ? ` — ${escHtml(state.profile.username || activeSlug())}` : ''}</button>
+    <p class="help" style="margin-top:6px;">Log out keeps your data saved on this device — pick your profile again from the welcome screen anytime.</p>
     <div class="divider"></div>
     <p class="label">GitHub Sync</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Without this, data stays in this browser only.</p>
@@ -674,6 +686,13 @@ function bindSettings() {
   repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
   pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
   autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
+  const logoutBtn = document.getElementById('s-logout');
+  if (logoutBtn) logoutBtn.addEventListener('click', () => {
+    if (!confirm('Log out? Your data stays saved on this device — pick your profile again from the welcome screen anytime.')) return;
+    logout();
+    navigate('onboarding');
+    toast('Logged out — your data is saved', 'success');
+  });
   const loaduser = document.getElementById('s-loaduser');
   if (loaduser) loaduser.addEventListener('click', async () => {
     const slug = slugify(document.getElementById('s-user').value);

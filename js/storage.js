@@ -2,6 +2,15 @@
 // ============================================================
 // STORAGE
 // ============================================================
+// Soft sign-out: persist the current persona, then clear the in-memory session + the
+// active-user pointer WITHOUT deleting any persona's saved data (so you can log back in).
+function logout() {
+  try { saveLocal(); } catch (_) {}
+  state.profile = null; state.phase = null; state.checks = []; state.pending = [];
+  state.session = null; state.injury = null; state.log = []; state._preDay = null; delete state._chk; delete state._onb;
+  state.activeUser = null;
+  try { localStorage.removeItem(ACTIVE_KEY); } catch (_) {}
+}
 function loadUserState(slug) {
   state.profile = null; state.phase = null; state.checks = []; state.pending = []; state.session = null; state.injury = null; state.log = [];
   if (!slug) return;
