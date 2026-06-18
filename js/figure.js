@@ -45,9 +45,26 @@ function _resolve(pose) {
   };
 }
 
-// Render one POSE to inner SVG markup (no <svg> wrapper). cls drives anim layering.
-function figureInner(pose) {
+// Floor & wall are SOLID: shift the whole figure up so nothing dips below the ground,
+// and clamp anything past a declared wall (pose.wallX) back to the wall. Keeps limbs rigid.
+function _applyConstraints(J, pose) {
+  const ground = pose.ground == null ? FIG.ground : pose.ground;
+  const pts = [J.pelvis, J.shoulder, J.headC];
+  ['nearArm', 'farArm'].forEach(k => { if (J[k]) pts.push(J[k].elbow, J[k].hand); });
+  ['nearLeg', 'farLeg'].forEach(k => { if (J[k]) pts.push(J[k].knee, J[k].ankle, J[k].toe); });
+  // floor: lowest point (incl. head's bottom edge) must sit on/above the ground line
+  let maxY = J.headC[1] + FIG.headR;
+  pts.forEach(p => { if (p[1] > maxY) maxY = p[1]; });
+  const dy = maxY - ground;
+  if (dy > 0) pts.forEach(p => { p[1] -= dy; });
+  // wall: nothing crosses to the right of wallX (hands rest on it)
+  if (pose.wallX != null) pts.forEach(p => { if (p[0] > pose.wallX) p[0] = pose.wallX; });
+}
+
+// Render one POSE to inner SVG markup (no <svg> wrapper). opts.feel (0..1) pulses intensity marks.
+function figureInner(pose, opts) {
   const J = _resolve(pose);
+  _applyConstraints(J, pose);
   const SW = 2.5, DIM = 'var(--paper-dim)';
   const out = [];
   const ground = pose.ground == null ? FIG.ground : pose.ground;
@@ -71,17 +88,19 @@ function figureInner(pose) {
   out.push(`<circle cx="${_n(J.headC[0])}" cy="${_n(J.headC[1])}" r="${FIG.headR}" fill="currentColor"/>`);
   // props in front (dumbbell at hand, etc.)
   if (pose.propsFront) out.push(typeof pose.propsFront === 'function' ? pose.propsFront(J) : pose.propsFront);
-  // intensity marks (where you should feel it) — red double-arc at a point
-  if (pose.intensity) { const i = typeof pose.intensity === 'function' ? pose.intensity(J) : pose.intensity; out.push(_intensity(i)); }
-  return out.join('');
+  // intensity marks (where you should feel it) — pulsing red double-arc at a point
+  if (pose.intensity) { const i = typeof pose.intensity === 'function' ? pose.intensity(J) : pose.intensity; out.push(_intensity(i, opts && opts.feel)); }
+  let svg = out.join('');
+  if (pose.facing === -1) svg = '<g transform="translate(50,0) scale(-1,1)">' + svg + '</g>';   // mirror to face left
+  return svg;
 }
-// red "feel it here" double-arc centered at [x,y], opening direction dir (deg)
-function _intensity(spec) {
+// red "feel it here" double-arc centered at [x,y], opening dir (deg); feel(0..1) pulses opacity.
+function _intensity(spec, feel) {
   const [x, y] = spec.at; const r = spec.r || 3; const d = (spec.dir == null ? 180 : spec.dir) * DEG;
   const nx = Math.cos(d), ny = Math.sin(d);             // offset normal
-  const a1 = [x + nx * 0 - ny * r, y + ny * 0 + nx * r];
-  const arc = (off) => { const cx = x + nx * off, cy = y + ny * off; return `<path d="M ${_n(cx - ny * r)} ${_n(cy + nx * r)} Q ${_n(cx + nx * r * 1.1)} ${_n(cy + ny * r * 1.1)} ${_n(cx + ny * r)} ${_n(cy - nx * r)}" stroke="#E26B5F" stroke-width="1.6" fill="none" stroke-linecap="round"/>`; };
-  return arc(0) + arc(2.2);
+  const op = (feel == null ? 1 : Math.max(0.2, Math.min(1, feel)));
+  const arc = (off) => { const cx = x + nx * off, cy = y + ny * off; return `<path d="M ${_n(cx - ny * r)} ${_n(cy + nx * r)} Q ${_n(cx + nx * r * 1.1)} ${_n(cy + ny * r * 1.1)} ${_n(cx + ny * r)} ${_n(cy - nx * r)}" stroke="#E26B5F" stroke-width="1.8" fill="none" stroke-linecap="round"/>`; };
+  return `<g opacity="${_n(op)}">${arc(0) + arc(2.2)}</g>`;
 }
 
 // Props ----------------------------------------------------------------
@@ -93,6 +112,75 @@ function propDumbbell(J, which) { const h = (which === 'near' ? J.nearArm : J.fa
 // Public: build an <svg> for a pose with a class (a/b for cross-fade frames)
 function poseSVG(pose, size, cls) { return `<svg class="${cls}" viewBox="0 0 50 60" width="${size}" height="${size}" aria-hidden="true">${figureInner(pose)}</svg>`; }
 
+// ============================================================
+// CONTINUOUS ANIMATOR — smoothly interpolate f1 ↔ f2 (ease-loop) and pulse the
+// intensity marker. Drives any <svg class="skfig" data-fig="<key>"> on the page.
+// One throttled rAF loop scans the DOM; off-screen figures are skipped.
+// ============================================================
+function _lerp(a, b, t) { return a + (b - a) * t; }
+function _lerpAng(a, b, t) { let d = ((b - a + 540) % 360) - 180; return a + d * t; }
+function _lerpPair(a, b, t) { return a && b ? a.map((v, i) => _lerpAng(v, b[i], t)) : (a || b); }
+function lerpPose(p1, p2, t) {
+  return {
+    pelvis: [_lerp(p1.pelvis[0], p2.pelvis[0], t), _lerp(p1.pelvis[1], p2.pelvis[1], t)],
+    torso: _lerpAng(p1.torso, p2.torso, t),
+    head: (p1.head == null && p2.head == null) ? null : _lerpAng(p1.head == null ? p1.torso : p1.head, p2.head == null ? p2.torso : p2.head, t),
+    nearArm: _lerpPair(p1.nearArm, p2.nearArm, t), farArm: _lerpPair(p1.farArm, p2.farArm, t),
+    nearLeg: _lerpPair(p1.nearLeg, p2.nearLeg, t), farLeg: _lerpPair(p1.farLeg, p2.farLeg, t),
+    // props/intensity/ground/facing are carried from f1 (static across the rep)
+    ground: p1.ground, facing: p1.facing, propsBehind: p1.propsBehind, propsFront: p1.propsFront, intensity: p1.intensity,
+  };
+}
+let _figLast = 0;
+function _figFrame(ts) {
+  if (ts - _figLast >= 40) {                 // ~25fps is plenty for stick figures
+    _figLast = ts;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const vh = window.innerHeight || 800;
+    const els = document.querySelectorAll('svg.skfig');
+    for (const el of els) {
+      const def = FIG_POSES[el.dataset.fig]; if (!def) continue;
+      const r = el.getBoundingClientRect();
+      if (r.bottom < -20 || r.top > vh + 20) continue;     // skip off-screen
+      const dur = def.dur || 2400;
+      const t = reduce ? 1 : 0.5 - 0.5 * Math.cos((ts % dur) / dur * 2 * Math.PI);  // ease ping-pong
+      const feel = reduce ? 1 : 0.35 + 0.65 * (0.5 - 0.5 * Math.cos((ts % 1100) / 1100 * 2 * Math.PI));
+      el.innerHTML = figureInner(lerpPose(def.f1, def.f2, t), { feel });
+    }
+  }
+  requestAnimationFrame(_figFrame);
+}
+if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(_figFrame);
+
+// Public: an animated skeleton figure for an exercise key (used by animatedFigure).
+function skeletonFigure(key, size) {
+  const s = size || 44; const def = FIG_POSES[key];
+  const inner = def ? figureInner(def.f1, { feel: 1 }) : '';
+  return `<span class="afig" style="width:${s}px;height:${s}px;display:inline-block;line-height:0;"><svg class="skfig" data-fig="${escAttr(key)}" viewBox="0 0 50 60" width="${s}" height="${s}" aria-hidden="true">${inner}</svg></span>`;
+}
+function escAttr(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function hasFigurePose(key) { return !!FIG_POSES[key]; }
+
+// ============================================================
+// HOW TO ADD AN EXERCISE
+// ------------------------------------------------------------
+// Add a key to FIG_POSES with two frames (f1 = start, f2 = end of the rep):
+//   <key>: { dur?: ms, f1: POSE, f2: POSE }
+// POSE fields (all angles in DEGREES; down=90, right=0, up=270, left=180):
+//   pelvis:[x,y]   root, in the 0..50 / 0..60 viewBox.
+//   torso          absolute angle of pelvis→shoulder (270 = upright; 142 ≈ lying, head left).
+//   head           optional absolute angle of the neck→head (defaults to torso = straight neck).
+//   nearArm/farArm [upperArmDeg, foreArmDeg]   near = solid (facing side), far = dim (depth).
+//   nearLeg/farLeg [thighDeg, shankDeg, footDeg]
+//   facing:-1      mirror the whole figure to face LEFT (default faces right).
+//   ground         floor y (default 57). FLOOR & WALL ARE SOLID — the renderer shifts the
+//                  figure up so nothing dips below `ground`.
+//   wallX          a vertical wall x; nothing crosses to its right (hands rest on it).
+//   propsBehind    SVG drawn behind the body — use propWall()/propBench()/propBenchLegs().
+//   propsFront     SVG (or fn(J)) drawn in front — use propDumbbell(J,'near'|'far') for weights.
+//   intensity      {at:[x,y], dir:deg, r} or fn(J) → a pulsing red "feel it here" marker.
+// Joint reality: knees/elbows bend one way only — author angles that don't hyperextend.
+// The animator smoothly eases f1↔f2 and pulses the intensity automatically.
 // ============================================================
 // POSE REGISTRY — each exercise = two frames of joint angles.
 // Angles per the convention above (down=90, right=0, up=270, left=180).
@@ -113,25 +201,28 @@ const FIG_POSES = {
   },
   // Glute bridge — lying on BACK, shoulders+feet on floor, hips lifted into a line.
   glute_bridge: {
-    f1: { pelvis:[25,49], torso:150, head:184, nearArm:[20,2], farArm:[24,4], nearLeg:[332,90,0], farLeg:[336,90,0] },
+    dur: 2000,
+    f1: { pelvis:[23,53], torso:160, head:186, nearArm:[16,2], farArm:[20,4], nearLeg:[350,93,0], farLeg:[346,93,0] },
     f2: { pelvis:[27,43], torso:142, head:178, nearArm:[20,2], farArm:[24,4], nearLeg:[10,90,0],  farLeg:[6,90,0] },
   },
   // Calf stretch — wall ahead (right); lean in, BACK leg straight (heel down) = stretch.
   calf_stretch: {
-    f1: { pelvis:[22,34], torso:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[120,118,2], ground:56,
+    f1: { pelvis:[22,34], torso:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[120,118,2], ground:56, wallX:44,
           propsBehind: propWall(44, 8, 56),
           intensity:(J)=>({ at:[J.farLeg.knee[0]-3, (J.farLeg.knee[1]+J.farLeg.ankle[1])/2], dir:180, r:2.6 }) },
-    f2: { pelvis:[21,35], torso:303, nearArm:[6,0], farArm:[10,2], nearLeg:[72,92,2], farLeg:[124,120,2], ground:56,
+    f2: { pelvis:[21,35], torso:303, nearArm:[6,0], farArm:[10,2], nearLeg:[72,92,2], farLeg:[124,120,2], ground:56, wallX:44,
           propsBehind: propWall(44, 8, 56),
           intensity:(J)=>({ at:[J.farLeg.knee[0]-3, (J.farLeg.knee[1]+J.farLeg.ankle[1])/2], dir:180, r:2.6 }) },
   },
-  // Single-arm DB row — hinge at a bench, far hand braces ON the bench top, near arm rows a dumbbell.
+  // Single-arm DB row — FACING RIGHT, hinged over a bench: FAR (support) hand braces flat on
+  // the bench top, feet on the floor under the hips, NEAR (working) arm rows the dumbbell up.
   db_row: {
-    f1: { pelvis:[24,34], torso:200, head:196, nearArm:[95,90], farArm:[80,90], nearLeg:[95,90,0], farLeg:[100,92,0], ground:57,
-          propsBehind: propBench(30,40,16,4) + propBenchLegs(30,44,16,11),
+    dur: 1700,
+    f1: { pelvis:[15,33], torso:6, head:6, farArm:[90,90], nearArm:[82,98], nearLeg:[100,90,4], farLeg:[96,90,4], ground:56,
+          propsBehind: propBench(28,47,20,4) + propBenchLegs(28,51,20,5),
           propsFront:(J)=>propDumbbell(J,'near') },
-    f2: { pelvis:[24,34], torso:200, head:196, nearArm:[120,250], farArm:[80,90], nearLeg:[95,90,0], farLeg:[100,92,0], ground:57,
-          propsBehind: propBench(30,40,16,4) + propBenchLegs(30,44,16,11),
+    f2: { pelvis:[15,33], torso:6, head:6, farArm:[90,90], nearArm:[250,108], nearLeg:[100,90,4], farLeg:[96,90,4], ground:56,
+          propsBehind: propBench(28,47,20,4) + propBenchLegs(28,51,20,5),
           propsFront:(J)=>propDumbbell(J,'near') },
   },
 };
@@ -144,9 +235,8 @@ function __figPreview(keys, frame) {
   keys = keys || Object.keys(FIG_POSES);
   const cell = (k) => {
     const p = FIG_POSES[k]; if (!p) return `<div style="padding:8px;color:#E26B5F">${k}: MISSING</div>`;
-    const f = frame == null ? null : frame;
-    const one = (pose, lbl) => `<div style="text-align:center"><div style="background:#211C19;border:1px solid #3A3431;border-radius:10px;display:inline-block">${poseSVG(pose, 120, 'a')}</div><div style="font-family:monospace;font-size:10px;color:#9A9282">${lbl}</div></div>`;
-    return `<div style="border:1px solid #3A3431;border-radius:12px;padding:8px;margin:4px"><div style="color:#E8E2D2;font-size:13px;margin-bottom:4px">${k}</div><div style="display:flex;gap:8px;justify-content:center">${one(p.f1, '1')}${one(p.f2, '2')}</div></div>`;
+    const box = (inner, lbl) => `<div style="text-align:center"><div style="background:#211C19;border:1px solid #3A3431;border-radius:10px;display:inline-block">${inner}</div><div style="font-family:monospace;font-size:10px;color:#9A9282">${lbl}</div></div>`;
+    return `<div style="border:1px solid #3A3431;border-radius:12px;padding:8px;margin:4px"><div style="color:#E8E2D2;font-size:13px;margin-bottom:4px">${k}</div><div style="display:flex;gap:8px;justify-content:center;align-items:center">${box(skeletonFigure(k, 116), 'live')}${box(poseSVG(p.f1, 72, 'a'), 'f1')}${box(poseSVG(p.f2, 72, 'a'), 'f2')}</div></div>`;
   };
   const html = `<div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#1A1614">${keys.map(cell).join('')}</div>`;
   document.getElementById('app').innerHTML = html;
