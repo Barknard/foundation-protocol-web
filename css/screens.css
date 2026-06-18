@@ -20,7 +20,10 @@
 .bodymap { width: auto; height: clamp(300px, 54vh, 470px); max-width: 100%; display: block; margin: 0 auto 8px; }
 .bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
 .bm-seg:hover { fill: var(--surface-2); }
-.bm-seg.sel { fill: var(--strength); stroke: var(--strength); }
+.bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2; }   /* bright outline = non-color cue (CVD) */
+/* inline redundant-encoding glyphs sit on the text baseline */
+.chip svg, .row.between .body-dim svg { vertical-align: -2px; }
+.chip svg { margin-right: 2px; }
 .bm-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .bm-chip { height: 38px; padding: 0 14px; min-width: 0; width: auto; border-radius: 20px; border: 1px solid var(--rule); background: var(--surface-1); color: var(--paper-dim); font-size: 14px; font-weight: 500; }
 .bm-chip.sel { background: var(--strength); border-color: var(--strength); color: var(--paper); }

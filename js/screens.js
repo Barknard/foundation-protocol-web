@@ -315,9 +315,9 @@ function renderCheck() {
     ` : `
     <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
     <div class="chip-row" data-q="goal">
-      <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">Done</button>
-      <button class="chip ${t.goalMet==='partial'?'active':''}" data-val="partial">Partial</button>
-      <button class="chip no ${t.goalMet==='missed'?'active':''}" data-val="missed">Missed</button>
+      <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">${svgUse('ic-check',13)} Done</button>
+      <button class="chip ${t.goalMet==='partial'?'active':''}" data-val="partial">${svgUse('ic-goal-partial',13)} Partial</button>
+      <button class="chip no ${t.goalMet==='missed'?'active':''}" data-val="missed">${svgUse('ic-goal-missed',13)} Missed</button>
     </div>
     <div class="sp-24"></div>
     <p class="label">How do you feel?</p><div class="sp-8"></div>
@@ -415,7 +415,7 @@ function renderResult(outcomeKey) {
   return `<div class="screen no-nav">
     <div class="sp-24"></div>
     <p class="label">The call</p><div class="sp-8"></div>
-    <h1 class="display-l serif" style="color:var(--${o.cls});">${escHtml(o.title)}</h1>
+    <div style="color:var(--${o.cls});display:flex;align-items:center;gap:10px;">${svgUse('ic-call-'+o.key,30)}<h1 class="display-l serif" style="color:var(--${o.cls});margin:0;">${escHtml(o.title)}</h1></div>
     <div class="sp-24"></div>
     <p class="label">What to do</p><div class="sp-8"></div>
     <p class="headline serif">${escHtml(o.action)}</p>
@@ -503,15 +503,15 @@ function renderProgress() {
     </div>
     <div class="card"><div class="stat-cols">
       <div><span class="label">Last 14</span><div class="sp-8"></div>
-        <div class="row between"><span class="body-dim">Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div>
-        <div class="row between"><span class="body-dim">Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div>
-        <div class="row between"><span class="body-dim">Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-check',12)} Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-goal-partial',12)} Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-goal-missed',12)} Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
       </div>
       <div><span class="label">All-time calls</span><div class="sp-8"></div>
-        <div class="row between"><span class="body-dim">Progress</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div>
-        <div class="row between"><span class="body-dim">Repeat</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div>
-        <div class="row between"><span class="body-dim">Modify</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div>
-        <div class="row between"><span class="body-dim">Rest</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-call-progress',12)} Progress</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-call-repeat',12)} Repeat</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-call-modify',12)} Modify</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-call-rest',12)} Rest</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
       </div>
     </div></div>`}
     <div class="sp-8"></div>
