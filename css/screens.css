@@ -17,7 +17,7 @@
 .markall { width: 100%; height: 44px; margin-top: 8px; background: var(--surface-1); color: var(--paper); border: 1px solid var(--rule); border-radius: 12px; font-size: 14px; font-weight: 600; }
 .rx-count { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--mobility); white-space: nowrap; }
 /* body map (injury) */
-.bodymap { width: clamp(150px, 48vw, 210px); height: auto; display: block; margin: 0 auto 12px; }
+.bodymap { width: auto; height: clamp(300px, 54vh, 470px); max-width: 100%; display: block; margin: 0 auto 8px; }
 .bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
 .bm-seg:hover { fill: var(--surface-2); }
 .bm-seg.sel { fill: var(--strength); stroke: var(--strength); }
@@ -120,6 +120,8 @@ button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active,
 @media (hover: hover) { .ex-card:hover { filter: brightness(1.1); } }
 .ex-card:active { transform: scale(0.985); }
 .ex-card .more { display: block; margin-top: 4px; background: none; border: none; padding: 0; color: var(--milestone); font-size: 13px; }
+.chk-min { width: auto; background: var(--surface-1); border: 1px solid var(--rule); border-radius: 12px; padding: 8px 14px; color: var(--paper-dim); font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+.chk-min .more { color: var(--milestone); font-size: 13px; }
 .stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .stat-cols .row.between { margin: 3px 0; }
 

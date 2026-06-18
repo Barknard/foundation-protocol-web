@@ -49,16 +49,7 @@ document.body.insertAdjacentHTML('afterbegin', String.raw`<svg xmlns="http://www
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
-  <symbol id="ic-glute-bridge" viewBox="0 0 50 60">
-    <circle cx="7" cy="45" r="3.5" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="10.5" y1="45" x2="28" y2="32"/>
-      <path d="M 11 47 L 15 50 L 19 50"/>
-      <path d="M 28 32 L 32 45 L 38 53"/>
-      <path d="M 28 32 L 30 46 L 36 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
-    </g>
-  </symbol>
+  <symbol id="ic-glute-bridge" viewBox="0 0 50 60"><circle cx="7" cy="50" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M 10.5 51 L 22 48"/><path d="M 22 48 L 33 51"/><line x1="33" y1="51" x2="33" y2="57"/><line x1="30" y1="57" x2="38" y2="57"/><line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/></g></symbol>
   <symbol id="ic-band-walk" viewBox="0 0 50 60">
     <circle cx="25" cy="10" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -330,16 +321,7 @@ document.body.insertAdjacentHTML('afterbegin', String.raw`<svg xmlns="http://www
       <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
-  <symbol id="ic-glute-bridge-2" viewBox="0 0 50 60">
-    <circle cx="7" cy="45" r="3.5" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="10.5" y1="45" x2="31.7" y2="49.5"/>
-      <path d="M 11 47 L 15 50 L 19 50"/>
-      <path d="M 31.7 49.5 L 44.7 45.6 L 38 53"/>
-      <path d="M 31.7 49.5 L 45.7 51.4 L 36 54"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
-    </g>
-  </symbol>
+  <symbol id="ic-glute-bridge-2" viewBox="0 0 50 60"><circle cx="7" cy="54" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M 10.5 54 L 28 40"/><path d="M 28 40 L 34 51"/><line x1="34" y1="51" x2="34" y2="57"/><line x1="31" y1="57" x2="39" y2="57"/><line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/></g></symbol>
   <symbol id="ic-band-walk-2" viewBox="0 0 50 60">
     <circle cx="25" cy="10" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -506,58 +488,6 @@ document.body.insertAdjacentHTML('afterbegin', String.raw`<svg xmlns="http://www
       <line x1="2" y1="50" x2="48" y2="50" stroke-width="1.5" stroke="#807868"/>
     </g>
   </symbol>
-  <symbol id="ic-walking-2" viewBox="0 0 50 60">
-    <circle cx="27" cy="9" r="3.5" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="26" y1="12.5" x2="24" y2="33"/>
-      <path d="M 25 17 L 20 23"/>
-      <path d="M 25 17 L 31 24"/>
-      <path d="M 24 33 L 19 43 L 15 53"/>
-      <path d="M 24 33 L 30 44 L 34 53"/>
-      <path d="M 34 53 L 37 53" stroke-width="1.5"/>
-      <path d="M 13 53 L 16 53" stroke-width="1.5"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
-    </g>
-  </symbol>
-  <symbol id="ic-walking-3" viewBox="0 0 50 60">
-    <circle cx="26" cy="8" r="3.5" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="26" y1="11.5" x2="25" y2="32"/>
-      <path d="M 25 17 L 28 25"/>
-      <path d="M 25 17 L 22 25"/>
-      <path d="M 25 32 L 23 44 L 22 54"/>
-      <path d="M 25 32 L 27 44 L 29 54"/>
-      <path d="M 20 54 L 23 54" stroke-width="1.5"/>
-      <path d="M 27 54 L 30 54" stroke-width="1.5"/>
-      <line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/>
-    </g>
-  </symbol>
-  <symbol id="ic-running-2" viewBox="0 0 50 60">
-    <circle cx="30" cy="11" r="3.5" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="28" y1="14" x2="23" y2="33"/>
-      <path d="M 27 18 L 21 19 L 19 24"/>
-      <path d="M 27 18 L 33 21 L 35 26"/>
-      <path d="M 23 33 L 17 38 L 15 46"/>
-      <path d="M 23 33 L 30 40 L 32 49"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
-      <path d="M 5 18 L 12 18" stroke-width="1" stroke="#6A93C8"/>
-      <path d="M 4 24 L 11 24" stroke-width="1" stroke="#6A93C8"/>
-    </g>
-  </symbol>
-  <symbol id="ic-running-3" viewBox="0 0 50 60">
-    <circle cx="29" cy="11" r="3.5" fill="currentColor"/>
-    <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <line x1="28" y1="14" x2="24" y2="33"/>
-      <path d="M 27 18 L 31 22 L 33 27"/>
-      <path d="M 27 18 L 23 22 L 21 27"/>
-      <path d="M 24 33 L 27 41 L 25 49"/>
-      <path d="M 24 33 L 21 41 L 23 49"/>
-      <line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/>
-      <path d="M 5 18 L 12 18" stroke-width="1" stroke="#6A93C8"/>
-      <path d="M 4 24 L 11 24" stroke-width="1" stroke="#6A93C8"/>
-    </g>
-  </symbol>
   <symbol id="ic-kb-swing" viewBox="0 0 50 60">
     <circle cx="25" cy="17" r="3.5" fill="currentColor"/>
     <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -620,5 +550,13 @@ document.body.insertAdjacentHTML('afterbegin', String.raw`<svg xmlns="http://www
     <path d="M13 7.2a2.4 2.4 0 0 1 4 1.6c0 1.6-2.4 2-2.4 3.6"/>
     <path d="M14.6 15.4h.01"/>
   </symbol>
+<symbol id="ic-walking-1" viewBox="0 0 50 60"><circle cx="25" cy="9" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="25" y1="12.5" x2="25" y2="33"/><path d="M 25 17 L 31 25"/><path d="M 25 17 L 19 23"/><path d="M 25 33 L 31 42 L 33 52"/><path d="M 25 33 L 19 43 L 16 52"/><path d="M 33 52 L 36 52" stroke-width="1.5"/><path d="M 14 52 L 17 52" stroke-width="1.5"/><line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-walking-2" viewBox="0 0 50 60"><circle cx="25" cy="7.5" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="25" y1="11" x2="25" y2="31.5"/><path d="M 25 15.5 L 27 23"/><path d="M 25 15.5 L 23 23"/><path d="M 25 31.5 L 26 42 L 27 52"/><path d="M 25 31.5 L 24 41 L 22 51"/><path d="M 25 52 L 29 52" stroke-width="1.5"/><path d="M 20 51 L 23 51" stroke-width="1.5"/><line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-walking-3" viewBox="0 0 50 60"><circle cx="25" cy="9" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="25" y1="12.5" x2="25" y2="33"/><path d="M 25 17 L 19 25"/><path d="M 25 17 L 31 23"/><path d="M 25 33 L 19 42 L 16 52"/><path d="M 25 33 L 31 43 L 33 52"/><path d="M 14 52 L 17 52" stroke-width="1.5"/><path d="M 33 52 L 36 52" stroke-width="1.5"/><line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-walking-4" viewBox="0 0 50 60"><circle cx="25" cy="7.5" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="25" y1="11" x2="25" y2="31.5"/><path d="M 25 15.5 L 23 23"/><path d="M 25 15.5 L 27 23"/><path d="M 25 31.5 L 24 42 L 23 52"/><path d="M 25 31.5 L 26 41 L 28 51"/><path d="M 21 52 L 25 52" stroke-width="1.5"/><path d="M 27 51 L 30 51" stroke-width="1.5"/><line x1="2" y1="57" x2="48" y2="57" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-running-1" viewBox="0 0 50 60"><circle cx="31" cy="11" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="29" y1="14" x2="23" y2="33"/><path d="M 28 18 L 34 20 L 33 26"/><path d="M 26 19 L 20 19 L 20 25"/><path d="M 23 33 L 31 37 L 35 45"/><path d="M 23 33 L 18 41 L 14 47"/><line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-running-2" viewBox="0 0 50 60"><circle cx="31" cy="8" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="29" y1="11" x2="24" y2="29"/><path d="M 28 15 L 33 18 L 30 23"/><path d="M 27 16 L 22 19 L 25 24"/><path d="M 24 29 L 28 36 L 25 43"/><path d="M 24 29 L 21 36 L 24 42"/><path d="M 6 53 L 12 53" stroke-width="1.5" stroke="#6A93C8"/><path d="M 8 50 L 13 50" stroke-width="1.5" stroke="#6A93C8"/><line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-running-3" viewBox="0 0 50 60"><circle cx="31" cy="11" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="29" y1="14" x2="23" y2="33"/><path d="M 27 18 L 21 20 L 22 26"/><path d="M 28 18 L 34 18 L 34 24"/><path d="M 23 33 L 18 37 L 13 44"/><path d="M 23 33 L 30 39 L 33 47"/><line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/></g></symbol>
+  <symbol id="ic-running-4" viewBox="0 0 50 60"><circle cx="31" cy="8" r="3.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="29" y1="11" x2="24" y2="29"/><path d="M 28 15 L 22 18 L 25 23"/><path d="M 27 16 L 33 19 L 30 24"/><path d="M 24 29 L 21 36 L 24 43"/><path d="M 24 29 L 28 36 L 25 42"/><path d="M 6 53 L 12 53" stroke-width="1.5" stroke="#6A93C8"/><path d="M 8 50 L 13 50" stroke-width="1.5" stroke="#6A93C8"/><line x1="2" y1="55" x2="48" y2="55" stroke-width="1.5" stroke="#807868"/></g></symbol>
 </svg>
 `);

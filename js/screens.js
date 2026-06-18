@@ -297,9 +297,17 @@ function renderCheck() {
   const ready = t.goalMet && t.feel;
   const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
   const reChk = injuryActive();
+  const gl = { done:'Goal met', partial:'Partial goal', missed:'Goal missed' }[t.goalMet] || 'Goal not set';
   return `<div class="screen no-nav">
-    <p class="body-dim">${reChk ? 'Still sore, or good to ease back in?' : 'A tap or two — the app picks the call.'}</p>
-    <div class="sp-24"></div>
+    ${(t.hurt && !reChk) ? '<div class="sp-8"></div>' : `<p class="body-dim">${reChk ? 'Still sore, or good to ease back in?' : 'A tap or two — the app picks the call.'}</p><div class="sp-20"></div>`}
+    ${t.hurt ? `
+    <button class="chk-min" data-clearhurt aria-label="Change your goal or feeling answer">${gl} · Feel ${t.feel?`${t.feel}/5`:'—'} <span class="more">change</span></button>
+    <div class="sp-12"></div>
+    <p class="label">Where does it hurt? Tap all that apply.</p><div class="sp-8"></div>
+    ${bodyMap(t.parts)}
+    <div class="sp-12"></div>
+    <button class="ghost" data-clearhurt>Nothing hurts — clear</button>
+    ` : `
     <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
     <div class="chip-row" data-q="goal">
       <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">Done</button>
@@ -309,11 +317,10 @@ function renderCheck() {
     <div class="sp-24"></div>
     <p class="label">How do you feel?</p><div class="sp-8"></div>
     <div class="feel-grid" data-q="feel">
-      ${[5,4,3,2,1].map(v=>`<button class="feel ${t.feel===v?'active':''} feel-${v}" data-val="${v}">
-        <span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
+      ${[5,4,3,2,1].map(v=>`<button class="feel ${t.feel===v?'active':''} feel-${v}" data-val="${v}"><span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
     </div>
     <div class="sp-20"></div>
-    ${(t.feel && t.feel <= 2 && !t.hurt && !t.painChecked) ? `
+    ${(t.feel && t.feel <= 2 && !t.painChecked) ? `
       <div class="card-block strength pain-nudge"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
         <div class="title">Low days are normal — is something actually hurting?</div>
         <div class="body-dim" style="font-size:14px;margin-top:2px;">Tired or sore all over is fatigue, not injury. A joint, one spot, or sharp/new pain is different — soreness never lives inside a joint.</div>
@@ -324,15 +331,10 @@ function renderCheck() {
           <button id="chk-pain-sharp">Sharp / new / worse pain</button>
         </div>
       </div></div>`
-    : `<button class="hurt-toggle ${t.hurt?'on':''}" id="chk-hurt">${t.hurt?'⚠ Something hurts — tap to clear':'Something hurts?'}</button>`}
-    ${t.hurt ? `<div class="sp-16"></div>
-      <p class="label">Where? Tap all that apply.</p><div class="sp-8"></div>
-      ${bodyMap(t.parts)}
-      <div class="bm-chips">${['lower back','glute','hamstring','calf','Achilles'].map(p=>`<button class="bm-chip${t.parts.includes(p)?' sel':''}" data-part="${p}">${p}</button>`).join('')}</div>
-      <div class="sp-16"></div>
-      <button class="hurt-toggle ${t.redFlag?'on':''}" id="chk-flag" style="text-align:left;padding:10px 14px;height:auto;min-height:56px;font-size:14px;">${t.redFlag?'⚠ Warning sign flagged — we will route you to a clinician':'Any of: cannot bear weight · bone-point tenderness · numbness · deformity · locking/giving way · a "pop" · rapid swelling?'}</button>` : ''}
-    <div class="sp-24"></div>
-    <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016). Pain — or a flagged warning sign — routes you to rest/clinical care, and the program then eases you back with pain-monitored loading.</p>
+    : `<button class="hurt-toggle" id="chk-hurt">Something hurts?</button>`}
+    <div class="sp-16"></div>
+    <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016) — feel rough or flag pain and it eases you back with pain-monitored loading.</p>
+    `}
   </div>`;
 }
 // Check-in's frozen footer action (placed by the app shell).
@@ -342,15 +344,15 @@ function checkFooter() {
   return `<div class="wiz-nav"><button class="onb-next" id="chk-go" ${ready?'':'disabled'}>See the call</button></div>`;
 }
 function bindCheck() {
-  const goal = document.querySelector('[data-q="goal"]');
-  if (!goal) return;   // DOM moved on before this deferred bind ran
-  goal.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+  if (state.ui.screen !== 'check' || !state._chk) return;   // deferred bind fired after navigating away
+  const goal = document.querySelector('[data-q="goal"]');   // absent in hurt mode (goal/feel minimized)
+  if (goal) goal.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
     state._chk.goalMet = btn.getAttribute('data-val');
     goal.querySelectorAll('button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active'); refreshGo();
   }));
   const feel = document.querySelector('[data-q="feel"]');
-  feel.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+  if (feel) feel.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
     state._chk.feel = Number(btn.getAttribute('data-val'));
     render();   // re-render so the low-feel pain nudge appears/updates for feel 1–2
   }));
@@ -367,6 +369,8 @@ function bindCheck() {
   if (pspot) pspot.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; render(); });
   const psharp = document.getElementById('chk-pain-sharp');
   if (psharp) psharp.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._chk.painSharp = true; render(); });
+  // Clear / "nothing hurts" / "change" → back to the goal+feel questions.
+  document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; state._chk.parts = []; state._chk.redFlag = false; state._chk.painChecked = false; render(); }));
   const flag = document.getElementById('chk-flag');
   if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
   document.querySelectorAll('[data-part]').forEach(el => {

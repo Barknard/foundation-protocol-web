@@ -245,8 +245,8 @@ const FRAMES = {
   'ic-oh-press': ['ic-oh-press','ic-oh-press-2'],
   'ic-split-sq': ['ic-split-sq','ic-split-sq-2'],
   'ic-dead-bug': ['ic-dead-bug','ic-dead-bug-2'],
-  'ic-walking': ['ic-walking','ic-walking-3','ic-walking-2'],
-  'ic-running': ['ic-running','ic-running-3','ic-running-2'],
+  'ic-walking': ['ic-walking-1','ic-walking-2','ic-walking-3','ic-walking-4'],
+  'ic-running': ['ic-running-1','ic-running-2','ic-running-3','ic-running-4'],
   'ic-kb-swing': ['ic-kb-swing','ic-kb-swing-2'],
   'ic-kb-carry': ['ic-kb-carry','ic-kb-carry-2'],
 };

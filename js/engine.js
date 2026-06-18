@@ -72,7 +72,7 @@ function advancePointer() {
 }
 const INJURY_REST = { key: 'rest', title: 'Rest & protect', cls: 'strength',
   action: 'Offload the painful movement today. Keep moving everything that does not hurt.',
-  why: 'For a fresh tweak, current guidance is PEACE & LOVE, not RICE: Protect (briefly offload), Elevate, Avoid anti-inflammatories/ice as a "healing" step, Compress, Educate — then over the next days gently Load, stay Optimistic, do easy pain-free cardio (Vascularization) and graded Exercise. Gentle early loading beats prolonged rest (BJSM 2019/2020). Prefer paracetamol over NSAIDs for pain; re-check tomorrow.' };
+  why: 'For a fresh tweak, current guidance is PEACE & LOVE, not RICE: Protect (briefly offload), Elevate, Avoid anti-inflammatories/ice as a "healing" step, Compress, Educate — then over the next days gently Load, stay Optimistic, do easy pain-free cardio (Vascularization) and graded Exercise. Gentle early loading beats prolonged rest (BJSM 2019/2020). Prefer paracetamol over NSAIDs for pain; re-check tomorrow. Warning signs — can\'t bear weight, numbness, a visible deformity, joint locking/giving way, a "pop", or rapid swelling — mean see a clinician (GP, physio, urgent care) before training it, more so at 40+.' };
 const INJURY_FLAG = { key: 'rest', title: 'See a clinician first', cls: 'strength',
   action: 'Hold off and get this looked at before training it.',
   why: 'You flagged a warning sign — cannot bear weight, bone-point tenderness, numbness, deformity, joint locking/giving way, a "pop", or rapid swelling. Any of these warrants a professional check (GP, physio, urgent care), and it matters more at 40+ where fracture and medication-interaction risk are higher. Resume the plan once cleared.' };

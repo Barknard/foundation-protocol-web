@@ -13,7 +13,8 @@ function animatedFigure(ex, size) {
   const frames = (ex && ex.frames && ex.frames.length) ? ex.frames : [ex.icon];
   const svg = (cls, id) => `<svg class="${cls}" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`;
   const box = (cls, inner) => `<span class="${cls}" style="width:${s}px;height:${s}px;">${inner}</span>`;
-  if (frames.length >= 3) return box('afig anim3', svg('a',frames[0]) + svg('b',frames[1]) + svg('c',frames[2]));
+  if (frames.length >= 4) return box('afig anim4', svg('a',frames[0]) + svg('b',frames[1]) + svg('c',frames[2]) + svg('d',frames[3]));
+  if (frames.length === 3) return box('afig anim3', svg('a',frames[0]) + svg('b',frames[1]) + svg('c',frames[2]));
   if (frames.length === 2) return box('afig anim', svg('a',frames[0]) + svg('b',frames[1]));
   return box('afig', svg('a', frames[0]));
 }

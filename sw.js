@@ -2,7 +2,7 @@
    The app is a slim index.html spine + css/*.css + js/*.js modules; cache them
    all so it opens with no network.
    GitHub API (data sync) is NEVER cached — it always goes to the network. */
-const CACHE = 'fp-shell-v2.7.0';
+const CACHE = 'fp-shell-v2.8.0';
 const SHELL = [
   './', './index.html', './manifest.json', './icon.png', './logo.png',
   './css/base.css', './css/components.css', './css/figures.css', './css/screens.css',
@@ -11,7 +11,13 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Fetch each shell file with cache:'no-store' so a reinstall never re-caches a
+  // stale copy from the browser's HTTP cache (the cause of mixed old/new files).
+  e.waitUntil(
+    caches.open(CACHE).then((c) => Promise.all(
+      SHELL.map((u) => fetch(u, { cache: 'no-store' }).then((r) => (r && r.ok) ? c.put(u, r.clone()) : null).catch(() => {}))
+    )).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
