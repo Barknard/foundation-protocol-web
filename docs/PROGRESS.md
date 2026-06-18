@@ -3,7 +3,8 @@
 **App name:** **The Hard Part** (logo: stone-block "HARD PART" emblem, `logo.png` / `icon.png`). Formerly "Foundation Protocol".
 **Live:** https://barknard.github.io/foundation-protocol-web/ · **Repo:** `Barknard/foundation-protocol-web` (GitHub Pages, branch `main`)
 **Source:** `~/foundation-protocol-web`
-**Last updated:** 2026-06-17
+**Last updated:** 2026-06-18
+**New AI / engineer?** Read [`AI-START-HERE.md`](../AI-START-HERE.md) first — it's the one-screen download for this repo.
 
 A 40-week, research-grounded get-in-shape-without-injury program for ~40+, run as a daily two-tap autoregulated decision. Offline-capable PWA; optional GitHub data-sync per persona.
 
@@ -83,6 +84,37 @@ Research-driven (3 cited reviews in `docs/UX-RECOMMENDATIONS.md`). All in-browse
 - **Data safety (no-GitHub-needed):** lossless Export (incl. injury/session/log/units), Import backup, Restore-last-auto-backup, backup-before-destroy (Reset/Pull snapshot + Reset auto-downloads first).
 - **Accessibility:** :focus-visible rings; body-map keyboard/SR operable (role/aria-pressed/Enter-Space); toast aria-live; contrast bump; per-exercise aria-labels.
 - **Quick wins:** Library search; Progress empty-state; Back no longer cycles tabs; 3-way low-feel pain discriminator; logo fixed ~172px; "e.g." placeholders; default name "Sisyphus".
+
+## 2026-06-18 (cont.) — Why-formula, no-scroll polish, gait figures, streamlined injury input, full validation
+- **"Why this plan?"** brain icon (`ic-why`) on Today opens a **dynamic** panel: today's
+  reasoning + the formula + where it leads + your readiness trend (`dayWhy()`), per
+  phase/week/age. **Phase tab** now shows the current phase's plain-language formula + the
+  studies it's based on (`PHASE_WHY`), plus each phase's formula + references in its detail.
+- **No-scroll everywhere it should be:** header single-lined (title no longer clipped);
+  `100svh` so content that fits doesn't scroll; **exercise detail** (smaller figure hero) and
+  **Progress** (dropped duplicate title, side-by-side stat columns, smaller chart) fit with
+  0px scroll on a 390×844 phone; setup never scrolls. Library stays a scrolling list (intended).
+- **Tabs get a back-to-Today arrow**; whole exercise card opens its full-steps detail
+  (keyboard-activatable; ✓ toggle stops propagation). Hover/press feedback added throughout.
+- **Gait figures reworked** (research: human gait cycle): walk + run are now **4-frame**
+  loops (`anim4`: contact→passing→contact→passing; run adds flight + ~90° arm pump + knee
+  drive). **Glute bridge** redrawn as a proper supine hip-lift. New `animatedFigure` 4-frame mode.
+- **Streamlined "Something hurts"**: tapping it minimizes goal/feel to a one-line "change"
+  summary and opens an **enlarged tap-the-body map** that fills the screen (no scroll);
+  removed the posterior chips and the verbose red-flag screener (its warning-sign guidance
+  moved to text on the rest result). **Fixed a real bug:** `bindCheck` bailed on `!goal`, so
+  in hurt mode the body-map taps / clear / red-flag were all dead — now guarded on screen+state.
+- **Service worker hardened:** install fetches the shell with `cache:'no-store'` (was
+  re-caching stale files from the HTTP cache → old-vs-new figure mismatch between windows);
+  cache bumped (now `v2.9.0`). This was the cause of "the emulator and website look different".
+- **Full validation pass** (in-browser, clean reload): day-gate verified (one row/day, no
+  double-advance, same-day downgrade rolls back); decide() 30-combo truth table; every screen
+  renders + handlers bind; **12 depth/length persona sims** (start phase 0/1/2; 60–500 days;
+  all-good / mixed / oscillating / injury patterns) all monotonic, bounded, no dup rows; long
+  good runs reach the **Target/capstone** (~250–460 days, deload-paced) with sensible end-state
+  guidance; save/load + backup round-trips. **Result: 20/20 + 41/42** — the lone "fail" was a
+  harness artifact (`daysSinceLastCheck` uses real `Date.now()`; the sim faked dates but not the
+  clock → bogus layoff). Documented in `AI-START-HERE.md` §5.
 
 ## Pending (from EVIDENCE-REVIEW.md, not yet wired into the engine)
 - Explicit **RIR 2–3 double-progression** for load advancement (currently in copy, not the engine).
