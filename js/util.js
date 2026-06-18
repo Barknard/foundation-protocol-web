@@ -10,6 +10,8 @@ function escHtml(s) { if (s == null) return ''; return String(s).replace(/&/g,'&
 function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`; }
 function animatedFigure(ex, size) {
   const s = size || 44;
+  // Prefer the parametric skeleton pose when one exists for this exercise (skip walk/run — procedural).
+  if (ex && ex.key && typeof hasFigurePose === 'function' && hasFigurePose(ex.key)) return skeletonFigure(ex.key, s);
   const frames = (ex && ex.frames && ex.frames.length) ? ex.frames : [ex.icon];
   const svg = (cls, id) => `<svg class="${cls}" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`;
   const box = (cls, inner) => `<span class="${cls}" style="width:${s}px;height:${s}px;">${inner}</span>`;

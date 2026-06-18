@@ -70,8 +70,8 @@ function figureInner(pose, opts) {
   const ground = pose.ground == null ? FIG.ground : pose.ground;
   // ground line first (behind)
   if (pose.ground !== false) out.push(`<line x1="2" y1="${_n(ground)}" x2="48" y2="${_n(ground)}" stroke-width="1.5" stroke="#807868"/>`);
-  // props behind the body (wall/bench/band drawn under near limbs)
-  if (pose.propsBehind) out.push(pose.propsBehind);
+  // props behind the body (wall/bench/band drawn under near limbs); may be a fn of the joints
+  if (pose.propsBehind) out.push(typeof pose.propsBehind === 'function' ? pose.propsBehind(J) : pose.propsBehind);
   // far-side limbs (dim, for depth) drawn behind torso
   out.push('<g stroke="' + DIM + '" stroke-width="' + SW + '" stroke-linecap="round" stroke-linejoin="round" fill="none">');
   if (J.farLeg) out.push(_poly([J.pelvis, J.farLeg.knee, J.farLeg.ankle, J.farLeg.toe]));
@@ -108,6 +108,10 @@ function propBench(x, y, w, h) { return `<rect x="${x}" y="${y}" width="${w}" he
 function propBenchLegs(x, y, w, h) { return `<line x1="${x + 2}" y1="${y}" x2="${x + 2}" y2="${y + h}" stroke="#807868" stroke-width="1.5"/><line x1="${x + w - 2}" y1="${y}" x2="${x + w - 2}" y2="${y + h}" stroke="#807868" stroke-width="1.5"/>`; }
 function propWall(x, y1, y2) { return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke-width="2.5" stroke="#807868"/>`; }
 function propDumbbell(J, which) { const h = (which === 'near' ? J.nearArm : J.farArm)?.hand; if (!h) return ''; return `<rect x="${_n(h[0] - 3)}" y="${_n(h[1] - 1.6)}" width="6" height="3.2" rx="1" fill="#D9A24E"/>`; }
+function propKettlebell(J, which) { const h = (which === 'far' ? J.farArm : J.nearArm)?.hand; if (!h) return ''; const x = _n(h[0]), y = _n(h[1]); return `<path d="M ${x - 1.8} ${y} a 1.8 1.8 0 0 1 3.6 0" fill="none" stroke="#D9A24E" stroke-width="1.1"/><circle cx="${x}" cy="${y + 2.8}" r="2.8" fill="#D9A24E"/>`; }
+function propBand(J) { if (!J.nearLeg || !J.farLeg) return ''; const a = J.nearLeg.knee, b = J.farLeg.knee; return `<line x1="${_n(a[0])}" y1="${_n(a[1])}" x2="${_n(b[0])}" y2="${_n(b[1])}" stroke="#D9A24E" stroke-width="1.4" stroke-dasharray="2 1.5"/>`; }
+// point a fraction f along segment a→b (for placing intensity marks on a muscle)
+function _along(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; }
 
 // Public: build an <svg> for a pose with a class (a/b for cross-fade frames)
 function poseSVG(pose, size, cls) { return `<svg class="${cls}" viewBox="0 0 50 60" width="${size}" height="${size}" aria-hidden="true">${figureInner(pose)}</svg>`; }
@@ -127,8 +131,8 @@ function lerpPose(p1, p2, t) {
     head: (p1.head == null && p2.head == null) ? null : _lerpAng(p1.head == null ? p1.torso : p1.head, p2.head == null ? p2.torso : p2.head, t),
     nearArm: _lerpPair(p1.nearArm, p2.nearArm, t), farArm: _lerpPair(p1.farArm, p2.farArm, t),
     nearLeg: _lerpPair(p1.nearLeg, p2.nearLeg, t), farLeg: _lerpPair(p1.farLeg, p2.farLeg, t),
-    // props/intensity/ground/facing are carried from f1 (static across the rep)
-    ground: p1.ground, facing: p1.facing, propsBehind: p1.propsBehind, propsFront: p1.propsFront, intensity: p1.intensity,
+    // props/intensity/ground/facing/wall are carried from f1 (static across the rep)
+    ground: p1.ground, facing: p1.facing, wallX: p1.wallX, propsBehind: p1.propsBehind, propsFront: p1.propsFront, intensity: p1.intensity,
   };
 }
 let _figLast = 0;
@@ -224,6 +228,93 @@ const FIG_POSES = {
     f2: { pelvis:[15,33], torso:6, head:6, farArm:[90,90], nearArm:[250,108], nearLeg:[100,90,4], farLeg:[96,90,4], ground:56,
           propsBehind: propBench(28,47,20,4) + propBenchLegs(28,51,20,5),
           propsFront:(J)=>propDumbbell(J,'near') },
+  },
+  // ---- balance / neuromuscular ----
+  sl_stance: {
+    f1: { pelvis:[25,34], torso:271, head:271, nearArm:[98,62], farArm:[108,57], nearLeg:[90,90,5], farLeg:[345,98,0] },
+    f2: { pelvis:[25,33], torso:270, head:270, nearArm:[100,60], farArm:[110,55], nearLeg:[90,90,5], farLeg:[340,95,0] },
+  },
+  sl_squat: {
+    f1: { pelvis:[25,33], torso:270, head:270, nearArm:[95,92], farArm:[98,92], nearLeg:[90,90,5], farLeg:[110,60,20],
+          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:0, r:2.4 }) },
+    f2: { pelvis:[25,36], torso:268, head:268, nearArm:[80,88], farArm:[83,88], nearLeg:[100,75,5], farLeg:[112,58,20] },
+  },
+  sl_hop: {
+    dur:1000,
+    f1: { pelvis:[24,42], torso:255, head:258, nearArm:[200,160], farArm:[205,165], nearLeg:[40,120,0], farLeg:[300,55,0],
+          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:0, r:2.4 }) },
+    f2: { pelvis:[25,40], torso:265, head:265, nearArm:[40,30], farArm:[48,35], nearLeg:[15,100,0], farLeg:[300,60,0] },
+  },
+  // ---- hip ----
+  hip_abd: {
+    f1: { pelvis:[33,52], torso:178, head:178, nearArm:[200,210], farArm:[185,185], nearLeg:[6,6,30], farLeg:[5,5,30],
+          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.3), dir:270, r:2.4 }) },
+    f2: { pelvis:[33,52], torso:178, head:178, nearArm:[200,210], farArm:[185,185], nearLeg:[315,315,300], farLeg:[5,5,30] },
+  },
+  band_walk: {
+    f1: { pelvis:[25,39], torso:265, head:265, nearArm:[40,35], farArm:[44,38], nearLeg:[68,116,3], farLeg:[72,112,3],
+          propsBehind:(J)=>propBand(J), intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.3), dir:0, r:2.4 }) },
+    f2: { pelvis:[25,39.5], torso:265, head:265, nearArm:[40,35], farArm:[44,38], nearLeg:[35,118,3], farLeg:[80,106,3] },
+  },
+  // ---- shin / calf ----
+  sl_calf_raise: {
+    f1: { pelvis:[25,33], torso:270, head:270, nearArm:[15,8], farArm:[40,200], nearLeg:[90,90,2], farLeg:[40,200,0], wallX:44,
+          propsBehind: propWall(44,8,57), intensity:(J)=>({ at:_along(J.nearLeg.knee,J.nearLeg.ankle,0.5), dir:180, r:2.4 }) },
+    f2: { pelvis:[25,30], torso:270, head:270, nearArm:[15,8], farArm:[40,200], nearLeg:[90,90,60], farLeg:[40,200,0], wallX:44,
+          propsBehind: propWall(44,8,57) },
+  },
+  // ---- strength ----
+  goblet_sq: {
+    f1: { pelvis:[25,33], torso:270, head:270, nearArm:[110,300], farArm:[112,302], nearLeg:[90,90,5], farLeg:[90,90,5],
+          propsFront:(J)=>propDumbbell(J,'near'), intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:0, r:2.4 }) },
+    f2: { pelvis:[23,40], torso:283, head:283, nearArm:[120,290], farArm:[124,292], nearLeg:[50,118,0], farLeg:[55,114,0] },
+  },
+  pushup: {
+    f1: { pelvis:[27,50], torso:8, head:8, nearArm:[100,95], farArm:[100,95], nearLeg:[170,170,90], farLeg:[170,170,90],
+          intensity:(J)=>({ at:_along(J.pelvis,J.shoulder,0.82), dir:90, r:2.6 }) },
+    f2: { pelvis:[27,52], torso:8, head:8, nearArm:[150,70], farArm:[150,70], nearLeg:[170,170,90], farLeg:[170,170,90] },
+  },
+  plank: {
+    f1: { pelvis:[26,46], torso:12, head:12, nearArm:[95,180], farArm:[92,180], nearLeg:[162,162,120], farLeg:[160,160,118],
+          intensity:(J)=>({ at:_along(J.pelvis,J.shoulder,0.4), dir:90, r:2.4 }) },
+    f2: { pelvis:[26,46], torso:12, head:12, nearArm:[95,180], farArm:[92,180], nearLeg:[162,162,120], farLeg:[160,160,118] },
+  },
+  rdl: {
+    f1: { pelvis:[25,33], torso:270, head:270, nearArm:[92,90], farArm:[88,90], nearLeg:[90,90,5], farLeg:[90,90,5],
+          propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far'),
+          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:200, r:2.4 }) },
+    f2: { pelvis:[22,36], torso:20, head:12, nearArm:[90,90], farArm:[90,90], nearLeg:[85,95,0], farLeg:[83,95,0] },
+  },
+  oh_press: {
+    f1: { pelvis:[25,35], torso:270, head:270, nearArm:[122,283], farArm:[118,287], nearLeg:[90,90,5], farLeg:[90,90,5],
+          propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far'),
+          intensity:(J)=>({ at:_along(J.shoulder,J.nearArm.elbow,0.5), dir:0, r:2.2 }) },
+    f2: { pelvis:[25,35], torso:270, head:270, nearArm:[272,272], farArm:[268,268], nearLeg:[90,90,5], farLeg:[90,90,5] },
+  },
+  split_sq: {
+    f1: { pelvis:[25,38], torso:276, head:276, nearArm:[110,135], farArm:[115,140], nearLeg:[95,90,0], farLeg:[132,225,35],
+          propsBehind:(J)=>propBench(J.farLeg.ankle[0]-7, J.farLeg.ankle[1], 16, 3),
+          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:0, r:2.4 }) },
+    f2: { pelvis:[24,42], torso:272, head:272, nearArm:[120,150], farArm:[125,155], nearLeg:[105,55,0], farLeg:[138,235,30] },
+  },
+  // ---- mobility ----
+  dead_bug: {
+    f1: { pelvis:[30,54], torso:180, head:180, nearArm:[270,270], farArm:[270,270], nearLeg:[270,0,0], farLeg:[270,0,0],
+          intensity:(J)=>({ at:_along(J.pelvis,J.shoulder,0.4), dir:270, r:2.4 }) },
+    f2: { pelvis:[30,54], torso:180, head:180, nearArm:[185,182], farArm:[270,270], nearLeg:[270,0,0], farLeg:[10,5,0] },
+  },
+  // ---- kettlebell ----
+  kb_swing: {
+    dur:1200,
+    f1: { pelvis:[26,40], torso:305, head:312, nearArm:[112,114], farArm:[108,110], nearLeg:[96,88,4], farLeg:[92,90,4],
+          propsFront:(J)=>propKettlebell(J,'near'), intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.2), dir:180, r:2.4 }) },
+    f2: { pelvis:[25,33], torso:270, head:270, nearArm:[357,357], farArm:[353,353], nearLeg:[90,90,5], farLeg:[90,90,5] },
+  },
+  kb_carry: {
+    dur:1400,
+    f1: { pelvis:[25,33], torso:270, head:270, nearArm:[90,90], farArm:[90,90], nearLeg:[78,88,5], farLeg:[102,95,25],
+          propsFront:(J)=>propKettlebell(J,'near')+propKettlebell(J,'far') },
+    f2: { pelvis:[25,33], torso:270, head:270, nearArm:[90,90], farArm:[90,90], nearLeg:[102,95,25], farLeg:[78,88,5] },
   },
 };
 
