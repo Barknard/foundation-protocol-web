@@ -99,6 +99,11 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
 .goal-row { display: flex; gap: 10px; align-items: stretch; }
 .goal-vert { flex: 0 0 auto; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper-dim); text-align: center; padding: 2px 0; }
 .goal-blocks { flex: 1; min-width: 0; }
+.today-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.today-head .today-focus { flex: 1; min-width: 0; }
+.why-btn { flex: 0 0 auto; width: auto; background: none; border: none; padding: 4px 4px 4px 8px; margin-top: 2px; color: var(--paper-dim); display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.why-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--paper-dim); white-space: nowrap; }
+.why-btn-row { width: auto; background: none; border: 1px solid var(--rule); border-radius: 12px; color: var(--paper-dim); display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 14px; }
 
 /* ---------- INTERACTION FEEDBACK: hover (pointer) + press (all) ---------- */
 button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .bm-chip, .ex-check, .hd-journey, .hd-gear, .hd-back {

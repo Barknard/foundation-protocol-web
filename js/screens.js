@@ -196,15 +196,15 @@ function renderToday() {
   const focus = dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery';
   const PENCIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   // "Why" card lives at the BOTTOM (action-first layout): the call/session leads, rationale is opt-in below.
-  const whyCard = `<div class="sp-16"></div>
-    <button class="today-block" data-exp-why aria-expanded="${whyOpen?'true':'false'}">
-      <div class="card" style="padding:14px 16px;border:1px solid var(--rule);">
-        <div class="rx-head"><div class="col"><span class="label" style="color:var(--milestone);">Today · why</span><div class="sp-4"></div><div class="body-dim">${escHtml(why.line)}</div></div><div class="rx-chev">${svgUse('ic-chev-right',20)}</div></div>
-      </div>
-    </button>
-    <div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:12px 14px;border:1px solid var(--rule);margin-top:8px;">
+  // The dynamic "why" panel (opened by the brain-? icon): today's reasoning, THE formula, where it leads, your trend.
+  const whyPanel = `<div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:14px 16px;border:1px solid var(--rule);margin-top:10px;">
+      <div class="body" style="margin-bottom:8px;">${escHtml(why.line)}</div>
       ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
-      ${trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(trend)}</p>`:''}
+      <div class="divider"></div>
+      <p class="label" style="color:var(--milestone);">How today's call is decided</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.formula)}</p>
+      <div class="sp-12"></div>
+      <p class="label" style="color:var(--mobility);">Where this leads</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.lead)}</p>
+      ${why.trend?`<div class="sp-12"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.trend)}</p>`:''}
     </div></div>`;
   // One banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
@@ -223,9 +223,12 @@ function renderToday() {
       return `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
       <div class="sp-12"></div>
       <div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
-      ${whyCard}`;
+      <div class="sp-12"></div>
+      <button class="why-btn-row" data-exp-why aria-expanded="${whyOpen?'true':'false'}">${svgUse('ic-why',20)}<span>Why this call?</span></button>
+      ${whyPanel}`;
     })() : `
-    <div class="today-focus serif">${focus}</div>
+    <div class="today-head"><div class="today-focus serif">${focus}</div><button class="why-btn" data-exp-why aria-expanded="${whyOpen?'true':'false'}" aria-label="Why this plan — the reasoning behind today's routine">${svgUse('ic-why',24)}<span class="why-lbl">Why this plan?</span></button></div>
+    ${whyPanel}
     <div class="sp-8"></div>
     ${(() => {
       if (standingCall()) return '';   // the recovering card above is the active call
@@ -256,8 +259,7 @@ function renderToday() {
       return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
     }).join('')}</div></div>
     <div class="sp-12"></div>
-    <button data-go="check">Daily check-in</button>
-    ${whyCard}`}
+    <button data-go="check">Daily check-in</button>`}
     <div class="sp-16"></div>
   </div>`;
 }
@@ -537,11 +539,30 @@ function drawReadiness() {
 window.addEventListener('resize', () => { if (state.ui.screen === 'progress') drawReadiness(); });
 
 // ---------- PHASE LIST / DETAIL ----------
+// Plain-language formula + the research each phase is based on (shown on the Phase tab).
+const PHASE_WHY = {
+  0: { formula: "For 4 weeks you do gentle, repeatable movement (walking, light bodyweight prep, mobility) plus a daily 2-tap check-in. You advance only when you can repeatedly hit easy goals AND feel good doing them — because tendons and bone strengthen far more slowly than muscle and heart, so this phase lets the slow tissue catch up before any load goes on. Cap: never raise a session more than ~10% over the prior week.",
+       refs: ["Bohm, Mersmann & Arampatzis — Sports Medicine, 2015 (tendon & bone adapt slower than muscle/cardio).","Johansen & Nielsen et al. — BJSM, 2025 (avoid >10% single-session spikes).","Saw, Main & Gastin — BJSM, 2016 (subjective wellbeing tracks readiness)."] },
+  1: { formula: "For 8 weeks the main job is strength, taken close to but never to failure (~2–3 reps in reserve). You advance by meeting strength goals while still feeling recovered — strength roughly halves injury risk and builds the capacity for running, and for the 40+ body stopping shy of failure gives nearly all the benefit with far less strain.",
+       refs: ["Lauersen, Andersen & Andersen — BJSM, 2018 (strength training cuts injuries ~50%).","ACSM guidelines / Pelland et al., 2025 (2–3 reps in reserve; anti-failure for older adults).","Bohm, Mersmann & Arampatzis — Sports Medicine, 2015 (strength builds tendon/bone capacity)."] },
+  2: { formula: "Over 12 weeks you add running in tiny, controlled doses (run-walk intervals) on top of maintained strength. You advance only when you complete the run goal and feel recovered the next day — and never grow a run more than ~10% week to week, because a new runner's tendons, bone and joints are the limiter, not the lungs.",
+       refs: ["Johansen & Nielsen et al. — BJSM, 2025 (+10% session-spike cap limits running injury).","Bohm, Mersmann & Arampatzis — Sports Medicine, 2015 (slow tissue adaptation governs safe running).","Lauersen, Andersen & Andersen — BJSM, 2018 (maintained strength halves running injury)."] },
+  3: { formula: "For 16 weeks you steadily grow running distance and strength volume to raise aerobic fitness (VO₂max) — one of the strongest predictors of health and longevity. You advance by hitting progressively bigger goals while still feeling good, always under the +10% weekly cap and with strength still shy of failure.",
+       refs: ["Kokkinos et al. — JACC, 2022 (higher VO₂max strongly lowers mortality).","Johansen & Nielsen et al. — BJSM, 2025 (+10% load-spike cap during the build).","ACSM guidelines / Pelland et al., 2025 (progressive overload with 2–3 RIR)."] },
+  4: { formula: "The capstone: sharpen everything toward one session — a 10K plus 100 pushups, situps and squats — by peaking aerobic fitness and strength endurance. You attempt it only when your check-ins confirm you're recovered and ready, never forcing it on a tired body, because readiness is the gate that keeps a hard effort from becoming an injury.",
+       refs: ["Kokkinos et al. — JACC, 2022 (peak VO₂max underpins the 10K demand).","Saw, Main & Gastin — BJSM, 2016 (subjective readiness gates peak/test efforts).","Lauersen, Andersen & Andersen — BJSM, 2018 (accumulated strength protects the capstone effort)."] },
+};
 function renderPhaseList() {
   const curIdx = state.phase?.phase ?? 0;
+  const cw = PHASE_WHY[curIdx];
   return `<div class="screen">
-    <p class="label">Full Progression</p><div class="sp-8"></div>
-    <h1 class="display-s serif">Five phases.<br>Each earns the next.</h1><div class="sp-20"></div>
+    <h1 class="display-s serif">Five phases.<br>Each earns the next.</h1><div class="sp-16"></div>
+    ${cw ? `<div class="card" style="margin-bottom:18px;border:1px solid var(--milestone);">
+      <span class="label" style="color:var(--milestone);">Your phase now · the formula</span><div class="sp-8"></div>
+      <div class="body">${escHtml(cw.formula)}</div>
+      <div class="sp-12"></div><p class="label">Based on</p><div class="sp-4"></div>
+      ${cw.refs.map(r=>`<p class="body-dim" style="font-size:14px;margin:3px 0;">${escHtml(r)}</p>`).join('')}
+    </div>` : ''}
     ${PHASES.map(p=>`<button class="lib-row" data-go="phaseDetail" data-p-index="${p.index}" style="grid-template-columns:1fr 16px; height:auto; padding:14px 16px; ${p.index===curIdx?'background:var(--surface-1);border:1px solid var(--milestone);':''}">
       <div class="text"><div class="row between"><span class="label">PHASE 0${p.index}</span>${p.index===curIdx?'<span class="label" style="color:var(--milestone);">CURRENT</span>':''}</div>
       <div class="headline serif" style="margin-top:4px;">${escHtml(p.name)}</div>
@@ -562,6 +583,7 @@ function renderPhaseDetail(index) {
     ${p.focus.map(f=>`<p class="body" style="margin:4px 0;">•  ${escHtml(f)}</p>`).join('')}
     <div class="sp-20"></div><p class="label">Exit criteria</p><div class="sp-8"></div>
     ${p.exit.map(f=>`<p class="body" style="margin:4px 0;">•  ${escHtml(f)}</p>`).join('')}
+    ${PHASE_WHY[p.index]?`<div class="divider"></div><p class="label" style="color:var(--milestone);">The formula</p><div class="sp-8"></div><p class="body">${escHtml(PHASE_WHY[p.index].formula)}</p><div class="sp-12"></div><p class="label">References</p><div class="sp-8"></div>${PHASE_WHY[p.index].refs.map(r=>`<p class="body-dim" style="font-size:14px;margin:3px 0;">${escHtml(r)}</p>`).join('')}`:''}
     <div class="divider"></div><p class="label">Sample week</p><div class="sp-12"></div>
     ${p.week.map(d=>`<div style="margin-bottom:12px;"><div class="title-sm" style="color:var(--paper-dim); margin-bottom:6px;">${escHtml(d.day)}</div>
       ${d.blocks.map(b=>`<div class="card-block ${b.kind}" style="margin-bottom:6px;"><div class="stripe"></div>

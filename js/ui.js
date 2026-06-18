@@ -38,7 +38,7 @@ function appHeader(screen) {
     inner = `${journeyHeader()}<button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
   } else if (TAB_SCREENS.includes(screen)) {
     const t = { library: 'Library', progress: 'Progress', phase: 'Phases' }[screen] || '';
-    inner = `<span class="hd-title">${t}</span><button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
+    inner = `<button class="hd-back" data-go="today" aria-label="Back to Today">${svgUse('ic-back', 22)}</button><span class="hd-title">${t}</span><button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
   } else {
     let title = SCREEN_TITLES[screen] || '';
     if (screen === 'check') title = injuryActive() ? 'Pain re-check' : 'Daily check-in';

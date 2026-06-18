@@ -612,5 +612,13 @@ document.body.insertAdjacentHTML('afterbegin', String.raw`<svg xmlns="http://www
     <rect x="28" y="33" width="8" height="6" rx="2" fill="#D9A24E"/>
     <g stroke="#D9A24E" stroke-width="1.3" fill="none"><path d="M 16 33 Q 18 30 20 33"/><path d="M 30 33 Q 32 30 34 33"/></g>
   </symbol>
+<symbol id="ic-why" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 5a3 3 0 0 0-3 3 3 3 0 0 0-1.5 5.4A3 3 0 0 0 6 19a3 3 0 0 0 3 1"/>
+    <path d="M9 5v15"/>
+    <path d="M6 8.5c1.2.6 2.2.6 3 0"/>
+    <path d="M5.4 13.4c1.4-.5 2.6-.4 3.6.3"/>
+    <path d="M13 7.2a2.4 2.4 0 0 1 4 1.6c0 1.6-2.4 2-2.4 3.6"/>
+    <path d="M14.6 15.4h.01"/>
+  </symbol>
 </svg>
 `);
