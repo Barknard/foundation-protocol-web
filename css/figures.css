@@ -33,12 +33,12 @@
 .fig-hero {
   background: var(--surface-1);
   border-radius: 18px;
-  height: clamp(184px, 48vw, 240px);
+  height: clamp(128px, 32vw, 164px);
   display: flex; align-items: center; justify-content: center;
-  margin: 12px 0;
+  margin: 8px 0;
 }
-.fig-hero svg { height: 170px; width: 170px; color: var(--paper); }
-.fig-hero .afig { width: clamp(150px, 42vw, 196px) !important; height: clamp(150px, 42vw, 196px) !important; }
+.fig-hero svg { height: 120px; width: 120px; color: var(--paper); }
+.fig-hero .afig { width: clamp(104px, 28vw, 140px) !important; height: clamp(104px, 28vw, 140px) !important; }
 .fig-hero .afig svg { width: 100% !important; height: 100% !important; }
 .step-list { display: grid; grid-template-columns: 28px 1fr; gap: 8px 12px; }
 .step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-low); padding-top: 3px; }

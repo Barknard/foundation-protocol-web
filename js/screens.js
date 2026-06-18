@@ -248,7 +248,7 @@ function renderToday() {
         </div><div class="col" style="align-items:flex-end;gap:6px;">${exs.length?`<span class="rx-count">${bdone}/${exs.length}</span><div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div></div>`;
       if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
       const open = !!state.ui.openBlocks[i];
-      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
+      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" role="button" tabindex="0" aria-label="${escHtml(ex.name)} — full steps"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><span class="more">Full steps &rarr;</span></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
       const todo = exs.filter(e=>!exDone(e.key));
       const done = exs.filter(e=>exDone(e.key));
       const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">
@@ -453,16 +453,14 @@ function renderExerciseDetail(key) {
   const ex = EXERCISES.find(e => e.key === key);
   if (!ex) return `<div class="screen no-nav"><p>Not found.</p></div>`;
   return `<div class="screen no-nav">
-        <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
-    <div class="sp-4"></div>
-    <p class="mono" style="color:var(--milestone); font-size: 16px; letter-spacing:0.06em;">${escHtml(ex.rx)}</p>
-    <div class="fig-hero">${animatedFigure(ex,170)}</div>
+    <p class="mono" style="color:var(--milestone); font-size: 15px; letter-spacing:0.05em;">${escHtml(ex.cat)} · ${escHtml(ex.rx)}</p>
+    <div class="fig-hero">${animatedFigure(ex,140)}</div>
     <p class="label">Steps</p><div class="sp-8"></div>
     <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
     <div class="divider"></div>
-    <p class="label" style="color:var(--milestone);">Cue</p><div class="sp-8"></div>
+    <p class="label" style="color:var(--milestone);">Cue</p><div class="sp-4"></div>
     <p class="body">${escHtml(ex.cue)}</p>
-    <div class="sp-32"></div>
+    <div class="sp-16"></div>
   </div>`;
 }
 
@@ -482,8 +480,8 @@ function renderProgress() {
     rest:     state.checks.filter(c=>c.decision==='rest').length,
   };
   return `<div class="screen">
-    <h1 class="display-s serif">Where you are.</h1><div class="sp-16"></div>
-    <div class="card" style="margin-bottom:12px;">
+    <div class="sp-4"></div>
+    <div class="card" style="margin-bottom:10px;">
       <span class="label">Program position</span><div class="sp-8"></div>
       <div class="headline serif">${escHtml(pd.name)} · Week ${state.phase?.week ?? 1}</div>
       <div class="body-dim" style="margin-top:4px;">Session ${state.phase?.dayInWeek ?? 1} of ${pd.week.length} · ${cleared} session${cleared===1?'':'s'} cleared total</div>
@@ -491,23 +489,23 @@ function renderProgress() {
     ${state.checks.length === 0 ? `<div class="card"><span class="label" style="color:var(--mobility);">Your picture starts with day one</span><div class="sp-4"></div><div class="body-dim">Check in each day — your readiness trend and the mix of calls will build here.</div></div>` : `
     <div class="chart" data-chart="chart-readiness" data-color="cardio">
       <div class="top"><div class="title">Readiness</div><div class="label-sm">feel 1–5</div></div>
-      <canvas id="chart-readiness" height="120"></canvas>
+      <canvas id="chart-readiness" height="96"></canvas>
       <div class="bottom" id="chart-readiness-bottom"></div>
     </div>
-    <div class="card" style="margin-bottom:12px;">
-      <span class="label">Last 14 check-ins</span><div class="sp-12"></div>
-      <div class="row between"><span class="body">Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div><div class="sp-4"></div>
-      <div class="row between"><span class="body">Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div><div class="sp-4"></div>
-      <div class="row between"><span class="body">Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
-    </div>
-    <div class="card" style="margin-bottom:12px;">
-      <span class="label">All-time calls</span><div class="sp-12"></div>
-      <div class="row between"><span class="body">Progressed</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div><div class="sp-4"></div>
-      <div class="row between"><span class="body">Repeated</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div><div class="sp-4"></div>
-      <div class="row between"><span class="body">Modified</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div><div class="sp-4"></div>
-      <div class="row between"><span class="body">Rested</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
-    </div>`}
-    <div class="sp-32"></div>
+    <div class="card"><div class="stat-cols">
+      <div><span class="label">Last 14</span><div class="sp-8"></div>
+        <div class="row between"><span class="body-dim">Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div>
+        <div class="row between"><span class="body-dim">Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div>
+        <div class="row between"><span class="body-dim">Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
+      </div>
+      <div><span class="label">All-time calls</span><div class="sp-8"></div>
+        <div class="row between"><span class="body-dim">Progress</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div>
+        <div class="row between"><span class="body-dim">Repeat</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div>
+        <div class="row between"><span class="body-dim">Modify</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div>
+        <div class="row between"><span class="body-dim">Rest</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
+      </div>
+    </div></div>`}
+    <div class="sp-8"></div>
   </div>`;
 }
 function drawReadiness() {
@@ -516,7 +514,7 @@ function drawReadiness() {
   const dpr = window.devicePixelRatio || 1;
   const cssColor = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
   const values = state.checks.slice(-20).map(c => c.feel);
-  const w = canvas.clientWidth, h = 120;
+  const w = canvas.clientWidth, h = 96;
   canvas.width = w*dpr; canvas.height = h*dpr;
   const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
   const bottom = document.getElementById('chart-readiness-bottom');

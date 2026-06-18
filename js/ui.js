@@ -91,12 +91,17 @@ function renderNav(active) {
   </nav>`;
 }
 function bindEvents() {
-  document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => {
-    const target = el.getAttribute('data-go');
-    const params = {};
-    for (const a of el.attributes) if (a.name.startsWith('data-p-')) params[a.name.slice(7)] = a.value;
-    navigate(target, params);
-  }));
+  document.querySelectorAll('[data-go]').forEach(el => {
+    const goNav = () => {
+      const target = el.getAttribute('data-go');
+      const params = {};
+      for (const a of el.attributes) if (a.name.startsWith('data-p-')) params[a.name.slice(7)] = a.value;
+      navigate(target, params);
+    };
+    el.addEventListener('click', goNav);
+    // Keyboard activation for non-button elements that act as buttons (e.g. the whole exercise card).
+    if (el.getAttribute('tabindex') === '0') el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNav(); } });
+  });
   document.querySelectorAll('[data-back]').forEach(el => el.addEventListener('click', () => goBack('today')));
   document.querySelectorAll('[data-exp]').forEach(el => el.addEventListener('click', () => {
     const i = el.getAttribute('data-exp');
@@ -113,7 +118,7 @@ function bindEvents() {
     el.setAttribute('aria-expanded', open ? 'true' : 'false');
     state.ui.whyOpen = open;
   }));
-  document.querySelectorAll('[data-toggle-ex]').forEach(el => el.addEventListener('click', () => { toggleEx(el.getAttribute('data-toggle-ex')); render(); }));
+  document.querySelectorAll('[data-toggle-ex]').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); toggleEx(el.getAttribute('data-toggle-ex')); render(); }));
   document.querySelectorAll('[data-markall]').forEach(el => el.addEventListener('click', () => { markBlockDone(el.getAttribute('data-markall')); render(); }));
 }
 

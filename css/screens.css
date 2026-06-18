@@ -115,6 +115,13 @@ button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg butto
 }
 button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active, .radio-card:active, .seg button:active, .more:active, .hurt-toggle:active, .nav .tab:active, .bm-chip:active, .ex-check:active { transform: scale(0.97); filter: brightness(0.93); }
 .bm-seg:active { fill-opacity: 0.65; }
+/* Whole exercise card is tappable → full steps (the check button stops propagation). */
+.ex-card { cursor: pointer; transition: filter 140ms ease, transform 90ms ease; }
+@media (hover: hover) { .ex-card:hover { filter: brightness(1.1); } }
+.ex-card:active { transform: scale(0.985); }
+.ex-card .more { display: block; margin-top: 4px; background: none; border: none; padding: 0; color: var(--milestone); font-size: 13px; }
+.stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.stat-cols .row.between { margin: 3px 0; }
 
 /* ---------- SETUP: never scroll when the content fits ---------- */
 html:has(.app-main.onb-main), body:has(.app-main.onb-main) { overflow: hidden; }
