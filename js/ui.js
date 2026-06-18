@@ -26,7 +26,7 @@ function journeyHeader() {
   const wk = state.phase?.week ?? 1;
   const dayInWeek = state.phase?.dayInWeek ?? 1;
   return `<button class="hd-journey" data-go="progress" aria-label="Your progress — phase ${phaseIdx + 1} of ${PHASES.length}, ${escHtml(pd.name)}, week ${wk}, session ${dayInWeek} of ${pd.week.length}">
-      <span class="hd-phase">Phase ${phaseIdx + 1}/${PHASES.length} · ${escHtml(pd.name)} · Wk ${wk}</span>
+      <span class="hd-phase">Phase ${phaseIdx + 1}/${PHASES.length} · ${escHtml(pd.name)} · Wk ${wk} · Day ${dayInWeek}/${pd.week.length}</span>
     </button>`;
 }
 const SCREEN_TITLES = { settings: 'Settings', log: 'Activity log' };
@@ -35,16 +35,16 @@ function appHeader(screen) {
   if (screen === 'onboarding') return `<header class="app-header"><div class="hd-inner" style="display:block;padding-top:12px;padding-bottom:12px;">${onbCrumb()}</div></header>`;
   let inner;
   if (screen === 'today') {
-    inner = `${journeyHeader()}<button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button><span class="sync"></span>`;
+    inner = `${journeyHeader()}<button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
   } else if (TAB_SCREENS.includes(screen)) {
     const t = { library: 'Library', progress: 'Progress', phase: 'Phases' }[screen] || '';
-    inner = `<span class="hd-title">${t}</span><button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button><span class="sync"></span>`;
+    inner = `<span class="hd-title">${t}</span><button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
   } else {
     let title = SCREEN_TITLES[screen] || '';
     if (screen === 'check') title = injuryActive() ? 'Pain re-check' : 'Daily check-in';
     if (screen === 'exerciseDetail') { const ex = EXERCISES.find(e => e.key === state.ui.params?.key); title = ex ? ex.name : 'Exercise'; }
     if (screen === 'phaseDetail') { const p = PHASES[state.ui.params?.index]; title = p ? p.name : 'Phase'; }
-    inner = `<button class="hd-back" data-back aria-label="Back">${svgUse('ic-back', 22)}</button><span class="hd-title">${escHtml(title)}</span><span class="sync"></span>`;
+    inner = `<button class="hd-back" data-back aria-label="Back">${svgUse('ic-back', 22)}</button><span class="hd-title">${escHtml(title)}</span>`;
   }
   return `<header class="app-header"><div class="hd-inner">${inner}</div></header>`;
 }
