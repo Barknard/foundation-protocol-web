@@ -19,8 +19,7 @@ function renderOnboarding() {
   if (!p.step) p.step = 1;
   setTimeout(bindOnboarding, 0);
   const imp = p.unit === 'imperial';
-  const r = Math.min(p.step, ONB_REAL), total = ONB_LABELS.length;   // r is 1..3
-  const crumb = `<div class="wiz-head"><div class="wiz-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${r}">${ONB_LABELS.map((_,i)=>`<span class="wiz-seg${i<r?' on':''}"></span>`).join('')}</div><div class="wiz-step">Step ${r} of ${total} · ${ONB_LABELS[r-1]}</div></div>`;
+  const r = Math.min(p.step, ONB_REAL);   // r is 1..3
   let body = '';
   if (r === 1) body = `
     <div class="brand"><img class="brand-logo" src="logo.png" alt="The Hard Part"></div>
@@ -46,9 +45,18 @@ function renderOnboarding() {
       {i:2,t:'I train regularly',s:'Run-walk, strength continuing underneath.'}
      ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
     <div id="plan-preview">${planPreviewHtml(p.phase)}</div>`;
-  const isLast = r === ONB_REAL;
-  const navBar = `<div class="wiz-nav">${r>1?`<button class="secondary onb-back" id="onb-back">Back</button>`:''}<button class="onb-next" id="onb-next">${isLast?'Start my first session':'Next'}</button></div>`;
-  return `<div class="screen no-nav onb">${crumb}<div class="sp-12"></div>${body}</div>${navBar}`;
+  return `<div class="screen no-nav onb">${body}</div>`;
+}
+// Onboarding's frozen header (progress crumb) + frozen footer (Back/Next) — placed by the app shell.
+function onbCrumb() {
+  const p = state._onb || { step: 1 };
+  const r = Math.min(p.step || 1, ONB_REAL), total = ONB_LABELS.length;
+  return `<div class="wiz-head"><div class="wiz-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${r}">${ONB_LABELS.map((_,i)=>`<span class="wiz-seg${i<r?' on':''}"></span>`).join('')}</div><div class="wiz-step">Step ${r} of ${total} · ${ONB_LABELS[r-1]}</div></div>`;
+}
+function onbFooter() {
+  const p = state._onb || { step: 1 };
+  const r = Math.min(p.step || 1, ONB_REAL), isLast = r === ONB_REAL;
+  return `<div class="wiz-nav">${r>1?`<button class="secondary onb-back" id="onb-back">Back</button>`:''}<button class="onb-next" id="onb-next">${isLast?'Start my first session':'Next'}</button></div>`;
 }
 function bindOnboarding() {
   const get = id => document.getElementById(id);
@@ -164,30 +172,48 @@ function renderToday() {
     const adh = Math.round(recent.filter(c=>c.goalMet==='done').length/recent.length*100);
     trend = `Readiness ~${avg.toFixed(1)}/5 over your last ${recent.length} check-ins · ${adh}% sessions completed · ${state.phase?.sessionsCleared ?? 0} progressions so far.`;
   }
+  const focus = dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery';
+  const PENCIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  // "Why" card lives at the BOTTOM (action-first layout): the call/session leads, rationale is opt-in below.
+  const whyCard = `<div class="sp-16"></div>
+    <button class="today-block" data-exp-why aria-expanded="${whyOpen?'true':'false'}">
+      <div class="card" style="padding:14px 16px;border:1px solid var(--rule);">
+        <div class="rx-head"><div class="col"><span class="label" style="color:var(--milestone);">Today · why</span><div class="sp-4"></div><div class="body-dim">${escHtml(why.line)}</div></div><div class="rx-chev">${svgUse('ic-chev-right',20)}</div></div>
+      </div>
+    </button>
+    <div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:12px 14px;border:1px solid var(--rule);margin-top:8px;">
+      ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
+      ${trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(trend)}</p>`:''}
+    </div></div>`;
+  // One banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
+  const banners = (() => {
+    const sc = standingCall();
+    if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
+    if (layoff) return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>`;
+    if (deloadActive()) return `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>`;
+    return '';
+  })();
   return `<div class="screen">
-    <div class="screen-head">
-      <div class="col"><span class="crumb">${escHtml(crumb)}</span><div class="sp-4"></div><span class="sync"></span></div>
-      <button class="icon" data-go="settings" title="Settings">${svgUse('ic-settings',22)}</button>
-    </div>
-    <h1 class="display-m serif">${escHtml(pd.name)}</h1>
-    <div class="sp-4"></div>
-    <p class="title" style="color:var(--mobility);">${dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery'}</p>
-    <div class="sp-16"></div>
-    <div style="margin-bottom:12px;">
-      <button class="today-block" data-exp-why aria-expanded="${whyOpen?'true':'false'}">
-        <div class="card" style="padding:14px 16px;border:1px solid var(--rule);">
-          <div class="rx-head"><div class="col"><span class="label" style="color:var(--milestone);">Today · why</span><div class="sp-4"></div><div class="body">${escHtml(why.line)}</div></div><div class="rx-chev">${svgUse('ic-chev-right',20)}</div></div>
-        </div>
-      </button>
-      <div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:12px 14px;border:1px solid var(--rule);margin-top:8px;">
-        ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
-        ${trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(trend)}</p>`:''}
-        <div class="sp-8"></div><button class="more" data-go="settings">Full evidence base &rarr;</button>
-      </div></div>
-    </div>
-    ${layoff ? `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>` : ''}
-    ${(!layoff && !injuryActive() && deloadActive()) ? `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>` : ''}
-    ${(() => { const sc = standingCall(); return sc ? `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>` : ''; })()}
+    ${banners}
+    ${lastToday ? (() => {
+      // DAY-GATE: already checked in today → call up top + done/countdown. Next session locks until the
+      // next local calendar day (msUntilTomorrow), so you can't run ahead. One session a day.
+      const o = OUTCOMES[lastToday.decision] || OUTCOMES.repeat;
+      return `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
+      <div class="sp-12"></div>
+      <div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
+      ${whyCard}`;
+    })() : `
+    <h1 class="display-s serif" style="color:var(--mobility);">${focus}</h1>
+    <div class="sp-12"></div>
+    ${(() => {
+      if (standingCall()) return '';   // the recovering card above is the active call
+      const lastAny = state.checks[state.checks.length - 1];
+      const carried = (!layoff && lastAny && lastAny.date !== isoToday() && daysSinceLastCheck() <= 2 && ['rest','modify','repeat'].includes(lastAny.decision)) ? lastAny : null;
+      if (!carried) return '';
+      const o = OUTCOMES[carried.decision] || OUTCOMES.repeat;
+      return `<div class="card-block ${o.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">Still standing · your last call</span><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>`;
+    })()}
     <p class="label">Today's goal${counts.total?` · <span class="rx-count">${counts.done}/${counts.total} done</span>`:''}</p><div class="sp-8"></div>
     ${dayPlan.blocks.map((b,i)=>{
       const exs = exercisesForBlock(b.key);
@@ -209,19 +235,9 @@ function renderToday() {
       </div>`;
       return `<div style="margin-bottom:12px;"><button class="today-block" data-exp="${i}" aria-expanded="${open?'true':'false'}">${head}</button>${panel}</div>`;
     }).join('')}
-    ${(() => {
-      if (standingCall()) return '';   // the recovering card above is the active call
-      const lastAny = state.checks[state.checks.length - 1];
-      const carried = (!lastToday && !layoff && lastAny && lastAny.date !== isoToday() && daysSinceLastCheck() <= 2 && ['rest','modify','repeat'].includes(lastAny.decision)) ? lastAny : null;
-      const c = lastToday || carried; if (!c) return '';
-      const o = OUTCOMES[c.decision] || OUTCOMES.repeat;
-      const lbl = lastToday ? "Today's call" : 'Still standing · your last call';
-      return `<div class="sp-12"></div><div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${lbl}</span><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>`;
-    })()}
-    <div class="sp-32"></div>
-    ${lastToday
-      ? `<button data-go="progress">See where you are</button><div class="sp-8"></div><button class="more" data-go="check" data-p-edit="1">Made a mistake? Edit today's answer</button>`
-      : `<button data-go="check">Daily check-in</button>`}
+    <div class="sp-24"></div>
+    <button data-go="check">Daily check-in</button>
+    ${whyCard}`}
     <div class="sp-16"></div>
   </div>`;
 }
@@ -258,9 +274,6 @@ function renderCheck() {
   const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
   const reChk = injuryActive();
   return `<div class="screen no-nav">
-    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
-    <h1 class="display-s serif">${reChk ? 'Pain re-check' : 'Daily check-in'}</h1>
-    <div class="sp-8"></div>
     <p class="body-dim">${reChk ? 'Still sore, or good to ease back in?' : 'A tap or two — the app picks the call.'}</p>
     <div class="sp-24"></div>
     <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
@@ -295,10 +308,14 @@ function renderCheck() {
       <div class="sp-16"></div>
       <button class="hurt-toggle ${t.redFlag?'on':''}" id="chk-flag" style="text-align:left;padding:10px 14px;height:auto;min-height:56px;font-size:14px;">${t.redFlag?'⚠ Warning sign flagged — we will route you to a clinician':'Any of: cannot bear weight · bone-point tenderness · numbness · deformity · locking/giving way · a "pop" · rapid swelling?'}</button>` : ''}
     <div class="sp-24"></div>
-    <button id="chk-go" ${ready?'':'disabled'}>See the call</button>
-    <div class="sp-16"></div>
     <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016). Pain — or a flagged warning sign — routes you to rest/clinical care, and the program then eases you back with pain-monitored loading.</p>
   </div>`;
+}
+// Check-in's frozen footer action (placed by the app shell).
+function checkFooter() {
+  const t = state._chk || {};
+  const ready = t.goalMet && t.feel;
+  return `<div class="wiz-nav"><button class="onb-next" id="chk-go" ${ready?'':'disabled'}>See the call</button></div>`;
 }
 function bindCheck() {
   const goal = document.querySelector('[data-q="goal"]');
@@ -334,7 +351,8 @@ function bindCheck() {
     el.classList.toggle('sel');
   }));
   function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
-  document.getElementById('chk-go').addEventListener('click', () => {
+  const go = document.getElementById('chk-go');
+  if (go) go.addEventListener('click', () => {
     const t = state._chk;
     if (!(t.goalMet && t.feel)) return;
     const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
@@ -393,9 +411,8 @@ function renderExerciseDetail(key) {
   const ex = EXERCISES.find(e => e.key === key);
   if (!ex) return `<div class="screen no-nav"><div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div><p>Not found.</p></div>`;
   return `<div class="screen no-nav">
-    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
-    <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
-    <h1 class="display-s serif">${escHtml(ex.name)}</h1><div class="sp-4"></div>
+        <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
+    <div class="sp-4"></div>
     <p class="mono" style="color:var(--milestone); font-size: 16px; letter-spacing:0.06em;">${escHtml(ex.rx)}</p>
     <div class="fig-hero">${animatedFigure(ex,170)}</div>
     <p class="label">Steps</p><div class="sp-8"></div>
@@ -497,9 +514,8 @@ function renderPhaseList() {
 function renderPhaseDetail(index) {
   const p = PHASES[Number(index)||0];
   return `<div class="screen no-nav">
-    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
-    <p class="label">Phase 0${p.index}</p><div class="sp-8"></div>
-    <h1 class="display-s serif">${escHtml(p.name)}</h1><div class="sp-4"></div>
+        <p class="label">Phase 0${p.index}</p><div class="sp-8"></div>
+    <div class="sp-4"></div>
     <p class="label-sm" style="color:var(--milestone);">${escHtml(p.weeks)}</p><div class="sp-16"></div>
     <p class="body">${escHtml(p.summary)}</p>
     <div class="sp-24"></div><p class="label">Focus this phase</p><div class="sp-8"></div>
@@ -520,8 +536,7 @@ function renderLog() {
   setTimeout(bindLog, 0);
   const log = (state.log || []).slice().reverse();
   return `<div class="screen no-nav">
-    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
-    <h1 class="display-s serif">Activity log</h1><div class="sp-8"></div>
+        <div class="sp-4"></div>
     <p class="body-dim">A timestamped record of every check-in, call, progression, injury, layoff, and sync for ${escHtml(state.profile?.username || 'this persona')}.</p>
     <div class="sp-16"></div>
     ${log.length ? log.map(e => `<div class="logrow"><div class="logtime">${escHtml(fmtLogTime(e.ts))}</div><div class="logbody"><span class="logtype ${escHtml(e.type)}">${escHtml(e.type)}</span>${escHtml(e.text)}</div></div>`).join('') : '<p class="body-dim">No activity yet — your first check-in will show up here.</p>'}
@@ -545,8 +560,7 @@ function renderSettings() {
   const s = state.settings;
   setTimeout(bindSettings, 0);
   return `<div class="screen no-nav">
-    <div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div>
-    <h1 class="display-s serif">Settings</h1><div class="sp-20"></div>
+        <div class="sp-8"></div>
     <p class="label">Persona</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona keeps its own files in the repo: <span class="mono" style="font-size:13px;">data/users/${escHtml(activeSlug()||'…')}/</span></p>
     <div class="sp-12"></div>

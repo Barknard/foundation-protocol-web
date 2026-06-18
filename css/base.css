@@ -20,6 +20,9 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
 html { background: var(--ink); }
+/* Hide the scrollbar chrome everywhere but keep scrolling functional (no visible bar; scroll when needed). */
+html { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar { width: 0; height: 0; display: none; }
 body {
   background: var(--ink);
   color: var(--paper);
@@ -58,12 +61,39 @@ body {
   padding: 0;
   position: relative;
 }
-/* Bottom-nav clearance lives on nav screens only (border-box keeps the screen at exactly 100dvh,
-   so screens that fit never produce a scrollbar). no-nav screens (setup) get no nav padding. */
-.screen { padding: 56px var(--pad) calc(clamp(66px, 9.5vh, 96px) + env(safe-area-inset-bottom) + 16px); min-height: 100vh; min-height: 100dvh; }
-.screen.no-nav { padding: 24px var(--pad) 16px; min-height: 100svh; }   /* svh ≤ viewport → setup never scrolls */
-/* Setup content fits well within the viewport; hide the dvh-rounding filler so setup never shows a scrollbar. */
-html:has(.screen.onb), body:has(.screen.onb) { overflow: hidden; }
+/* ---------- APP SHELL: frozen header (where you are) + scrolling main + frozen footer (nav/action) ---------- */
+.app-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+  max-width: 540px; margin: 0 auto;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--rule);
+  padding-top: env(safe-area-inset-top);
+}
+.hd-inner { display: flex; align-items: center; gap: 10px; padding: 9px var(--pad); min-height: 54px; }
+.hd-journey { flex: 1; min-width: 0; width: auto; background: none; border: none; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 1px; cursor: pointer; }
+.hd-phase { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--milestone); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd-sub { font-size: 13px; color: var(--paper-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd-back { width: auto; flex: 0 0 auto; background: none; border: none; padding: 4px; color: var(--paper); display: flex; align-items: center; }
+.hd-title { flex: 1; min-width: 0; font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd-gear { flex: 0 0 auto; }
+.app-header .sync { flex: 0 0 auto; }
+
+.app-main {
+  max-width: 540px; margin: 0 auto;
+  padding-top: calc(54px + env(safe-area-inset-top));
+  min-height: 100dvh;
+}
+.app-main.has-footer { padding-bottom: calc(clamp(66px, 9.5vh, 96px) + env(safe-area-inset-bottom) + 16px); }
+.app-main.no-header { padding-top: 0; }
+
+/* Screens are now plain padded containers inside the shell (the shell owns viewport height + chrome). */
+.screen { padding: 16px var(--pad) 8px; }
+.screen.no-nav { padding: 16px var(--pad) 8px; }
+
+/* Onboarding fills the space between the fixed header/footer and never scrolls (content fits). */
+.app-main.onb-main { min-height: 100svh; overflow: hidden; }
+.screen.onb { padding: 12px var(--pad) 8px; }
 .row { display: flex; align-items: center; }
 .row.between { justify-content: space-between; }
 .row.gap-8 { gap: 8px; }

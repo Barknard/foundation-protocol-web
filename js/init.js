@@ -18,5 +18,7 @@ window.addEventListener('offline', () => { setSync('offline','Offline'); });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
 }
+// Keep the day-gate countdown ("next session opens in …") fresh without a full re-render.
+setInterval(() => { const el = document.getElementById('next-unlock'); if (el) el.textContent = fmtCountdown(msUntilTomorrow()); }, 30000);
 init();
 

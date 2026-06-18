@@ -190,7 +190,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 
 /* brand logo (homepage) */
 .brand { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.brand-logo { width: auto; max-width: 80%; height: clamp(116px, 24vh, 188px); object-fit: contain; margin: 0 auto 4px; display: block; }
+.brand-logo { width: auto; height: 172px; max-width: 88%; object-fit: contain; margin: 0 auto 4px; display: block; }
 
 /* unit toggle + auto-conversion */
 .unit-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
