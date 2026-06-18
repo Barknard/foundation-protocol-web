@@ -299,7 +299,7 @@ function renderCheck() {
   const reChk = injuryActive();
   const gl = { done:'Goal met', partial:'Partial goal', missed:'Goal missed' }[t.goalMet] || 'Goal not set';
   return `<div class="screen no-nav">
-    ${(t.hurt && !reChk) ? '<div class="sp-8"></div>' : `<p class="body-dim">${reChk ? 'Still sore, or good to ease back in?' : 'A tap or two — the app picks the call.'}</p><div class="sp-20"></div>`}
+    ${reChk ? `<p class="body-dim">Still sore, or good to ease back in?</p><div class="sp-20"></div>` : `<div class="sp-8"></div>`}
     ${t.hurt ? `
     <button class="chk-min" data-clearhurt aria-label="Change your goal or feeling answer">${gl} · Feel ${t.feel?`${t.feel}/5`:'—'} <span class="more">change</span></button>
     <div class="sp-12"></div>
