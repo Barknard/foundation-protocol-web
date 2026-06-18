@@ -175,8 +175,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .wiz-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   max-width: 540px; margin: 0 auto;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: var(--ink);
   border-top: 1px solid var(--rule);
   z-index: 50;
   display: flex; gap: 12px; align-items: center;
@@ -280,8 +279,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 /* ---------- BOTTOM NAV ---------- */
 .nav {
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  max-width: 540px; margin: 0 auto;
+  background: var(--ink);
   border-top: 1px solid var(--rule);
   display: flex; align-items: stretch;
   z-index: 50;

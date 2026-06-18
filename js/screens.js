@@ -225,7 +225,7 @@ function renderToday() {
         </div><div class="col" style="align-items:flex-end;gap:6px;">${exs.length?`<span class="rx-count">${bdone}/${exs.length}</span><div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div></div>`;
       if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
       const open = !!state.ui.openBlocks[i];
-      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
+      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><button class="more" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">Full steps &rarr;</button></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
       const todo = exs.filter(e=>!exDone(e.key));
       const done = exs.filter(e=>exDone(e.key));
       const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">
@@ -244,9 +244,11 @@ function renderToday() {
 
 // ---------- CHECK ----------
 function bodyMap(sel) {
-  const seg = (part,x,y,w,h)=>`<rect class="bm-seg${sel.includes(part)?' sel':''}" data-part="${part}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/>`;
-  return `<svg viewBox="0 0 100 188" class="bodymap" aria-label="Body map — tap where it hurts">
-    <circle class="bm-seg${sel.includes('head/neck')?' sel':''}" data-part="head/neck" cx="50" cy="13" r="10"/>
+  // Keyboard/screen-reader accessible: each region is a focusable toggle (role=button, aria-pressed).
+  const a = (part) => `data-part="${escHtml(part)}" role="button" tabindex="0" aria-label="${escHtml(part)}" aria-pressed="${sel.includes(part)?'true':'false'}"`;
+  const seg = (part,x,y,w,h)=>`<rect class="bm-seg${sel.includes(part)?' sel':''}" ${a(part)} x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/>`;
+  return `<svg viewBox="0 0 100 188" class="bodymap" role="group" aria-label="Body map — choose where it hurts">
+    <circle class="bm-seg${sel.includes('head/neck')?' sel':''}" ${a('head/neck')} cx="50" cy="13" r="10"/>
     ${seg('left shoulder',26,26,16,9)}${seg('right shoulder',58,26,16,9)}
     ${seg('chest',38,30,24,15)}${seg('core',39,47,22,15)}
     ${seg('left arm',21,30,11,44)}${seg('right arm',68,30,11,44)}
@@ -345,11 +347,16 @@ function bindCheck() {
   if (psharp) psharp.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._chk.painSharp = true; render(); });
   const flag = document.getElementById('chk-flag');
   if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
-  document.querySelectorAll('[data-part]').forEach(el => el.addEventListener('click', () => {
-    const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
-    if (i >= 0) state._chk.parts.splice(i,1); else state._chk.parts.push(p);
-    el.classList.toggle('sel');
-  }));
+  document.querySelectorAll('[data-part]').forEach(el => {
+    const toggle = () => {
+      const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
+      if (i >= 0) state._chk.parts.splice(i,1); else state._chk.parts.push(p);
+      const on = el.classList.toggle('sel');
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
+    };
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  });
   function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
   const go = document.getElementById('chk-go');
   if (go) go.addEventListener('click', () => {
@@ -394,22 +401,35 @@ function renderResult(outcomeKey) {
 
 // ---------- LIBRARY ----------
 function renderLibrary() {
+  setTimeout(bindLibrary, 0);
   const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Kettlebell','Mobility','Cardio'];
   return `<div class="screen">
-    <p class="label">Exercise Library</p><div class="sp-8"></div>
-    <h1 class="display-s serif">Form, cues, prescriptions</h1><div class="sp-16"></div>
+    <div class="field" style="margin-bottom:14px;"><input type="search" id="lib-search" placeholder="Search exercises…" autocapitalize="none" autocorrect="off" aria-label="Search exercises"></div>
+    <div id="lib-list">
     ${cats.map(cat=>{ const list=EXERCISES.filter(e=>e.cat===cat); if(!list.length) return '';
-      return `<div class="cat-header">${escHtml(cat)}</div>
-        ${list.map(ex=>`<button class="lib-row" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}">
+      return `<div class="cat-group"><div class="cat-header">${escHtml(cat)}</div>
+        ${list.map(ex=>`<button class="lib-row" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" data-search="${escHtml((ex.name+' '+(ex.cue||'')+' '+ex.cat).toLowerCase())}">
           <div class="fig">${animatedFigure(ex,44)}</div>
           <div class="text"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div></div>
-          <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}`; }).join('')}
+          <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}</div>`; }).join('')}
+    </div>
+    <p class="body-dim" id="lib-empty" style="display:none;">No exercises match that search.</p>
     <div class="sp-32"></div>
   </div>`;
 }
+function bindLibrary() {
+  const s = document.getElementById('lib-search'); if (!s) return;
+  s.addEventListener('input', () => {
+    const q = s.value.trim().toLowerCase();
+    document.querySelectorAll('#lib-list .lib-row').forEach(r => { r.style.display = (!q || (r.getAttribute('data-search')||'').includes(q)) ? '' : 'none'; });
+    let anyVisible = false;
+    document.querySelectorAll('#lib-list .cat-group').forEach(g => { const vis = [...g.querySelectorAll('.lib-row')].some(r => r.style.display !== 'none'); g.style.display = vis ? '' : 'none'; if (vis) anyVisible = true; });
+    const empty = document.getElementById('lib-empty'); if (empty) empty.style.display = anyVisible ? 'none' : '';
+  });
+}
 function renderExerciseDetail(key) {
   const ex = EXERCISES.find(e => e.key === key);
-  if (!ex) return `<div class="screen no-nav"><div class="back-row"><button data-back>${svgUse('ic-back',20)} Back</button></div><p>Not found.</p></div>`;
+  if (!ex) return `<div class="screen no-nav"><p>Not found.</p></div>`;
   return `<div class="screen no-nav">
         <p class="label">${escHtml(ex.cat)}</p><div class="sp-8"></div>
     <div class="sp-4"></div>
@@ -440,13 +460,13 @@ function renderProgress() {
     rest:     state.checks.filter(c=>c.decision==='rest').length,
   };
   return `<div class="screen">
-    <p class="label">Progress</p><div class="sp-8"></div>
     <h1 class="display-s serif">Where you are.</h1><div class="sp-16"></div>
     <div class="card" style="margin-bottom:12px;">
       <span class="label">Program position</span><div class="sp-8"></div>
       <div class="headline serif">${escHtml(pd.name)} · Week ${state.phase?.week ?? 1}</div>
       <div class="body-dim" style="margin-top:4px;">Session ${state.phase?.dayInWeek ?? 1} of ${pd.week.length} · ${cleared} session${cleared===1?'':'s'} cleared total</div>
     </div>
+    ${state.checks.length === 0 ? `<div class="card"><span class="label" style="color:var(--mobility);">Your picture starts with day one</span><div class="sp-4"></div><div class="body-dim">Check in each day — your readiness trend and the mix of calls will build here.</div></div>` : `
     <div class="chart" data-chart="chart-readiness" data-color="cardio">
       <div class="top"><div class="title">Readiness</div><div class="label-sm">feel 1–5</div></div>
       <canvas id="chart-readiness" height="120"></canvas>
@@ -464,7 +484,7 @@ function renderProgress() {
       <div class="row between"><span class="body">Repeated</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div><div class="sp-4"></div>
       <div class="row between"><span class="body">Modified</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div><div class="sp-4"></div>
       <div class="row between"><span class="body">Rested</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
-    </div>
+    </div>`}
     <div class="sp-32"></div>
   </div>`;
 }
@@ -582,8 +602,13 @@ function renderSettings() {
     <div class="divider"></div>
     <p class="label">Data</p><div class="sp-12"></div>
     <button class="secondary" data-go="log">Activity log</button><div class="sp-8"></div>
-    <button class="secondary" id="s-export">Export JSON</button><div class="sp-8"></div>
+    <button class="secondary" id="s-export">Export backup (JSON)</button><div class="sp-8"></div>
+    <button class="secondary" id="s-import">Import backup (JSON)</button>
+    <input type="file" id="s-import-file" accept="application/json" style="display:none">
+    ${hasBackup() ? `<div class="sp-8"></div><button class="ghost" id="s-restore">Restore last auto-backup</button>` : ''}
+    <div class="sp-8"></div>
     <button class="danger" id="s-reset">Reset all local data…</button>
+    <p class="help" style="margin-top:6px;">Export saves your whole history (incl. injuries &amp; log). Import restores it on any device — no GitHub needed. Reset auto-saves a backup first.</p>
     <div class="divider"></div>
     <p class="label">How the call is made</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Each day you answer two things: did you meet the goal, and how do you feel. The app maps that to one of four calls. Progress only when you did the work and feel good or great. Feel rough, it gives an easier version. Feel wrecked or flag pain, it rests you. Anything in between repeats the session so you consolidate before adding load.</p>
@@ -633,17 +658,41 @@ function bindSettings() {
   });
   document.getElementById('s-pull').addEventListener('click', async () => {
     if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
+    if (state.pending.length && !confirm(`You have ${state.pending.length} unsynced change${state.pending.length===1?'':'s'} that will be overwritten. Continue?`)) return;
     if (!confirm('Replace local data with what is in GitHub?')) return;
+    snapshotBeforeDestroy();   // keep a local restore point before overwriting
     await syncFromRemote(); logEvent('sync', 'Pulled all data from GitHub'); render(); toast('Pulled from GitHub','success');
   });
-  document.getElementById('s-export').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), appVersion:APP_VERSION, profile:state.profile, phase:state.phase, checks:state.checks }, null, 2)], { type:'application/json' });
-    const url = URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download=`foundation-export-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
-    toast('Downloaded','success');
+  document.getElementById('s-export').addEventListener('click', () => { downloadBackup(); toast('Backup downloaded','success'); });
+  const importBtn = document.getElementById('s-import'), importFile = document.getElementById('s-import-file');
+  if (importBtn && importFile) {
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', () => {
+      const file = importFile.files && importFile.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const obj = JSON.parse(reader.result);
+          if (state.profile && !confirm('Replace this device\'s data with the imported backup?')) return;
+          applyBackup(obj);
+          navigate(state.profile ? 'today' : 'onboarding');
+          toast('Backup imported','success');
+        } catch (e) { toast('Could not import: ' + e.message, 'error'); }
+      };
+      reader.onerror = () => toast('Could not read that file', 'error');
+      reader.readAsText(file);
+    });
+  }
+  const restoreBtn = document.getElementById('s-restore');
+  if (restoreBtn) restoreBtn.addEventListener('click', () => {
+    if (!confirm('Restore the last auto-backup? This replaces current data on this device.')) return;
+    try { restoreBackup(); navigate(state.profile ? 'today' : 'onboarding'); toast('Restored from backup', 'success'); }
+    catch (e) { toast(e.message, 'error'); }
   });
   document.getElementById('s-reset').addEventListener('click', () => {
-    if (!confirm('Delete this persona\'s profile, checks, and progress on this device? GitHub data is untouched.')) return;
+    if (!confirm('Delete this persona\'s data on this device? We\'ll save a backup to your device first. GitHub data is untouched.')) return;
+    snapshotBeforeDestroy();          // keep a local restore point
+    try { downloadBackup(); } catch (_) {}   // and drop a file in Downloads
     const slug = activeSlug();
     if (slug) localStorage.removeItem(userStateKey(slug));
     // Fully zero the in-memory persona (mirrors loadUserState('')) so nothing — log, injury, session,
@@ -651,7 +700,7 @@ function bindSettings() {
     state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
     state.session=null; state.injury=null; state.log=[]; state._preDay=null;
     state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}
-    navigate('onboarding'); toast('Local data cleared','success');
+    navigate('onboarding'); toast('Backup saved · local data cleared','success');
   });
 }
 

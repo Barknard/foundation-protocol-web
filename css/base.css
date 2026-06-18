@@ -6,7 +6,7 @@
   --surface-2: #332D29;
   --paper: #E8E2D2;
   --paper-dim: #B8B0A0;
-  --paper-low: #807868;
+  --paper-low: #9A9282;
   --rule: #3A3431;
   --strength: #E26B5F;
   --cardio: #6A93C8;
@@ -20,6 +20,9 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
 html { background: var(--ink); }
+/* Accessibility: a clear keyboard focus ring (WCAG 2.4.7) on every interactive element. */
+:focus-visible { outline: 3px solid var(--milestone); outline-offset: 2px; border-radius: 6px; }
+.bm-seg:focus-visible { outline-offset: 1px; }
 /* Hide the scrollbar chrome everywhere but keep scrolling functional (no visible bar; scroll when needed). */
 html { scrollbar-width: none; -ms-overflow-style: none; }
 html::-webkit-scrollbar { width: 0; height: 0; display: none; }
@@ -65,8 +68,7 @@ body {
 .app-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 40;
   max-width: 540px; margin: 0 auto;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: var(--ink);
   border-bottom: 1px solid var(--rule);
   padding-top: env(safe-area-inset-top);
 }

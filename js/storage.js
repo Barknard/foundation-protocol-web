@@ -51,6 +51,57 @@ function markDirty(...keys) {
   if (state.settings.autoSync) syncToRemote();
 }
 
+// ---- Backup / restore (local-first data safety — works with no GitHub) ----
+// LOSSLESS: includes profile, phase, checks, session, injury, log, and units.
+function fullBackup() {
+  return {
+    app: 'the-hard-part', appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
+    slug: activeSlug(), units: state.settings.units,
+    profile: state.profile, phase: state.phase, checks: state.checks,
+    session: state.session, injury: state.injury, log: state.log,
+  };
+}
+function downloadBackup() {
+  const blob = new Blob([JSON.stringify(fullBackup(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = `the-hard-part-${activeSlug() || 'backup'}-${isoToday()}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function backupKey(slug) { return slug ? `${userStateKey(slug)}:backup` : null; }
+function snapshotBeforeDestroy() {
+  const slug = activeSlug(); const k = backupKey(slug); if (!k) return;
+  try {
+    const cur = localStorage.getItem(userStateKey(slug)) || JSON.stringify(fullBackup());
+    localStorage.setItem(k, cur);
+  } catch (_) {}
+}
+function hasBackup() { const k = backupKey(activeSlug()); return !!(k && localStorage.getItem(k)); }
+function restoreBackup() {
+  const k = backupKey(activeSlug()); if (!k) throw new Error('No backup found');
+  const raw = localStorage.getItem(k); if (!raw) throw new Error('No backup found');
+  const slug = activeSlug();
+  localStorage.setItem(userStateKey(slug), raw);
+  loadUserState(slug);
+  logEvent('persona', 'Restored last auto-backup');
+}
+// Accepts either a full backup object or a legacy { profile, phase, checks } export.
+function applyBackup(obj) {
+  if (!obj || typeof obj !== 'object' || !obj.profile) throw new Error('Not a valid backup file');
+  const slug = obj.profile.usernameSlug || slugify(obj.profile.username || '') || obj.slug || '';
+  if (!slug) throw new Error('Backup has no username');
+  state.activeUser = slug; try { localStorage.setItem(ACTIVE_KEY, slug); } catch (_) {}
+  state.profile = obj.profile;
+  state.phase = obj.phase || null;
+  state.checks = Array.isArray(obj.checks) ? obj.checks : [];
+  state.session = obj.session || null;
+  state.injury = obj.injury || null;
+  state.log = Array.isArray(obj.log) ? obj.log : [];
+  if (obj.units) state.settings.units = obj.units;
+  state.pending = [];
+  saveLocal();
+  logEvent('persona', `Imported backup for "${slug}" (${state.checks.length} check-ins)`);
+}
+
 // ---------- GitHub API ----------
 function ghUrl(path) { return `https://api.github.com/repos/${state.settings.repo}/contents/${path}`; }
 function ghHeaders() { return { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Authorization': `Bearer ${state.settings.pat}` }; }

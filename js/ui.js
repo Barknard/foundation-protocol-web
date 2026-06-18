@@ -4,8 +4,11 @@
 // ============================================================
 const backStack = [];
 function navigate(screen, params) {
-  if (state.ui.screen && state.ui.screen !== screen && state.ui.screen !== 'loading') {
-    backStack.push({ screen: state.ui.screen, params: state.ui.params });
+  const prev = state.ui.screen;
+  if (TAB_SCREENS.includes(screen)) {
+    backStack.length = 0;   // tabs are top-level — Back shouldn't cycle through them
+  } else if (prev && prev !== screen && prev !== 'loading') {
+    backStack.push({ screen: prev, params: state.ui.params });
     if (backStack.length > 20) backStack.shift();
   }
   state.ui.screen = screen; state.ui.params = params || {};
