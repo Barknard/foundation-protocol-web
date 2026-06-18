@@ -8,10 +8,13 @@
   --paper-dim: #B8B0A0;
   --paper-low: #9A9282;
   --rule: #3A3431;
-  --strength: #E26B5F;
-  --cardio: #6A93C8;
-  --mobility: #7BAE83;
-  --milestone: #D9A24E;
+  /* Semantic colors, tuned for red-green color-blindness: separated by LIGHTNESS as well as
+     hue (red darkest → blue → green/gold lightest), so they survive deuteranopia/protanopia
+     and greyscale while keeping the warm ink/paper/gold feel. */
+  --strength: #CE4F38;   /* red  (Rest / missed / injury) — warmer + darker, anchors the low end */
+  --cardio: #5B86C4;     /* blue (Repeat) — slightly deeper */
+  --mobility: #92C285;   /* green (Progress / done) — same sage hue, lighter so it clears red */
+  --milestone: #E3AC3C;  /* gold (brand / Modify / partial) — a touch lighter to clear red under CVD */
   --tap-min: 48px;
   --pad: 24px;
   --shadow-card: 0 1px 0 rgba(255,255,255,0.02), 0 12px 32px rgba(0,0,0,0.32);
