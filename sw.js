@@ -2,12 +2,12 @@
    The app is a slim index.html spine + css/*.css + js/*.js modules; cache them
    all so it opens with no network.
    GitHub API (data sync) is NEVER cached — it always goes to the network. */
-const CACHE = 'fp-shell-v2.9.0';
+const CACHE = 'fp-shell-v3.0.0';
 const SHELL = [
   './', './index.html', './manifest.json', './icon.png', './logo.png',
   './css/base.css', './css/components.css', './css/figures.css', './css/screens.css',
-  './js/sprite.js', './js/config.js', './js/state.js', './js/program.js', './js/engine.js',
-  './js/storage.js', './js/util.js', './js/ui.js', './js/screens.js', './js/init.js',
+  './js/sprite.js', './js/config.js', './js/state.js', './js/program.js', './js/figure.js',
+  './js/engine.js', './js/storage.js', './js/util.js', './js/ui.js', './js/screens.js', './js/init.js',
 ];
 
 self.addEventListener('install', (e) => {

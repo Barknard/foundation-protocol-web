@@ -200,11 +200,7 @@ function renderToday() {
   const whyPanel = `<div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:14px 16px;border:1px solid var(--rule);margin-top:10px;">
       <div class="body" style="margin-bottom:8px;">${escHtml(why.line)}</div>
       ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
-      <div class="divider"></div>
-      <p class="label" style="color:var(--milestone);">How today's call is decided</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.formula)}</p>
-      <div class="sp-12"></div>
-      <p class="label" style="color:var(--mobility);">Where this leads</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.lead)}</p>
-      ${why.trend?`<div class="sp-12"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.trend)}</p>`:''}
+      ${why.trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.trend)}</p>`:''}
     </div></div>`;
   // One banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
