@@ -220,7 +220,14 @@ function renderToday() {
     if (deloadActive()) return `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>`;
     return '';
   })();
+  // PERSISTENT header: the "Why this plan?" brain icon lives in the upper-right of Today
+  // in EVERY state (pre-check, checked-in/locked, every phase/week/day). Constant icon,
+  // dynamic text (dayWhy()). Hoisted above the banners so it never moves or disappears.
+  const whyHead = `<div class="today-head"><div class="today-focus serif">${focus}</div><button class="why-btn" data-exp-why aria-expanded="${whyOpen?'true':'false'}" aria-label="Why this plan — the reasoning behind today's routine">${svgUse('ic-why',24)}<span class="why-lbl">Why this plan?</span></button></div>`;
   return `<div class="screen">
+    ${whyHead}
+    ${whyPanel}
+    <div class="sp-8"></div>
     ${banners}
     ${lastToday ? (() => {
       // DAY-GATE: already checked in today → call up top + done/countdown. Next session locks until the
@@ -229,13 +236,8 @@ function renderToday() {
       return `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
       <div class="sp-12"></div>
       <div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
-      <div class="sp-12"></div>
-      <button class="why-btn-row" data-exp-why aria-expanded="${whyOpen?'true':'false'}">${svgUse('ic-why',20)}<span>Why this call?</span></button>
-      ${whyPanel}`;
+      `;
     })() : `
-    <div class="today-head"><div class="today-focus serif">${focus}</div><button class="why-btn" data-exp-why aria-expanded="${whyOpen?'true':'false'}" aria-label="Why this plan — the reasoning behind today's routine">${svgUse('ic-why',24)}<span class="why-lbl">Why this plan?</span></button></div>
-    ${whyPanel}
-    <div class="sp-8"></div>
     ${(() => {
       if (standingCall()) return '';   // the recovering card above is the active call
       const lastAny = state.checks[state.checks.length - 1];
@@ -254,7 +256,7 @@ function renderToday() {
         </div><div class="col" style="align-items:flex-end;gap:6px;">${exs.length?`<span class="rx-count">${bdone}/${exs.length}</span><div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div></div>`;
       if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
       const open = !!state.ui.openBlocks[i];
-      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" role="button" tabindex="0" aria-label="${escHtml(ex.name)} — full steps"><div class="fig">${animatedFigure(ex,44)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><span class="more">Full steps &rarr;</span></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
+      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" role="button" tabindex="0" aria-label="${escHtml(ex.name)} — full steps"><div class="fig">${animatedFigure(ex,72)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><span class="more">Full steps &rarr;</span></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
       const todo = exs.filter(e=>!exDone(e.key));
       const done = exs.filter(e=>exDone(e.key));
       const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">
@@ -441,7 +443,7 @@ function renderLibrary() {
     ${cats.map(cat=>{ const list=EXERCISES.filter(e=>e.cat===cat); if(!list.length) return '';
       return `<div class="cat-group"><div class="cat-header">${escHtml(cat)}</div>
         ${list.map(ex=>`<button class="lib-row" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" data-search="${escHtml((ex.name+' '+(ex.cue||'')+' '+ex.cat).toLowerCase())}">
-          <div class="fig">${animatedFigure(ex,44)}</div>
+          <div class="fig">${animatedFigure(ex,84)}</div>
           <div class="text"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div></div>
           <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}</div>`; }).join('')}
     </div>
@@ -464,7 +466,7 @@ function renderExerciseDetail(key) {
   if (!ex) return `<div class="screen no-nav"><p>Not found.</p></div>`;
   return `<div class="screen no-nav">
     <p class="mono" style="color:var(--milestone); font-size: 15px; letter-spacing:0.05em;">${escHtml(ex.cat)} · ${escHtml(ex.rx)}</p>
-    <div class="fig-hero">${animatedFigure(ex,140)}</div>
+    <div class="fig-hero">${animatedFigure(ex,260)}</div>
     <p class="label">Steps</p><div class="sp-8"></div>
     <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
     <div class="divider"></div>

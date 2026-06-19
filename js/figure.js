@@ -21,9 +21,20 @@ const FIG = {
   thigh: 11, shank: 11, foot: 4,
   uarm: 7, farm: 6,
   ground: 57,
+  // ANATOMICAL LIMITS (relative flexion of a child bone vs its parent, in degrees).
+  // Knees & elbows are hinges: they fold ONE way only. The renderer clamps every
+  // joint into these ranges so no pose (authored OR mid-interpolation) can bend a
+  // limb backwards or fold it through itself. + = flexion, − = (slight) hyperextension.
+  kneeMin: -6, kneeMax: 160,    // knee: shank vs thigh
+  elbowLim: 162,                // elbow: |fore vs upper| (hinge magnitude, either reach)
 };
 const DEG = Math.PI / 180;
 function _pt(j, angDeg, len) { const a = angDeg * DEG; return [j[0] + len * Math.cos(a), j[1] + len * Math.sin(a)]; }
+// Normalize a degree delta to (−180, 180].
+function _norm180(d) { d = ((d % 360) + 360) % 360; return d > 180 ? d - 360 : d; }
+// Clamp a child bone's absolute angle so its flexion relative to the parent stays
+// within [lo, hi] (the hinge's natural range). Returns the clamped absolute angle.
+function _clampRel(childA, parentA, lo, hi) { const r = _norm180(childA - parentA); return parentA + Math.max(lo, Math.min(hi, r)); }
 function _n(v) { return Math.round(v * 100) / 100; }
 function _L(p, q, w, stroke) { return `<line x1="${_n(p[0])}" y1="${_n(p[1])}" x2="${_n(q[0])}" y2="${_n(q[1])}"${w ? ` stroke-width="${w}"` : ''}${stroke ? ` stroke="${stroke}"` : ''}/>`; }
 function _poly(pts, w, stroke) { const d = pts.map((p, i) => `${i ? 'L' : 'M'} ${_n(p[0])} ${_n(p[1])}`).join(' '); return `<path d="${d}"${w ? ` stroke-width="${w}"` : ''}${stroke ? ` stroke="${stroke}"` : ''}/>`; }
@@ -36,8 +47,8 @@ function _resolve(pose) {
   const shoulder = _pt(pelvis, pose.torso, FIG.torso);
   const headAng = (pose.head == null) ? pose.torso : pose.head;
   const headC = _pt(shoulder, headAng, FIG.neck);
-  const arm = (a) => { if (!a) return null; const elbow = _pt(shoulder, a[0], FIG.uarm); const hand = _pt(elbow, a[1], FIG.farm); return { elbow, hand }; };
-  const leg = (l) => { if (!l) return null; const knee = _pt(pelvis, l[0], FIG.thigh); const ankle = _pt(knee, l[1], FIG.shank); const toe = _pt(ankle, l[2] == null ? 5 : l[2], FIG.foot); return { knee, ankle, toe }; };
+  const arm = (a) => { if (!a) return null; const upperA = a[0]; const foreA = _clampRel(a[1], upperA, -FIG.elbowLim, FIG.elbowLim); const elbow = _pt(shoulder, upperA, FIG.uarm); const hand = _pt(elbow, foreA, FIG.farm); return { elbow, hand }; };
+  const leg = (l) => { if (!l) return null; const thighA = l[0]; const shankA = _clampRel(l[1], thighA, FIG.kneeMin, FIG.kneeMax); const knee = _pt(pelvis, thighA, FIG.thigh); const ankle = _pt(knee, shankA, FIG.shank); const toe = _pt(ankle, l[2] == null ? 5 : l[2], FIG.foot); return { knee, ankle, toe }; };
   return {
     pelvis, shoulder, headC,
     nearArm: arm(pose.nearArm), farArm: arm(pose.farArm),
@@ -67,15 +78,17 @@ function figureInner(pose, opts) {
   if (pose.view === 'front') return figureInnerFront(pose, opts);
   const J = _resolve(pose);
   _applyConstraints(J, pose);
-  const SW = 2.5, DIM = 'var(--paper-dim)';
+  // DEPTH: near limbs are full-weight + solid; far limbs are dimmer AND thinner so the
+  // body reads with front/back depth (not a flat cut-out). SW=near, FAR_SW=far.
+  const SW = 2.5, FAR_SW = 1.9, DIM = 'var(--paper-dim)';
   const out = [];
   const ground = pose.ground == null ? FIG.ground : pose.ground;
   // ground line first (behind)
   if (pose.ground !== false) out.push(`<line x1="2" y1="${_n(ground)}" x2="48" y2="${_n(ground)}" stroke-width="1.5" stroke="#807868"/>`);
   // props behind the body (wall/bench/band drawn under near limbs); may be a fn of the joints
   if (pose.propsBehind) out.push(typeof pose.propsBehind === 'function' ? pose.propsBehind(J) : pose.propsBehind);
-  // far-side limbs (dim, for depth) drawn behind torso
-  out.push('<g stroke="' + DIM + '" stroke-width="' + SW + '" stroke-linecap="round" stroke-linejoin="round" fill="none">');
+  // far-side limbs (dim + thinner, for depth) drawn behind torso
+  out.push('<g stroke="' + DIM + '" stroke-width="' + FAR_SW + '" stroke-linecap="round" stroke-linejoin="round" fill="none">');
   if (J.farLeg) out.push(_poly([J.pelvis, J.farLeg.knee, J.farLeg.ankle, J.farLeg.toe]));
   if (J.farArm) out.push(_poly([J.shoulder, J.farArm.elbow, J.farArm.hand]));
   out.push('</g>');
@@ -125,8 +138,8 @@ function _resolveFront(pose) {
   const headC = _pt(shoulderC, pose.head == null ? torso : pose.head, FIG.neck);
   const hipL = [c[0] - hipW / 2, c[1]], hipR = [c[0] + hipW / 2, c[1]];
   const shL = [shoulderC[0] - shW / 2, shoulderC[1]], shR = [shoulderC[0] + shW / 2, shoulderC[1]];
-  const arm = (a, base) => { if (!a) return null; const e = _pt(base, a[0], FIG.uarm); const h = _pt(e, a[1], FIG.farm); return { elbow: e, hand: h }; };
-  const leg = (l, base) => { if (!l) return null; const k = _pt(base, l[0], FIG.thigh); const an = _pt(k, l[1], FIG.shank); return { knee: k, ankle: an }; };
+  const arm = (a, base) => { if (!a) return null; const foreA = _clampRel(a[1], a[0], -FIG.elbowLim, FIG.elbowLim); const e = _pt(base, a[0], FIG.uarm); const h = _pt(e, foreA, FIG.farm); return { elbow: e, hand: h }; };
+  const leg = (l, base) => { if (!l) return null; const shankA = _clampRel(l[1], l[0], FIG.kneeMin, FIG.kneeMax); const k = _pt(base, l[0], FIG.thigh); const an = _pt(k, shankA, FIG.shank); return { knee: k, ankle: an }; };
   return { c, shoulderC, headC, hipL, hipR, shL, shR, leftArm: arm(pose.leftArm, shL), rightArm: arm(pose.rightArm, shR), leftLeg: leg(pose.leftLeg, hipL), rightLeg: leg(pose.rightLeg, hipR) };
 }
 function figureInnerFront(pose, opts) {
@@ -234,7 +247,11 @@ function _gaitPose(kind, p) {
     const hipFlex = (run ? 32 : 20) * Math.cos(TAU * ph);   // + forward at contact, − at toe-off
     const thighA = 90 - hipFlex;
     const swing = Math.max(0, Math.sin(TAU * (ph - 0.5)));  // 0 in stance, peaks mid-swing (ph 0.75)
-    const kneeBend = 6 + (run ? 58 : 34) * Math.pow(swing, 1.1);
+    // LANDING: at this leg's foot-strike (ph≈0/1) the stance knee gives to absorb the
+    // impact, so the body visibly dips & rebounds each step (run absorbs harder).
+    const stance = Math.max(0, Math.cos(TAU * ph));         // 1 at foot-strike, 0 by mid-cycle
+    const land = (run ? 26 : 12) * Math.pow(stance, 1.6);
+    const kneeBend = 6 + (run ? 58 : 34) * Math.pow(swing, 1.1) + land;
     const shankA = thighA + kneeBend;                       // shank folds BACK (correct flexion)
     const knee = _pt(hip, thighA, FIG.thigh);
     const ankle = _pt(knee, shankA, FIG.shank);
@@ -288,7 +305,21 @@ function gaitFigure(kind, size) { const s = size || 44; return `<span class="afi
 //   propsBehind    SVG drawn behind the body — use propWall()/propBench()/propBenchLegs().
 //   propsFront     SVG (or fn(J)) drawn in front — use propDumbbell(J,'near'|'far') for weights.
 //   intensity      {at:[x,y], dir:deg, r} or fn(J) → a pulsing red "feel it here" marker.
-// Joint reality: knees/elbows bend one way only — author angles that don't hyperextend.
+//
+// THE 6 DIRECTIONS (how depth is modelled in a 2D figure):
+//   up/down/left/right  → the in-plane angle (down=90, right=0, up=270, left=180).
+//   forward/backward    → DEPTH (toward/away from the viewer):
+//       • side view  — `near*` limbs = the side facing you (solid, full stroke);
+//                       `far*` limbs = the far side (dim + thinner). `facing:-1`
+//                       turns the whole body around (forward vs backward).
+//       • front view — `view:'front'` with left*/right* limbs in the frontal plane.
+//   Pick the view whose plane shows the movement (squat/press depth → side;
+//   lateral/abduction/symmetric → front).
+// Joint reality (ENFORCED — the renderer clamps every joint, so a bad angle can't
+//   bend a limb the wrong way even mid-interpolation):
+//       knee  — shank folds toward the hamstring only: flexion ∈ [kneeMin, kneeMax].
+//       elbow — hinge magnitude ≤ elbowLim (no fold-through).
+//   Still author angles that respect this — the clamp is a safety net, not a crutch.
 // The animator smoothly eases f1↔f2 and pulses the intensity automatically.
 // ============================================================
 // POSE REGISTRY — each exercise = two frames of joint angles.
@@ -315,11 +346,13 @@ const FIG_POSES = {
     f2: { pelvis:[27,43], torso:145, head:176, nearArm:[20,2], farArm:[24,4], nearLeg:[10,90,0],  farLeg:[6,90,0] },
   },
   // Calf stretch — wall ahead (right); lean in, BACK leg straight (heel down) = stretch.
+  // ONLY the back (far) leg moves — it presses straight & drives the heel down; the rest
+  // of the body (pelvis, torso, arms, front leg) is frozen identical across both frames.
   calf_stretch: {
-    f1: { pelvis:[22,34], torso:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[120,118,2], ground:56, wallX:44,
+    f1: { pelvis:[22,34], torso:300, head:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[122,130,6], ground:56, wallX:44,
           propsBehind: propWall(44, 8, 56),
           intensity:(J)=>({ at:[J.farLeg.knee[0]-3, (J.farLeg.knee[1]+J.farLeg.ankle[1])/2], dir:180, r:2.6 }) },
-    f2: { pelvis:[21,35], torso:303, nearArm:[6,0], farArm:[10,2], nearLeg:[72,92,2], farLeg:[124,120,2], ground:56, wallX:44,
+    f2: { pelvis:[22,34], torso:300, head:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[122,118,12], ground:56, wallX:44,
           propsBehind: propWall(44, 8, 56),
           intensity:(J)=>({ at:[J.farLeg.knee[0]-3, (J.farLeg.knee[1]+J.farLeg.ankle[1])/2], dir:180, r:2.6 }) },
   },
@@ -367,10 +400,11 @@ const FIG_POSES = {
           propsBehind: propWall(44,8,57) },
   },
   // ---- strength ----
-  goblet_sq: {   // front view — both hands hold the bell low/centered; squat = knees out
-    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, shoulderW:9, leftArm:[70,75], rightArm:[110,105], leftLeg:[94,90], rightLeg:[86,90],
+  goblet_sq: {   // front view — arms hang long, both hands cup the bell LOW & centered
+                 // between the legs; the squat lowers the whole package (knees press out).
+    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, shoulderW:9, leftArm:[84,89], rightArm:[96,91], leftLeg:[92,90], rightLeg:[88,90],
           propsFront:(J)=>propGobletFront(J) },
-    f2: { view:'front', pelvis:[25,40], torso:272, hipW:8, shoulderW:9, leftArm:[78,85], rightArm:[102,95], leftLeg:[112,68], rightLeg:[68,112],
+    f2: { view:'front', pelvis:[25,41], torso:271, hipW:8, shoulderW:9, leftArm:[86,90], rightArm:[94,90], leftLeg:[116,64], rightLeg:[64,116],
           propsFront:(J)=>propGobletFront(J) },
   },
   pushup: {
@@ -387,15 +421,18 @@ const FIG_POSES = {
           intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:200, r:2.4 }) },
     f2: { pelvis:[22,36], torso:20, head:12, nearArm:[90,90], farArm:[90,90], nearLeg:[85,95,0], farLeg:[83,95,0] },
   },
-  oh_press: {
-    f1: { pelvis:[25,35], torso:270, head:270, nearArm:[122,283], farArm:[118,287], nearLeg:[90,90,5], farLeg:[90,90,5],
+  oh_press: {   // arms on the RIGHT (front) side: racked at the shoulders → pressed overhead.
+    f1: { pelvis:[25,35], torso:270, head:270, nearArm:[60,300], farArm:[64,304], nearLeg:[90,90,5], farLeg:[90,90,5],
           propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far') },
-    f2: { pelvis:[25,35], torso:270, head:270, nearArm:[272,272], farArm:[268,268], nearLeg:[90,90,5], farLeg:[90,90,5] },
+    f2: { pelvis:[25,35], torso:270, head:270, nearArm:[274,272], farArm:[270,268], nearLeg:[90,90,5], farLeg:[90,90,5],
+          propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far') },
   },
-  split_sq: {   // rear foot on bench behind; FRONT leg lunges — knee forward (shank>thigh)
-    f1: { pelvis:[25,37], torso:278, head:278, nearArm:[100,120], farArm:[104,124], nearLeg:[86,96,0], farLeg:[132,225,35],
-          propsBehind:(J)=>propBench(J.farLeg.ankle[0]-7, J.farLeg.ankle[1], 16, 3) },
-    f2: { pelvis:[24,42], torso:280, head:280, nearArm:[104,128], farArm:[108,132], nearLeg:[70,100,0], farLeg:[138,235,30] },
+  split_sq: {   // rear foot up on a FIXED bench behind; FRONT leg lunges (knee forward).
+                // The bench is a constant prop (same string both frames) so it never moves.
+    f1: { pelvis:[26,36], torso:278, head:278, nearArm:[100,120], farArm:[104,124], nearLeg:[86,96,0], farLeg:[140,208,6],
+          ground:57, propsBehind: propBench(2,40,19,3.5) + propBenchLegs(2,43.5,19,13) },
+    f2: { pelvis:[25,41], torso:280, head:280, nearArm:[104,128], farArm:[108,132], nearLeg:[64,104,0], farLeg:[150,205,2],
+          ground:57, propsBehind: propBench(2,40,19,3.5) + propBenchLegs(2,43.5,19,13) },
   },
   // ---- mobility ----
   dead_bug: {
@@ -409,11 +446,13 @@ const FIG_POSES = {
           propsFront:(J)=>propKettlebell(J,'near') },
     f2: { pelvis:[25,33], torso:270, head:270, nearArm:[357,357], farArm:[353,353], nearLeg:[90,90,5], farLeg:[90,90,5] },
   },
-  kb_carry: {   // front view — a kettlebell in EACH hand, standing tall (subtle posture shift)
-    dur:1800,
-    f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[91,90], rightLeg:[89,90],
+  kb_carry: {   // front view — a kettlebell in EACH hand, MARCHING: legs alternate a clear
+                // knee-lift (foot off the floor) with a small body bob, so it reads as walking.
+    dur:1300,
+    f1: { view:'front', pelvis:[25,32], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[92,90], rightLeg:[88,148],
           propsFront:(J)=>propKbAt(J.leftArm.hand)+propKbAt(J.rightArm.hand) },
-    f2: { view:'front', pelvis:[25,33.6], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[89,90], rightLeg:[91,90] },
+    f2: { view:'front', pelvis:[25,33], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[92,148], rightLeg:[88,90],
+          propsFront:(J)=>propKbAt(J.leftArm.hand)+propKbAt(J.rightArm.hand) },
   },
 };
 

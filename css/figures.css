@@ -1,6 +1,6 @@
 /* ---------- LIBRARY / EXERCISE ---------- */
 .lib-row {
-  display: grid; grid-template-columns: 56px 1fr 16px;
+  display: grid; grid-template-columns: 92px 1fr 16px;
   gap: 12px; align-items: center;
   padding: 10px;
   background: var(--surface);
@@ -16,12 +16,12 @@
 }
 .lib-row:hover { border-color: var(--rule); }
 .lib-row .fig {
-  width: 56px; height: 56px;
+  width: 92px; height: 92px;
   background: var(--surface-1);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
 }
-.lib-row .fig svg { width: 44px; height: 44px; color: var(--paper); }
+.lib-row .fig svg { width: 84px; height: 84px; color: var(--paper); }
 .lib-row .text { display: flex; flex-direction: column; }
 .lib-row .text .name { font-size: 18px; font-weight: 600; color: var(--paper); }
 .lib-row .text .rx { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
@@ -33,12 +33,12 @@
 .fig-hero {
   background: var(--surface-1);
   border-radius: 18px;
-  height: clamp(128px, 32vw, 164px);
+  height: clamp(208px, 56vw, 300px);
   display: flex; align-items: center; justify-content: center;
   margin: 8px 0;
 }
-.fig-hero svg { height: 120px; width: 120px; color: var(--paper); }
-.fig-hero .afig { width: clamp(104px, 28vw, 140px) !important; height: clamp(104px, 28vw, 140px) !important; }
+.fig-hero svg { height: 100%; width: 100%; color: var(--paper); }
+.fig-hero .afig { width: clamp(192px, 52vw, 280px) !important; height: clamp(192px, 52vw, 280px) !important; }
 .fig-hero .afig svg { width: 100% !important; height: 100% !important; }
 .step-list { display: grid; grid-template-columns: 28px 1fr; gap: 8px 12px; }
 .step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-low); padding-top: 3px; }
