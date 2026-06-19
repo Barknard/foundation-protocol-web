@@ -3,11 +3,11 @@
 > Auto-generated from `FIG_POSES` in `js/figure.js`. To change a pose, edit the angles there.
 > (Snapshot — regenerate after editing poses; see "Regenerating" at the bottom.)
 
-**How to read this:** each exercise animates between **f1 (start of the rep)** and **f2 (end)**. Angles use the figure convention — **down = 90°, right = 0°, up = 270°, left = 180°** — and the arrow is the rough direction the bone points. Position `(x, y)` is where that joint lands in the 50×60 drawing box (x: 0 = left … 50 = right; y: 0 = top … 57 ≈ floor). On a side view, **near** = the side facing you (drawn solid), **far** = the back side (drawn dim + thinner for depth). Knees/elbows are clamped to natural hinge ranges, so an angle that would bend a joint backward is auto-corrected.
+**How to read this:** each exercise animates between **f1 (start of the rep)** and **f2 (end)**. Angles use the figure convention — **down = 90°, right = 0°, up = 270°, left = 180°** — and the arrow is the rough direction the bone points. Position `(x, y)` is where that joint lands in the 50×60 drawing box (x: 0 = left … 50 = right; y: 0 = top … 57 ≈ floor). On a side view, **near** = the side facing you (drawn solid), **far** = the back side (drawn dim + thinner for depth). Knees clamp to a natural hinge range (side view: one direction; front view: either direction by magnitude, since left/right legs flex oppositely), so a joint can't fold the wrong way.
 
-## Walk & run (procedural — no fixed frames)
+## Walk, run & farmer carry (procedural — no fixed frames)
 
-`walk` and `run` are generated continuously by `_gaitPose()`, not by f1/f2: the hip swings on a cosine, the knee bends through the swing phase, the **stance knee gives at each foot-strike** (the landing), arms swing opposite the same-side leg, and the lowest foot is planted on the floor every frame. Tune them in `_gaitPose` (run uses a bigger lean, knee drive, and landing absorb).
+`walk` and `run` are generated continuously by `_gaitPose()`, not by f1/f2: the hip swings on a cosine, the knee bends through the swing phase, the **stance knee gives at each foot-strike** (the landing), arms swing opposite the same-side leg, and the lowest foot is planted on the floor every frame. **Farmer Carry** reuses the walk gait with `carry=true` — the arms stop swinging and hang holding a kettlebell in each hand. Tune all three in `_gaitPose` / `gaitFigure`.
 
 ## standing — `standing`
 
@@ -31,7 +31,7 @@
 
 ## Calf Raise — `calf_raise`
 
-- View: **side** · rep ≈ 2400 ms · “feel-it-here” mark
+- View: **side** · rep ≈ 2400 ms · “feel-it-here” mark (pinned)
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
@@ -71,7 +71,7 @@
 
 ## Calf Stretch — `calf_stretch`
 
-- View: **side** · rep ≈ 2400 ms · solid wall, prop behind, “feel-it-here” mark
+- View: **side** · rep ≈ 2400 ms · solid wall, prop behind, “feel-it-here” mark (pinned)
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
@@ -165,11 +165,11 @@
 | left-leg thigh | 93° ↓D → (20.9, 46.1) | 90° ↓D → (21.5, 43) |
 | left-leg shank | 97° ↓D → (19.6, 57) | 90° ↓D → (21.5, 54) |
 | right-leg thigh | 80° ↓D → (30.4, 45.9) | 83° ↓D → (29.8, 42.9) |
-| right-leg shank | 300° ↗UR → (33.4, 56.5) | 296° ↗UR → (32.3, 53.6) |
+| right-leg shank | 300° ↗UR → (35.9, 36.4) | 296° ↗UR → (34.7, 33) |
 
 ## Side-Lying Hip Abduction — `hip_abd`
 
-- View: **side** · rep ≈ 2400 ms · “feel-it-here” mark
+- View: **side** · rep ≈ 2400 ms · “feel-it-here” mark (pinned)
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
@@ -189,7 +189,7 @@
 
 ## Lateral Band Walk — `band_walk`
 
-- View: **front (head-on)** · rep ≈ 2400 ms · prop behind, “feel-it-here” mark
+- View: **front (head-on)** · rep ≈ 2400 ms · prop behind, “feel-it-here” mark (pinned)
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
@@ -200,14 +200,14 @@
 | left-arm forearm | 90° ↓D → (19, 31.1) | 90° ↓D → (19, 31.2) |
 | right-arm upper | 80° ↓D → (30.4, 25.1) | 80° ↓D → (30.4, 25.2) |
 | right-arm forearm | 90° ↓D → (30.4, 31.1) | 90° ↓D → (30.4, 31.2) |
-| left-leg thigh | 100° ↓D → (18.6, 46) | 114° ↙DL → (16, 45.4) |
-| left-leg shank | 84° ↓D → (17.8, 57) | 80° ↓D → (12.6, 55.9) |
-| right-leg thigh | 80° ↓D → (31.4, 46) | 78° ↓D → (31.8, 46.1) |
+| left-leg thigh | 100° ↓D → (18.6, 46.1) | 114° ↙DL → (16, 45.4) |
+| left-leg shank | 84° ↓D → (19.7, 57) | 80° ↓D → (17.9, 56.2) |
+| right-leg thigh | 80° ↓D → (31.4, 46.1) | 78° ↓D → (31.8, 46.1) |
 | right-leg shank | 96° ↓D → (30.3, 57) | 98° ↓D → (30.3, 57) |
 
 ## Single-Leg Calf Raise — `sl_calf_raise`
 
-- View: **side** · rep ≈ 2400 ms · solid wall, prop behind, “feel-it-here” mark
+- View: **side** · rep ≈ 2400 ms · solid wall, prop behind, “feel-it-here” mark (pinned)
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
@@ -231,17 +231,17 @@
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
-| pelvis (root) | (25, 33) | (25, 36.8) |
-| torso → shoulder | 270° ↑U → (25, 16) | 271° ↑U → (25.3, 19.8) |
-| head | 270° ↑U → (25, 9) | 271° ↑U → (25.4, 12.8) |
-| left-arm upper | 84° ↓D → (21.2, 23) | 86° ↓D → (21.3, 26.8) |
-| left-arm forearm | 89° ↓D → (21.3, 29) | 90° ↓D → (21.3, 32.8) |
-| right-arm upper | 96° ↓D → (28.8, 23) | 94° ↓D → (29.3, 26.8) |
-| right-arm forearm | 91° ↓D → (28.7, 29) | 90° ↓D → (29.3, 32.8) |
-| left-leg thigh | 92° ↓D → (20.6, 44) | 116° ↙DL → (16.2, 46.7) |
-| left-leg shank | 90° ↓D → (20.6, 55) | 64° ↘DR → (12.4, 57) |
-| right-leg thigh | 88° ↓D → (29.4, 44) | 64° ↘DR → (33.8, 46.7) |
-| right-leg shank | 90° ↓D → (29.4, 55) | 116° ↙DL → (29, 56.6) |
+| pelvis (root) | (25, 33) | (25, 38.5) |
+| torso → shoulder | 270° ↑U → (25, 16) | 271° ↑U → (25.3, 21.5) |
+| head | 270° ↑U → (25, 9) | 271° ↑U → (25.4, 14.5) |
+| left-arm upper | 84° ↓D → (21.2, 23) | 86° ↓D → (21.3, 28.4) |
+| left-arm forearm | 89° ↓D → (21.3, 29) | 90° ↓D → (21.3, 34.4) |
+| right-arm upper | 96° ↓D → (28.8, 23) | 94° ↓D → (29.3, 28.4) |
+| right-arm forearm | 91° ↓D → (28.7, 29) | 90° ↓D → (29.3, 34.4) |
+| left-leg thigh | 92° ↓D → (20.6, 44) | 120° ↙DL → (15.5, 48) |
+| left-leg shank | 90° ↓D → (20.6, 55) | 55° ↘DR → (21.8, 57) |
+| right-leg thigh | 88° ↓D → (29.4, 44) | 60° ↘DR → (34.5, 48) |
+| right-leg shank | 90° ↓D → (29.4, 55) | 125° ↙DL → (28.2, 57) |
 
 ## Pushup — `pushup`
 
@@ -285,7 +285,7 @@
 
 ## Romanian Deadlift, DB — `rdl`
 
-- View: **side** · rep ≈ 2400 ms · weight/prop in front, “feel-it-here” mark
+- View: **side** · rep ≈ 2400 ms · weight/prop in front, “feel-it-here” mark (pinned)
 
 | Body part | Start (f1): angle → pos | End (f2): angle → pos |
 |---|---|---|
@@ -383,33 +383,15 @@
 | far-leg shank | 98° ↓D → (23.7, 56.7) | 90° ↓D → (25, 55) |
 | far-leg foot | 4° →R → (27.7, 57) | 5° →R → (29, 55.3) |
 
-## Farmer Carry — `kb_carry`
-
-- View: **front (head-on)** · rep ≈ 1300 ms · weight/prop in front
-
-| Body part | Start (f1): angle → pos | End (f2): angle → pos |
-|---|---|---|
-| pelvis (root) | (25, 32) | (25, 33) |
-| torso → shoulder | 270° ↑U → (25, 15) | 270° ↑U → (25, 16) |
-| head | 270° ↑U → (25, 8) | 270° ↑U → (25, 9) |
-| left-arm upper | 90° ↓D → (20.5, 22) | 90° ↓D → (20.5, 23) |
-| left-arm forearm | 90° ↓D → (20.5, 28) | 90° ↓D → (20.5, 29) |
-| right-arm upper | 90° ↓D → (29.5, 22) | 90° ↓D → (29.5, 23) |
-| right-arm forearm | 90° ↓D → (29.5, 28) | 90° ↓D → (29.5, 29) |
-| left-leg thigh | 92° ↓D → (20.6, 43) | 92° ↓D → (20.6, 44) |
-| left-leg shank | 90° ↓D → (20.6, 54) | 148° ↙DL → (11.3, 49.8) |
-| right-leg thigh | 88° ↓D → (29.4, 43) | 88° ↓D → (29.4, 44) |
-| right-leg shank | 148° ↙DL → (20.1, 48.8) | 90° ↓D → (29.4, 55) |
-
 ---
 
 ## Regenerating this file
 
-This is a snapshot decoded from `FIG_POSES`. After editing a pose, regenerate it by serving the app and running the generator in the browser console (the same one that produced this), then paste the output back here. The authoritative data is always the `f1`/`f2` angle arrays in `js/figure.js` — this file just decodes them into directions and on-screen positions for quick visual reference.
+This is a snapshot decoded from `FIG_POSES`. After editing a pose, regenerate it by serving the app and running the generator in the browser console, then paste the output back here. The authoritative data is always the `f1`/`f2` angle arrays in `js/figure.js`.
 
-### Known "off-canvas" reaches to watch (good tweak candidates)
-A few extended limbs currently resolve past the 50-wide box and get clipped at the edge — flagged here so they're easy to find:
-- **Side-Lying Hip Abduction** — the working leg's foot reaches x ≈ 58 (start) / shank x ≈ 55; clipped on the right.
+### Known "off-canvas" reaches to watch (tweak candidates)
+A few extended limbs resolve past the 50-wide box and get clipped at the edge:
+- **Side-Lying Hip Abduction** — the working leg's foot reaches x ≈ 58 (start) / shank x ≈ 55.
 - **Dead Bug** — the extended (far) leg reaches x ≈ 56 at full extension.
 - **Pushup** — head reaches x ≈ 51 at the top.
-- **Bulgarian Split Squat** — rear foot sits at y ≈ 37, while the bench top is y = 40, so the foot floats ~3 above the bench.
+- **Bulgarian Split Squat** — rear foot sits at y ≈ 37 while the bench top is y = 40, so the foot floats ~3 above the bench.

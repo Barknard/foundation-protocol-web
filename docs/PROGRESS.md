@@ -166,6 +166,27 @@ direction / limbs don't connect" report, so they were **replaced by a parametric
   kettlebell swing slowed (~2200 ms). All re-verified by screenshot.
 - SW cache bumped to **`fp-shell-v3.1.0`**; `js/figure.js` added to the precache SHELL.
 
+## 2026-06-19 (cont.) — Figure refinements + a pose reference doc
+- **Bigger figures:** Today exercise-card figures 46→76px, Library list 56→92px, and the
+  exercise-detail **demo hero ~140→280px** (the Library is where big matters most).
+- **Depth + joint limits** in `js/figure.js`: far limbs are dimmer **and thinner** for
+  front/back depth; knees & elbows are clamped to natural hinge ranges so nothing folds the
+  wrong way (side view clamps the knee by direction; **front view clamps by magnitude**, since
+  the left/right legs flex opposite ways — that fixed the goblet "slide" and the single-leg
+  hop's tucked leg).
+- **Gait landing:** the stance knee gives at each foot-strike so walk/run visibly land & rebound.
+- **Pinned "feel" marks:** the red intensity markers are fixed points now (calf raise, single-
+  leg calf raise, calf stretch, hip abduction, band walk, RDL) so they don't drift start→end.
+- **Pose fixes:** calf stretch moves only the back leg; goblet squat bends both knees out with
+  the feet planted; overhead press presses on the right side; split-squat bench is fixed with
+  legs (stationary).
+- **Farmer carry** now reuses the **procedural walk gait** with a **kettlebell in each hand**
+  (arms hang, no swing) instead of a static march.
+- **"Why this plan?"** persists upper-right in every Today state (pre-check and checked-in).
+- **New doc:** [`docs/FIGURE-POSES.md`](FIGURE-POSES.md) — decoded from `FIG_POSES`: per-exercise
+  start/end of every body part as angle (with arrow) **and** on-screen (x, y), plus a list of
+  off-canvas reaches worth tweaking. SW cache `fp-shell-v3.3.0`.
+
 ## Pending (from EVIDENCE-REVIEW.md, not yet wired into the engine)
 - Explicit **RIR 2–3 double-progression** for load advancement (currently in copy, not the engine).
 - **Situp training gap:** the capstone tests 100 situps but no situp/curl-up movement is trained (core block is plank+carries). Add a graded ab movement or reconcile the test.
