@@ -49,8 +49,8 @@ account block.
 ## 4. Architecture (modular, zero-build)
 A slim **`index.html` spine** + ordered classic `<script>`/`<link>` tags. All JS shares
 one global scope (no modules/bundler) so any function/const is global. Load order matters
-(see `index.html`): `sprite → config → state → program → engine → storage → util → ui →
-screens → init`.
+(see `index.html`): `sprite → config → state → program → figure → engine → storage → util →
+ui → screens → init`.
 
 ```
 index.html        40-line spine: meta/title, 4 css links, #app, #toast, 10 ordered js tags
@@ -60,10 +60,12 @@ css/
   figures.css     animated SVG figure sizing + anim2/anim3/anim4 keyframes; .lib-row; .bodymap
   screens.css     per-screen styles (today/check/progress), interaction feedback, no-scroll rules
 js/
-  sprite.js       injects the SVG <symbol> sheet (figures + UI icons) into the DOM
+  sprite.js       injects the SVG <symbol> sheet (UI icons + color-blind glyphs) into the DOM
   config.js       constants (APP_VERSION, storage keys, DATA_KEYS)
   state.js        the single `state` object + load/init
-  program.js      PHASES, EXERCISES, BLOCKS, FRAMES, + layoff/deload/injury helpers
+  program.js      PHASES, EXERCISES, BLOCKS, + layoff/deload/injury helpers
+  figure.js       parametric skeleton figure engine: FK joints, side/front poses (FIG_POSES),
+                  continuous rAF animator, procedural walk/run gait, solid floor/wall, prop helpers
   engine.js       decide(), applyCheck(), advancePointer(), OUTCOMES, injury outcomes
   storage.js      localStorage (per-persona) + GitHub Contents-API sync + backup/restore
   util.js         isoToday, escHtml, svgUse, animatedFigure, msUntilTomorrow, fmtCountdown
@@ -153,13 +155,38 @@ BJSM 2025); slow tendon/bone adaptation paces early phases (Bohm/Arampatzis Spor
 - **Whole exercise card** navigates to its detail (role=button, keyboard-activatable); the
   ✓ toggle `stopPropagation`s so it doesn't also navigate.
 
-## 9. Animated figures
-`animatedFigure(ex, size)` (`util.js`) renders a flip-book from `FRAMES[ex.icon]`:
-2 frames → `anim`, 3 → `anim3`, **4 → `anim4`** (crisp `steps(1)` 4-frame loop). Symbols
-live in `sprite.js` (viewBox `0 0 50 60`, stroke stick-figures; floor `#807868`, motion
-`#6A93C8`, body/`currentColor`). **Walk & run are 4-frame gait cycles** (contact → passing
-→ contact → passing; run adds flight + ~90° arm pump + knee drive), grounded in the gait
-cycle. Glute bridge is a proper supine hip-lift.
+## 9. Animated figures — parametric skeleton (`js/figure.js`)
+Exercise figures are **not hand-drawn SVGs** anymore — they're a **parametric skeleton**
+(named joints + forward kinematics), so limbs always connect and angles are data, not
+pixels. `animatedFigure(ex, size)` (`util.js`) routes: walk/run → `gaitFigure` (procedural
+gait), any `hasFigurePose(ex.key)` → `skeletonFigure`, else the legacy symbol flip-book.
+
+- **Coordinates:** `FIG` = segment lengths (torso 17, neck 7, headR 3.5, thigh/shank 11,
+  foot 4, uarm 7, farm 6, ground 57); `viewBox 0 0 50 60`. Angle convention
+  `end = J + (L·cos°, L·sin°)`: **down=90, right=0, up=270, left=180**.
+- **A pose** (entry in `FIG_POSES`, **19 exercises** + a `standing` sanity check) has `f1`
+  (rep start) and `f2` (rep end). Side view: `{pelvis:[x,y], torso, head, nearArm:[upper,
+  fore], farArm, nearLeg:[thigh,shank,foot], farLeg, facing:-1?, ground?, wallX?,
+  propsBehind, propsFront, intensity}`. **Front view** (`view:'front'`): `leftArm/rightArm/
+  leftLeg/rightLeg` + `hipW/shoulderW`, mirrored across center — used for goblet squat,
+  band walk, single-leg hop, farmer carry.
+- **Animator:** one throttled (~25 fps) rAF loop interpolates every on-screen `.skfig`
+  (f1↔f2, eased ping-pong) and runs procedural `.gaitfig`; off-screen figures skip; the red
+  **intensity marker pulses** with the feel signal. `_applyConstraints` makes the **floor +
+  wall solid** (the figure shifts so nothing passes through).
+- **Knee-bend rule** (the recurring bug): facing right, `shankA = thighA + kneeBend` — shank
+  folds back, knee tracks forward. `shank < thigh` = wrong-way bend.
+- **Walk + run** are procedural (`_gaitPose`): knee bends in the **swing** phase (no
+  gliding), hip flexes via cos, arms swing antiphase to the same-side leg, the lowest foot
+  is planted each frame. Glute bridge is a supine hip-lift with the head/shoulders planted.
+- **To add an exercise:** add ONE `FIG_POSES` entry (f1/f2 joint angles + optional
+  `dur`/props/`intensity`) — no drawing. Prop helpers: `propBench`, `propWall`,
+  `propDumbbell`, `propKbAt`, `propKettlebell`, `propBand`, `propGobletFront`,
+  `propBandFront`. A `__figPreview` dev harness renders the whole set; authoring rules are
+  in a header comment in `figure.js`.
+- **Color-blind glyphs** (in `sprite.js`): call icons `ic-call-{progress,repeat,modify,rest}`
+  + goal states `ic-goal-{partial,missed}` so red/green never carry meaning alone; the
+  palette is also separated by lightness (§8 / `base.css`).
 
 ## 10. Data, persistence, sync
 - localStorage keys (**do not rename — preserves existing data**):

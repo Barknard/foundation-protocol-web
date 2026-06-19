@@ -3,7 +3,7 @@
 **App name:** **The Hard Part** (logo: stone-block "HARD PART" emblem, `logo.png` / `icon.png`). Formerly "Foundation Protocol".
 **Live:** https://barknard.github.io/foundation-protocol-web/ · **Repo:** `Barknard/foundation-protocol-web` (GitHub Pages, branch `main`)
 **Source:** `~/foundation-protocol-web`
-**Last updated:** 2026-06-18
+**Last updated:** 2026-06-19
 **New AI / engineer?** Read [`AI-START-HERE.md`](../AI-START-HERE.md) first — it's the one-screen download for this repo.
 
 A 40-week, research-grounded get-in-shape-without-injury program for ~40+, run as a daily two-tap autoregulated decision. Offline-capable PWA; optional GitHub data-sync per persona.
@@ -13,7 +13,7 @@ A 40-week, research-grounded get-in-shape-without-injury program for ~40+, run a
 ## Architecture (refactored 2026-06-17)
 No longer one giant HTML file. Now a **slim `index.html` spine** + modular assets, zero build step (classic ordered scripts share one global scope; deploys on Pages as-is):
 - `css/` — `base.css` (tokens/type/layout), `components.css` (buttons/cards/fields/nav/wizard), `figures.css`, `screens.css`
-- `js/` — `sprite.js` (injects the SVG figure sheet), `config.js`, `state.js`, `program.js` (phases/exercises/blocks + injury/layoff/deload), `engine.js` (decide/applyCheck/advance), `storage.js` (localStorage + GitHub sync), `util.js`, `ui.js` (router/render), `screens.js`, `init.js` (boot + SW)
+- `js/` — `sprite.js` (injects the SVG icon/figure sheet), `config.js`, `state.js`, `program.js` (phases/exercises/blocks + injury/layoff/deload), **`figure.js`** (parametric skeleton figure engine: FK joints, side/front poses, continuous animator, procedural gait), `engine.js` (decide/applyCheck/advance), `storage.js` (localStorage + GitHub sync), `util.js`, `ui.js` (router/render), `screens.js`, `init.js` (boot + SW). Load order: sprite → config → state → program → **figure** → engine → storage → util → ui → screens → init.
 - `sw.js` precaches the spine + all css/js. Python is NOT used at runtime (browser app); kept zero-build deliberately.
 
 ---
@@ -43,7 +43,7 @@ No longer one giant HTML file. Now a **slim `index.html` spine** + modular asset
 - Per-day completion dedupe; advances at most once per local day; local-timezone day boundary.
 
 **Library / Phase**
-- 19 exercises, each an animated 2-frame stick figure (reworked to standard form: clean pushup/plank/RDL, plank forearms forward, supine dead-bug, lower goblet, red calf-emphasis on raises). Semantic color: floor=taupe, equipment=gold, motion=blue, body=cream.
+- 19 exercises, each a **parametric skeleton figure** (`js/figure.js`) animated start↔end of the rep; walk + run are procedural gait. Joints are connected by construction (no more hand-drawn-SVG limb gaps). Solid floor/wall, pulsing red "feel-it-here" intensity markers, side or front view per exercise. Semantic color: floor=taupe, equipment=gold, motion=blue, body=cream.
 
 **Data, sync, audit**
 - **GitHub sync** (optional, per persona): push on check-in, pull on a fresh device, Test/Pull buttons. Hardened: 409 stale-SHA retry, `cache:'no-store'` on all sync GETs, cross-device checks merge, in-flight guard, allSettled pulls, auth-error surfacing. Token is user-pasted only (never embedded).
@@ -115,6 +115,56 @@ Research-driven (3 cited reviews in `docs/UX-RECOMMENDATIONS.md`). All in-browse
   guidance; save/load + backup round-trips. **Result: 20/20 + 41/42** — the lone "fail" was a
   harness artifact (`daysSinceLastCheck` uses real `Date.now()`; the sim faked dates but not the
   clock → bogus layoff). Documented in `AI-START-HERE.md` §5.
+
+## 2026-06-19 — Parametric skeleton figure engine, color-blind palette, logout
+The hand-drawn 2/3/4-frame SVG figures were the root cause of every "looks insane / wrong
+direction / limbs don't connect" report, so they were **replaced by a parametric skeleton**
+(`js/figure.js`) — joints are now connected by construction.
+
+**Figure engine (`js/figure.js`)**
+- **Model:** named joints + forward kinematics. `FIG` segment lengths (torso 17, neck 7,
+  headR 3.5, thigh/shank 11, foot 4, uarm 7, farm 6, ground 57). Angle convention
+  `end = J + (L·cos°, L·sin°)`: **down=90, right=0, up=270, left=180**.
+- **Pose format:** side view = `{pelvis:[x,y], torso, head, nearArm:[upper,fore],
+  farArm:[…], nearLeg:[thigh,shank,foot], farLeg:[…], facing:-1?, ground?, wallX?,
+  propsBehind, propsFront, intensity}`; `f1` = rep start, `f2` = rep end. **Front view**
+  (`view:'front'`) uses `leftArm/rightArm/leftLeg/rightLeg` + `hipW/shoulderW`, mirrored
+  across center — used for **goblet squat, band walk, single-leg hop, farmer carry** (read
+  better head-on).
+- **Animator:** one throttled (~25 fps) rAF loop interpolates every on-screen `.skfig`
+  (f1↔f2, eased ping-pong) and runs procedural `.gaitfig`; off-screen figures are skipped;
+  the **red intensity marker pulses** with the feel signal. `_applyConstraints` makes the
+  **floor and wall solid** (the whole figure shifts so nothing passes through).
+- **Knee-bend rule** (the bug that bit twice): facing right, `shankA = thighA + kneeBend`
+  so the shank folds back and the knee tracks forward; `shank < thigh` bends the wrong way.
+- **Walk + run** are **procedural gait** (`gaitFigure`/`_gaitPose`): knee bends during the
+  swing phase (no gliding), hip flexes via cos, arms swing antiphase to the same-side leg,
+  the lowest foot is planted to the ground each frame.
+- **Adding an exercise** = add one `FIG_POSES` entry (f1/f2 joint angles + optional
+  `dur`/props/`intensity`) — **no SVG drawing**. Prop helpers: `propBench`, `propWall`,
+  `propDumbbell`, `propKbAt`, `propKettlebell`, `propBand`, `propGobletFront`,
+  `propBandFront`. Authoring rules are documented in a header comment in `figure.js`; a
+  `__figPreview` dev harness renders the whole set. `animatedFigure()` routes walk/run →
+  `gaitFigure`, posed keys → `skeletonFigure`, else the legacy symbol flip-book.
+
+**Color-blindness (WCAG 1.4.1)** — without disturbing the warm yellow/brown look:
+- Palette re-spaced by **lightness** so hue is never the only cue: `--strength` #CE4F38
+  (darkest) / `--cardio` #5B86C4 / `--mobility` #92C285 / `--milestone` #E3AC3C (lightest).
+- **Redundant glyphs**: call icons `ic-call-{progress,repeat,modify,rest}` and goal states
+  `ic-goal-{partial,missed}` so red/green never carry meaning alone.
+
+**Other**
+- **Sticky Today header:** the vertical "Today's goal · X/N" rail stays pinned at the top
+  while an expanded prescription list scrolls (`.goal-vert { position: sticky; top: 62px }`).
+- **Logout / switch account:** `logout()` is a **soft** sign-out (saves, zeroes in-memory
+  state, clears the active-user pointer, but keeps each persona's localStorage). "Log out"
+  button in Settings; the welcome-screen **resume is now a dropdown** (`#onb-resume-sel` +
+  Continue) instead of a long list.
+- **Final figure fixes from review:** walk swing-phase knee lift; sl_squat + split_sq knee
+  direction; glute bridge head/shoulders planted (only hips lift); goblet squat arms hold the
+  bell low/centered; farmer carry tall two-hand; single-leg hop a real vertical hop;
+  kettlebell swing slowed (~2200 ms). All re-verified by screenshot.
+- SW cache bumped to **`fp-shell-v3.1.0`**; `js/figure.js` added to the precache SHELL.
 
 ## Pending (from EVIDENCE-REVIEW.md, not yet wired into the engine)
 - Explicit **RIR 2–3 double-progression** for load advancement (currently in copy, not the engine).
