@@ -139,7 +139,11 @@ function _resolveFront(pose) {
   const hipL = [c[0] - hipW / 2, c[1]], hipR = [c[0] + hipW / 2, c[1]];
   const shL = [shoulderC[0] - shW / 2, shoulderC[1]], shR = [shoulderC[0] + shW / 2, shoulderC[1]];
   const arm = (a, base) => { if (!a) return null; const foreA = _clampRel(a[1], a[0], -FIG.elbowLim, FIG.elbowLim); const e = _pt(base, a[0], FIG.uarm); const h = _pt(e, foreA, FIG.farm); return { elbow: e, hand: h }; };
-  const leg = (l, base) => { if (!l) return null; const shankA = _clampRel(l[1], l[0], FIG.kneeMin, FIG.kneeMax); const k = _pt(base, l[0], FIG.thigh); const an = _pt(k, shankA, FIG.shank); return { knee: k, ankle: an }; };
+  // Front view: left & right legs flex in OPPOSITE relative directions (a squat bends the
+  // left knee out one way, the right knee out the other), so clamp the knee by MAGNITUDE
+  // only (no fold-through) rather than by a single sign — otherwise one leg gets straightened
+  // and the foot slides out sideways.
+  const leg = (l, base) => { if (!l) return null; const shankA = _clampRel(l[1], l[0], -FIG.kneeMax, FIG.kneeMax); const k = _pt(base, l[0], FIG.thigh); const an = _pt(k, shankA, FIG.shank); return { knee: k, ankle: an }; };
   return { c, shoulderC, headC, hipL, hipR, shL, shR, leftArm: arm(pose.leftArm, shL), rightArm: arm(pose.rightArm, shR), leftLeg: leg(pose.leftLeg, hipL), rightLeg: leg(pose.rightLeg, hipR) };
 }
 function figureInnerFront(pose, opts) {
@@ -212,9 +216,9 @@ function _figFrame(ts) {
     for (const el of document.querySelectorAll('svg.gaitfig')) {
       const r = el.getBoundingClientRect();
       if (r.bottom < -20 || r.top > vh + 20) continue;
-      const kind = el.dataset.gait; const dur = kind === 'run' ? 680 : 1050;
+      const kind = el.dataset.gait; const carry = el.dataset.carry === '1'; const dur = kind === 'run' ? 680 : 1050;
       const p = reduce ? 0.12 : (ts % dur) / dur;
-      el.innerHTML = _gaitInner(_gaitPose(kind, p));
+      el.innerHTML = _gaitInner(_gaitPose(kind, p, carry), carry);
     }
   }
   requestAnimationFrame(_figFrame);
@@ -236,7 +240,7 @@ function hasFigurePose(key) { return !!FIG_POSES[key]; }
 // run adds forward lean + body hop. Lowest foot is planted on the floor each frame
 // (fixes the floating-figure defect).
 // ============================================================
-function _gaitPose(kind, p) {
+function _gaitPose(kind, p, carry) {
   const run = kind === 'run'; const TAU = Math.PI * 2;
   const torsoA = 270 + (run ? 14 : 3);                      // up + forward lean
   const hip = [25, 33];                                     // final y set by contact-shift (natural bob)
@@ -265,7 +269,16 @@ function _gaitPose(kind, p) {
     return { elbow, hand };
   };
   const Lleg = leg(p), Rleg = leg((p + 0.5) % 1);
-  const Larm = arm((p + 0.5) % 1), Rarm = arm(p);           // arm opposes same-side leg
+  // Carry (farmer carry): arms hang at the sides holding a weight — no swing; a slight
+  // forward/back splay so the near & far hand (and their kettlebells) read separately.
+  let Larm, Rarm;
+  if (carry) {
+    const hang = (upperA, foreA) => { const elbow = _pt(shoulder, upperA, FIG.uarm); return { elbow, hand: _pt(elbow, foreA, FIG.farm) }; };
+    Larm = hang(84, 88);    // near hand (slightly forward)
+    Rarm = hang(96, 92);    // far hand (slightly back)
+  } else {
+    Larm = arm((p + 0.5) % 1); Rarm = arm(p);               // arm opposes same-side leg
+  }
   // plant the lowest foot on the floor (no floating)
   const feet = [Lleg.ankle, Lleg.toe, Rleg.ankle, Rleg.toe];
   let maxY = -1e9; feet.forEach(q => { if (q[1] > maxY) maxY = q[1]; });
@@ -273,19 +286,20 @@ function _gaitPose(kind, p) {
   [hip, shoulder, head, Lleg.knee, Lleg.ankle, Lleg.toe, Rleg.knee, Rleg.ankle, Rleg.toe, Larm.elbow, Larm.hand, Rarm.elbow, Rarm.hand].forEach(q => { q[1] -= dy; });
   return { hip, shoulder, head, Lleg, Rleg, Larm, Rarm };
 }
-function _gaitInner(J) {
-  const SW = 2.5, DIM = 'var(--paper-dim)';
+function _gaitInner(J, carry) {
+  const SW = 2.5, FAR_SW = 1.9, DIM = 'var(--paper-dim)';
   let out = `<line x1="2" y1="${FIG.ground}" x2="48" y2="${FIG.ground}" stroke-width="1.5" stroke="#807868"/>`;
-  out += `<g stroke="${DIM}" stroke-width="${SW}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
+  out += `<g stroke="${DIM}" stroke-width="${FAR_SW}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
   out += _poly([J.hip, J.Rleg.knee, J.Rleg.ankle, J.Rleg.toe]) + _poly([J.shoulder, J.Rarm.elbow, J.Rarm.hand]);
   out += '</g>';
   out += `<g stroke="currentColor" stroke-width="${SW}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
   out += _L(J.hip, J.shoulder) + _poly([J.hip, J.Lleg.knee, J.Lleg.ankle, J.Lleg.toe]) + _poly([J.shoulder, J.Larm.elbow, J.Larm.hand]);
   out += '</g>';
   out += `<circle cx="${_n(J.head[0])}" cy="${_n(J.head[1])}" r="${FIG.headR}" fill="currentColor"/>`;
+  if (carry) out += propKbAt(J.Rarm.hand) + propKbAt(J.Larm.hand);   // a kettlebell in each hand (far then near)
   return out;
 }
-function gaitFigure(kind, size) { const s = size || 44; return `<span class="afig" style="width:${s}px;height:${s}px;display:inline-block;line-height:0;"><svg class="gaitfig" data-gait="${kind}" viewBox="0 0 50 60" width="${s}" height="${s}" aria-hidden="true">${_gaitInner(_gaitPose(kind, 0))}</svg></span>`; }
+function gaitFigure(kind, size, carry) { const s = size || 44; return `<span class="afig" style="width:${s}px;height:${s}px;display:inline-block;line-height:0;"><svg class="gaitfig" data-gait="${kind}"${carry ? ' data-carry="1"' : ''} viewBox="0 0 50 60" width="${s}" height="${s}" aria-hidden="true">${_gaitInner(_gaitPose(kind, 0, carry), carry)}</svg></span>`; }
 
 // ============================================================
 // HOW TO ADD AN EXERCISE
@@ -334,10 +348,11 @@ const FIG_POSES = {
   },
   // Calf raise — both feet, rise onto toes (heels up); feel it in the calves.
   calf_raise: {
+    // feel-mark pinned (fixed point) so it sits on the calf and doesn't drift start→end
     f1: { pelvis:[25,33], torso:270, nearArm:[100,95], farArm:[100,95], nearLeg:[90,90,2], farLeg:[90,90,2],
-          intensity:(J)=>({ at:[J.nearLeg.knee[0]-3, (J.nearLeg.knee[1]+J.nearLeg.ankle[1])/2], dir:180, r:2.6 }) },
+          intensity:{ at:[22,49], dir:180, r:2.6 } },
     f2: { pelvis:[25,30], torso:270, nearArm:[100,95], farArm:[100,95], nearLeg:[90,90,60], farLeg:[90,90,60],
-          intensity:(J)=>({ at:[J.nearLeg.knee[0]-3, (J.nearLeg.knee[1]+J.nearLeg.ankle[1])/2], dir:180, r:2.6 }) },
+          intensity:{ at:[22,49], dir:180, r:2.6 } },
   },
   // Glute bridge — lying on BACK, shoulders+feet on floor, hips lifted into a line.
   glute_bridge: {   // head + shoulders stay planted on the floor; only the hips lift
@@ -351,10 +366,10 @@ const FIG_POSES = {
   calf_stretch: {
     f1: { pelvis:[22,34], torso:300, head:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[122,130,6], ground:56, wallX:44,
           propsBehind: propWall(44, 8, 56),
-          intensity:(J)=>({ at:[J.farLeg.knee[0]-3, (J.farLeg.knee[1]+J.farLeg.ankle[1])/2], dir:180, r:2.6 }) },
+          intensity:{ at:[12,48], dir:180, r:2.6 } },
     f2: { pelvis:[22,34], torso:300, head:300, nearArm:[8,2], farArm:[12,4], nearLeg:[70,90,2], farLeg:[122,118,12], ground:56, wallX:44,
           propsBehind: propWall(44, 8, 56),
-          intensity:(J)=>({ at:[J.farLeg.knee[0]-3, (J.farLeg.knee[1]+J.farLeg.ankle[1])/2], dir:180, r:2.6 }) },
+          intensity:{ at:[12,48], dir:180, r:2.6 } },
   },
   // Single-arm DB row — FACING RIGHT, hinged over a bench: FAR (support) hand braces flat on
   // the bench top, feet on the floor under the hips, NEAR (working) arm rows the dumbbell up.
@@ -384,18 +399,18 @@ const FIG_POSES = {
   // ---- hip ----
   hip_abd: {
     f1: { pelvis:[33,52], torso:178, head:178, nearArm:[200,210], farArm:[185,185], nearLeg:[6,6,30], farLeg:[5,5,30],
-          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.3), dir:270, r:2.4 }) },
+          intensity:{ at:[37,50], dir:270, r:2.4 } },
     f2: { pelvis:[33,52], torso:178, head:178, nearArm:[200,210], farArm:[185,185], nearLeg:[315,315,300], farLeg:[5,5,30] },
   },
   band_walk: {   // front view (lateral steps + band across knees)
     f1: { view:'front', pelvis:[25,38], torso:269, hipW:9, leftArm:[100,90], rightArm:[80,90], leftLeg:[100,84], rightLeg:[80,96],
-          propsBehind:(J)=>propBandFront(J), intensity:(J)=>({ at:_along(J.hipL,J.leftLeg.knee,0.5), dir:180, r:2.2 }) },
+          propsBehind:(J)=>propBandFront(J), intensity:{ at:[18,47], dir:180, r:2.2 } },
     f2: { view:'front', pelvis:[25,38.5], torso:269, hipW:9, leftArm:[100,90], rightArm:[80,90], leftLeg:[114,80], rightLeg:[78,98] },
   },
   // ---- shin / calf ----
   sl_calf_raise: {
     f1: { pelvis:[25,33], torso:270, head:270, nearArm:[15,8], farArm:[40,200], nearLeg:[90,90,2], farLeg:[40,200,0], wallX:44,
-          propsBehind: propWall(44,8,57), intensity:(J)=>({ at:_along(J.nearLeg.knee,J.nearLeg.ankle,0.5), dir:180, r:2.4 }) },
+          propsBehind: propWall(44,8,57), intensity:{ at:[22,49], dir:180, r:2.4 } },
     f2: { pelvis:[25,30], torso:270, head:270, nearArm:[15,8], farArm:[40,200], nearLeg:[90,90,60], farLeg:[40,200,0], wallX:44,
           propsBehind: propWall(44,8,57) },
   },
@@ -404,7 +419,7 @@ const FIG_POSES = {
                  // between the legs; the squat lowers the whole package (knees press out).
     f1: { view:'front', pelvis:[25,33], torso:270, hipW:8, shoulderW:9, leftArm:[84,89], rightArm:[96,91], leftLeg:[92,90], rightLeg:[88,90],
           propsFront:(J)=>propGobletFront(J) },
-    f2: { view:'front', pelvis:[25,41], torso:271, hipW:8, shoulderW:9, leftArm:[86,90], rightArm:[94,90], leftLeg:[116,64], rightLeg:[64,116],
+    f2: { view:'front', pelvis:[25,39], torso:271, hipW:8, shoulderW:9, leftArm:[86,90], rightArm:[94,90], leftLeg:[120,55], rightLeg:[60,125],
           propsFront:(J)=>propGobletFront(J) },
   },
   pushup: {
@@ -418,7 +433,7 @@ const FIG_POSES = {
   rdl: {
     f1: { pelvis:[25,33], torso:270, head:270, nearArm:[92,90], farArm:[88,90], nearLeg:[90,90,5], farLeg:[90,90,5],
           propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far'),
-          intensity:(J)=>({ at:_along(J.pelvis,J.nearLeg.knee,0.5), dir:200, r:2.4 }) },
+          intensity:{ at:[22,40], dir:200, r:2.4 } },
     f2: { pelvis:[22,36], torso:20, head:12, nearArm:[90,90], farArm:[90,90], nearLeg:[85,95,0], farLeg:[83,95,0] },
   },
   oh_press: {   // arms on the RIGHT (front) side: racked at the shoulders → pressed overhead.
@@ -446,14 +461,8 @@ const FIG_POSES = {
           propsFront:(J)=>propKettlebell(J,'near') },
     f2: { pelvis:[25,33], torso:270, head:270, nearArm:[357,357], farArm:[353,353], nearLeg:[90,90,5], farLeg:[90,90,5] },
   },
-  kb_carry: {   // front view — a kettlebell in EACH hand, MARCHING: legs alternate a clear
-                // knee-lift (foot off the floor) with a small body bob, so it reads as walking.
-    dur:1300,
-    f1: { view:'front', pelvis:[25,32], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[92,90], rightLeg:[88,148],
-          propsFront:(J)=>propKbAt(J.leftArm.hand)+propKbAt(J.rightArm.hand) },
-    f2: { view:'front', pelvis:[25,33], torso:270, hipW:8, leftArm:[90,90], rightArm:[90,90], leftLeg:[92,148], rightLeg:[88,90],
-          propsFront:(J)=>propKbAt(J.leftArm.hand)+propKbAt(J.rightArm.hand) },
-  },
+  // kb_carry (Farmer Carry) is rendered by the procedural WALK gait + a kettlebell in each
+  // hand (see gaitFigure(kind,size,carry) + animatedFigure) — not a static f1/f2 pose.
 };
 
 // ----------------------------------------------------------------------
