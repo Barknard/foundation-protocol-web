@@ -164,10 +164,12 @@ function markBlockDone(blockKey) { ensureSession(); exercisesForBlock(blockKey).
 function sessionCounts() { ensureSession(); const ks = todayExerciseKeys(); return { done: ks.filter(k => state.session.done[k]).length, total: ks.length }; }
 
 // ---- Time-aware detraining / layoff (evidence: tendon de-adapts ~2mo; run restarts more conservatively than strength) ----
-function lastCheckDate() { for (let i = state.checks.length - 1; i >= 0; i--) { if (state.checks[i] && state.checks[i].date) return state.checks[i].date; } return null; }
-function daysSinceLastCheck() { const d = lastCheckDate(); if (!d) return 0; const ms = Date.now() - new Date(d + 'T12:00:00').getTime(); return Math.max(0, Math.floor(ms / 86400000)); }
-function layoffTier() {
-  const g = daysSinceLastCheck();
+// excludeToday: ignore a row already logged for today, so a same-day edit can't collapse the gap to 0 (the return-from-layoff ease-back must survive editing today's check).
+function lastCheckDate(excludeToday) { const t = excludeToday ? isoToday() : null; for (let i = state.checks.length - 1; i >= 0; i--) { const c = state.checks[i]; if (c && c.date && c.date !== t) return c.date; } return null; }
+// Whole-calendar-day math (midnight-to-midnight) so the 15/29/57-day tier boundaries don't jitter with time-of-day or DST.
+function daysSinceLastCheck(excludeToday) { const d = lastCheckDate(excludeToday); if (!d) return 0; const a = new Date(d + 'T00:00:00').getTime(), b = new Date(isoToday() + 'T00:00:00').getTime(); return Math.max(0, Math.round((b - a) / 86400000)); }
+function layoffTier(gap) {
+  const g = (gap == null) ? daysSinceLastCheck() : gap;
   if (g < 15) return null;
   if (g < 29) return { gap: g, level: 1, pct: 85, title: 'Welcome back', msg: `${g} days off. Ease in: ~15% lighter today, rebuild over a week. Hold running at your last tolerated run-walk, not your best.` };
   if (g < 57) return { gap: g, level: 2, pct: 70, title: 'Easing back in', msg: `${g} days off (~1-2 months). Start ~30% lighter, higher reps, +10%/week. Running throttles back to early run-walk intervals — tendons de-adapt faster than your heart and muscle.` };
@@ -177,14 +179,21 @@ function layoffTier() {
 // ---- Deload (evidence: lighter week every ~4-6 weeks; or early on under-recovery trend) ----
 function underRecoveryTrend() {
   const recent = state.checks.slice(-7);
-  if (recent.length < 4) return false;
+  if (recent.length < 5) return false;
   // 'repeat' just means "held steady / not fully completed" — not under-recovery — so it must NOT count here,
-  // or steady training at feel 3 would trip a spurious deload. Count only genuine fatigue/distress signals.
-  const flags = recent.filter(c => c.feel <= 2 || c.decision === 'modify' || c.decision === 'rest').length;
+  // or steady training at feel 3 would trip a spurious deload. Also EXCLUDE injury (hurt) entries: an acute
+  // injury is its own regime, and a re-flagged injury writes decision:'rest' which would otherwise self-trip
+  // the trend. Count only genuine slow-fatigue/distress signals from non-injury days.
+  const flags = recent.filter(c => !c.hurt && (c.feel <= 2 || c.decision === 'modify' || c.decision === 'rest')).length;
   return flags >= 3;
 }
-function isDeloadWeek() { const wk = state.phase?.week ?? 1; const ph = state.phase?.phase ?? 0; return ph >= 1 && wk > 0 && wk % 5 === 0; }
-function deloadActive() { return isDeloadWeek() || underRecoveryTrend(); }
+// Cumulative program week (sums all completed phases) so the deload cadence is CONTINUOUS, not reset to 1 at
+// every phase boundary (which previously opened ~9-week gaps across phase seams).
+function globalWeek() { const ph = state.phase?.phase ?? 0; let w = state.phase?.week ?? 1; for (let i = 0; i < ph; i++) w += PHASES[i].totalWeeks; return w; }
+// A scheduled lighter week every ~5 weeks of LOADED training (Phase 1+; Phase 0 carries no training load).
+function isDeloadWeek() { const ph = state.phase?.phase ?? 0; if (ph < 1) return false; const loadedWk = globalWeek() - PHASES[0].totalWeeks; return loadedWk > 0 && loadedWk % 5 === 0; }
+// Suppressed during an active injury — acute-injury management is a separate regime from slow-fatigue deload.
+function deloadActive() { return !injuryActive() && (isDeloadWeek() || underRecoveryTrend()); }
 
 // ---- Injury (PEACE & LOVE / overuse loading; red-flag screen) ----
 const BODY_PARTS = ['neck','shoulder','upper back','lower back','elbow','wrist','hip','groin','glute','quad','hamstring','knee','shin','calf','ankle','foot'];
@@ -210,6 +219,22 @@ function standingCall() {
   if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest & protect', action: `Protect &amp; gently load the area — keep moving everything that does not hurt (PEACE &amp; LOVE). Protect window through ${fmtDate(inj.riceUntil)}.` };
   return { cls: 'milestone', label: `Recovering · ${parts} · easing back${ext}`, title: 'Ease back in', action: `Pain-monitored loading — keep pain at or under ~3–5/10 and gone by next morning. Re-check by ${fmtDate(injuryEnd(inj))}.` };
 }
+
+// ---- Graded return ramp (after a layoff) + unified load reduction ----
+// A layoff arms a ramp (set in applyCheck); while it is active the prescription is shown lighter and rebuilds
+// to baseline over the tier's window — a graded return, not a single eased day, then auto-expires.
+function returnRampActive() { if (state.returnRamp && Date.now() >= state.returnRamp.until) state.returnRamp = null; return !!state.returnRamp; }
+// The single source of truth for "should today's prescription be lighter, and why" — injury > layoff-ramp > deload.
+function loadReduction() {
+  if (injuryActive()) return injuryInRice()
+    ? { reason: 'injury', pct: 0,  note: 'Protect — offload the painful movement; keep pain-free movement going (PEACE & LOVE)' }
+    : { reason: 'injury', pct: 50, note: 'Pain-monitored ease-back — keep pain ≤ ~3–5/10 and gone by next morning' };
+  if (returnRampActive()) { const r = state.returnRamp, left = Math.max(1, Math.ceil((r.until - Date.now()) / 86400000)); return { reason: 'layoff', pct: r.pct, note: `Easing back from time off — about ${r.pct}% of normal load, rebuild over ~${left} more day${left > 1 ? 's' : ''}` }; }
+  if (deloadActive()) return { reason: 'deload', pct: 60, note: 'Lighter week — about 2 working sets, ~40% less volume; keep cardio easy' };
+  return null;
+}
+// Lighten a loaded (strength/cardio) block with the active reduction note; mobility/rest unchanged.
+function lightenBlock(b, lr) { return (b.kind === 'strength' || b.kind === 'cardio') ? Object.assign({}, b, { deload: true, detail: (b.detail ? b.detail + ' · ' : '') + lr.note }) : b; }
 
 // ---- Audit / activity log ----
 function logEvent(type, text) {

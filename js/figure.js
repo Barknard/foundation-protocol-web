@@ -442,12 +442,13 @@ const FIG_POSES = {
     f2: { pelvis:[25,35], torso:270, head:270, nearArm:[274,272], farArm:[270,268], nearLeg:[90,90,5], farLeg:[90,90,5],
           propsFront:(J)=>propDumbbell(J,'near')+propDumbbell(J,'far') },
   },
-  split_sq: {   // rear foot up on a FIXED bench behind; FRONT leg lunges (knee forward).
-                // The bench is a constant prop (same string both frames) so it never moves.
-    f1: { pelvis:[26,36], torso:278, head:278, nearArm:[100,120], farArm:[104,124], nearLeg:[86,96,0], farLeg:[140,208,6],
-          ground:57, propsBehind: propBench(2,40,19,3.5) + propBenchLegs(2,43.5,19,13) },
-    f2: { pelvis:[25,41], torso:280, head:280, nearArm:[104,128], farArm:[108,132], nearLeg:[64,104,0], farLeg:[150,205,2],
-          ground:57, propsBehind: propBench(2,40,19,3.5) + propBenchLegs(2,43.5,19,13) },
+  split_sq: {   // rear foot rests ON a FIXED bench behind; FRONT leg lunges (knee forward).
+                // Rear leg folds so the foot lands at ~y42 (knee hangs just below); the bench
+                // top is pinned at y42 to meet it — no float, and a constant prop so it never moves.
+    f1: { pelvis:[26,36], torso:278, head:278, nearArm:[100,120], farArm:[104,124], nearLeg:[86,96,0], farLeg:[120,195,5],
+          ground:57, propsBehind: propBench(2,42,19,3) + propBenchLegs(2,45,19,12) },
+    f2: { pelvis:[25,41], torso:280, head:280, nearArm:[104,128], farArm:[108,132], nearLeg:[64,104,0], farLeg:[128,193,3],
+          ground:57, propsBehind: propBench(2,42,19,3) + propBenchLegs(2,45,19,12) },
   },
   // ---- mobility ----
   dead_bug: {

@@ -30,15 +30,19 @@ function journeyHeader() {
     </button>`;
 }
 const SCREEN_TITLES = { settings: 'Settings', log: 'Activity log' };
+// The stone emblem (logo with the "HARD PART" text cropped off) — a constant home/login button on every tab.
+function brandHome() {
+  return `<button class="hd-home" data-go-login aria-label="The Hard Part — back to the login screen"><img class="hd-emblem" src="logo.png" alt=""></button>`;
+}
 function appHeader(screen) {
   if (screen === 'loading') return '';
   if (screen === 'onboarding') return `<header class="app-header"><div class="hd-inner" style="display:block;padding-top:12px;padding-bottom:12px;">${onbCrumb()}</div></header>`;
   let inner;
   if (screen === 'today') {
-    inner = `${journeyHeader()}<button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
+    inner = `${brandHome()}${journeyHeader()}<button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
   } else if (TAB_SCREENS.includes(screen)) {
     const t = { library: 'Library', progress: 'Progress', phase: 'Phases' }[screen] || '';
-    inner = `<button class="hd-back" data-go="today" aria-label="Back to Today">${svgUse('ic-back', 22)}</button><span class="hd-title">${t}</span><button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
+    inner = `${brandHome()}<button class="hd-back" data-go="today" aria-label="Back to Today">${svgUse('ic-back', 22)}</button><span class="hd-title">${t}</span><button class="hd-gear icon" data-go="settings" aria-label="Settings">${svgUse('ic-settings', 22)}</button>`;
   } else {
     let title = SCREEN_TITLES[screen] || '';
     if (screen === 'check') title = injuryActive() ? 'Pain re-check' : 'Daily check-in';
@@ -81,6 +85,18 @@ function render() {
   root.innerHTML = header + `<main class="${cls.join(' ')}">${body}</main>` + footer;
   bindEvents();
   setSync(state.ui.syncStatus, state.ui.syncMessage);
+  syncHeaderOffset();
+}
+// The header is fixed; clear the scrolling main by the header's ACTUAL height so a 2-line journey crumb
+// (long phase names on narrow phones), a 1-line title screen, and notch safe-areas all clear exactly.
+function syncHeaderOffset() {
+  const h = document.querySelector('.app-header'), m = document.querySelector('.app-main');
+  if (h && m) m.style.paddingTop = h.offsetHeight + 'px';
+}
+if (typeof window !== 'undefined' && !window._hdOffsetBound) {
+  window._hdOffsetBound = true;
+  window.addEventListener('resize', syncHeaderOffset);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeaderOffset);
 }
 function renderNav(active) {
   return `<nav class="nav">
@@ -103,6 +119,12 @@ function bindEvents() {
     if (el.getAttribute('tabindex') === '0') el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNav(); } });
   });
   document.querySelectorAll('[data-back]').forEach(el => el.addEventListener('click', () => goBack('today')));
+  // Brand emblem → back to the login/welcome screen (soft logout; data stays saved, resume anytime).
+  document.querySelectorAll('[data-go-login]').forEach(el => el.addEventListener('click', () => {
+    if (typeof logout === 'function') logout();
+    navigate('onboarding');
+    if (typeof toast === 'function') toast('Back to login — your data is saved', 'success');
+  }));
   document.querySelectorAll('[data-exp]').forEach(el => el.addEventListener('click', () => {
     const i = el.getAttribute('data-exp');
     const panel = document.getElementById('ex-panel-' + i);

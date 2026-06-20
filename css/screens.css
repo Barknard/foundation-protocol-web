@@ -129,5 +129,8 @@ button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active,
 .stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .stat-cols .row.between { margin: 3px 0; }
 
+/* ---------- WELCOME: motivational quote under the logo ---------- */
+.hp-quote { text-align: center; font-family: 'Fraunces', serif; font-style: italic; color: var(--paper-dim); font-size: 14px; line-height: 1.5; max-width: 320px; margin: 12px auto 0; }
+
 /* ---------- SETUP: never scroll when the content fits ---------- */
 html:has(.app-main.onb-main), body:has(.app-main.onb-main) { overflow: hidden; }

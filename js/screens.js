@@ -22,7 +22,8 @@ function renderOnboarding() {
   const r = Math.min(p.step, ONB_REAL);   // r is 1..3
   let body = '';
   if (r === 1) body = `
-    <div class="brand"><img class="brand-logo" src="logo.png" alt="The Hard Part"></div>
+    <div class="brand"><img class="brand-emblem" src="logo.png" alt=""><div class="brand-wordmark">The Hard Part</div></div>
+    <p class="hp-quote">“It gets easier. Every day it gets a little easier. But you have to do it every day; that’s the hard part. But it does get easier.”</p>
     <div class="sp-16"></div>
     ${(() => { const others = savedPersonas(); if (!others.length) return ''; return `<div class="card" style="margin-bottom:14px;"><span class="label" style="color:var(--milestone);">Welcome back</span><div class="sp-8"></div><div class="row gap-8"><select id="onb-resume-sel" style="flex:1;min-width:0;padding:11px 12px;background:var(--surface-1);color:var(--paper);border:1px solid var(--rule);border-radius:12px;font-size:16px;">${others.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('')}</select><button class="secondary" id="onb-resume-go" style="width:auto;flex:0 0 auto;">Continue</button></div><div class="help">Or set up a new profile below.</div></div>`; })()}
     <div class="field"><label for="onb-username">Username</label><input type="text" id="onb-username" value="${escHtml(p.username)}" placeholder="e.g. Sisyphus" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username"><div class="help">Pick any name — it's just the label on your private profile. Change it anytime.</div></div>
@@ -44,7 +45,7 @@ function renderOnboarding() {
       {i:0,t:'New — or back after a break',s:'Walking + mobility, then strength. Recommended.'},
       {i:1,t:'I exercise sometimes',s:'Strength 2× a week with easy cardio.'},
       {i:2,t:'I train regularly',s:'Run-walk, strength continuing underneath.'}
-     ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
+     ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}" role="radio" tabindex="0" aria-checked="${p.phase===o.i?'true':'false'}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
     <div id="plan-preview">${planPreviewHtml(p.phase)}</div>`;
   return `<div class="screen no-nav onb">${body}</div>`;
 }
@@ -76,6 +77,10 @@ function bindOnboarding() {
   const upd = () => FIELDS.forEach(k => { const e = get('onb-'+k); if (e) o[k] = e.value; });
   const updConv = () => { const conv = get('onb-weight-conv'); if (!conv) return; const v = parseFloat(get('onb-weight').value); conv.textContent = (v>0) ? (o.unit==='imperial' ? `≈ ${fmt1(lbToKg(v))} kg` : `≈ ${fmt1(kgToLb(v))} lb`) : ''; };
   FIELDS.forEach(k => { const e = get('onb-'+k); if (e) e.addEventListener('input', upd); });
+  // Enter in any field submits the step (like clicking Next); Enter on the resume dropdown resumes.
+  const enterAdvance = (e) => { if (e.key === 'Enter') { e.preventDefault(); upd(); next.click(); } };
+  FIELDS.forEach(k => { const e = get('onb-'+k); if (e) e.addEventListener('keydown', enterAdvance); });
+  if (resumeSel) resumeSel.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (resumeGo) resumeGo.click(); } });
   const wEl = get('onb-weight'); if (wEl) wEl.addEventListener('input', updConv);
   document.querySelectorAll('#onb-unit button').forEach(b => b.addEventListener('click', () => {
     const u = b.getAttribute('data-u'); if (u === o.unit) return;
@@ -86,12 +91,16 @@ function bindOnboarding() {
     wEl.placeholder = u === 'imperial' ? 'e.g. 173' : 'e.g. 78.4';
     upd(); updConv();
   }));
-  document.querySelectorAll('[data-phase]').forEach(el => el.addEventListener('click', () => {
+  const selectPhase = (el) => {
     o.phase = Number(el.getAttribute('data-phase'));
-    document.querySelectorAll('[data-phase]').forEach(x => x.classList.remove('selected'));
-    el.classList.add('selected');
+    document.querySelectorAll('[data-phase]').forEach(x => { const on = x === el; x.classList.toggle('selected', on); x.setAttribute('aria-checked', on ? 'true' : 'false'); });
     const pv = get('plan-preview'); if (pv) pv.innerHTML = planPreviewHtml(o.phase);
-  }));
+  };
+  document.querySelectorAll('[data-phase]').forEach(el => {
+    el.addEventListener('click', () => selectPhase(el));
+    // keyboard: Space selects; Enter selects and advances (so the whole flow is keyboard-only)
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPhase(el); if (e.key === 'Enter') next.click(); } });
+  });
   updConv();
   const back = get('onb-back'); if (back) back.addEventListener('click', () => { o.step = Math.max(1, (o.step||1) - 1); render(); });
   next.addEventListener('click', () => {

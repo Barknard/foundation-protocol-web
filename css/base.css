@@ -15,6 +15,7 @@
   --cardio: #5B86C4;     /* blue (Repeat) — slightly deeper */
   --mobility: #92C285;   /* green (Progress / done) — same sage hue, lighter so it clears red */
   --milestone: #E3AC3C;  /* gold (brand / Modify / partial) — a touch lighter to clear red under CVD */
+  --brand-blue: #7C9AB8; /* the "HARD" blue-stone of the logo, lightened for legible title text */
   --tap-min: 48px;
   --pad: 24px;
   --shadow-card: 0 1px 0 rgba(255,255,255,0.02), 0 12px 32px rgba(0,0,0,0.32);
@@ -77,12 +78,17 @@ body {
 }
 .hd-inner { display: flex; align-items: center; gap: 10px; padding: 8px var(--pad); min-height: 44px; }
 .hd-journey { flex: 1; min-width: 0; width: auto; background: none; border: none; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 1px; cursor: pointer; }
-.hd-phase { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--milestone); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Wraps to a second line on narrow phones instead of clipping with an ellipsis (the header row has the height for it). */
+.hd-phase { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--milestone); line-height: 1.25; }
+@media (max-width: 400px) { .hd-phase { font-size: 11px; letter-spacing: 0.04em; } }
 .hd-sub { font-size: 13px; color: var(--paper-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hd-back { width: auto; flex: 0 0 auto; background: none; border: none; padding: 4px; color: var(--paper); display: flex; align-items: center; }
 .hd-title { flex: 1; min-width: 0; font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hd-gear { flex: 0 0 auto; }
 .app-header .sync { flex: 0 0 auto; }
+/* Brand emblem (logo with the "HARD PART" text cropped off) — a home/login button in the header. */
+.hd-home { flex: 0 0 auto; width: auto; background: none; border: none; padding: 0; display: flex; align-items: center; cursor: pointer; }
+.hd-emblem { width: 30px; height: 27px; object-fit: cover; object-position: top center; display: block; }
 
 .app-main {
   max-width: 540px; margin: 0 auto;
