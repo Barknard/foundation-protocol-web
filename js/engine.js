@@ -74,7 +74,7 @@ function advancePointer() {
     dayInWeek = 1; week += 1;
     if (week > pd.totalWeeks) {
       if (lastPhase) { week = pd.totalWeeks; dayInWeek = pd.week.length; state.capstoneReached = true; }   // TERMINAL: clamp, never wrap Target back to week 1
-      else { week = 1; phase = phase + 1; }
+      else { week = 1; phase = phase + 1; if (phase === PHASES.length - 1 && !state.targetReachedAt) state.targetReachedAt = Date.now(); }   // first arrival at the Target phase → celebrate
     }
   }
   state.phase = { phase, week, dayInWeek, sessionsCleared: (cur.sessionsCleared ?? 0) + 1, lastDecision: new Date().toISOString() };

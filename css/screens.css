@@ -132,5 +132,22 @@ button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active,
 /* ---------- WELCOME: motivational quote under the logo ---------- */
 .hp-quote { text-align: center; font-family: 'Fraunces', serif; font-style: italic; color: var(--paper-dim); font-size: 14px; line-height: 1.5; max-width: 320px; margin: 12px auto 0; }
 
+/* ---------- CAPSTONE CELEBRATION ---------- */
+.cap-screen { text-align: center; padding-top: 16px; }
+.cap-screen .brand { margin-bottom: 4px; }
+.cap-screen .brand-emblem { width: clamp(92px, 28vw, 124px); height: clamp(83px, 25vw, 112px); }
+.cap-title { color: var(--brand-blue); margin: 0; }
+.cap-screen .card-block { text-align: left; }
+.cap-confetti { display: flex; justify-content: center; gap: 10px; font-size: 24px; margin-bottom: 10px; }
+.cap-confetti span { animation: cap-pop 1.5s ease-in-out infinite; }
+.cap-confetti span:nth-child(3n+1) { color: var(--milestone); }
+.cap-confetti span:nth-child(3n+2) { color: var(--mobility); }
+.cap-confetti span:nth-child(3n)   { color: var(--cardio); }
+.cap-confetti span:nth-child(2){animation-delay:.12s} .cap-confetti span:nth-child(3){animation-delay:.24s}
+.cap-confetti span:nth-child(4){animation-delay:.36s} .cap-confetti span:nth-child(5){animation-delay:.48s}
+.cap-confetti span:nth-child(6){animation-delay:.60s} .cap-confetti span:nth-child(7){animation-delay:.72s}
+.cap-confetti span:nth-child(8){animation-delay:.84s}
+@keyframes cap-pop { 0%,100% { transform: translateY(0); opacity: .45; } 50% { transform: translateY(-7px); opacity: 1; } }
+
 /* ---------- SETUP: never scroll when the content fits ---------- */
 html:has(.app-main.onb-main), body:has(.app-main.onb-main) { overflow: hidden; }

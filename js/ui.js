@@ -23,7 +23,8 @@ const TAB_SCREENS = ['today','library','progress','phase'];
 function journeyHeader() {
   const phaseIdx = state.phase?.phase ?? state.profile?.startingPhase ?? 0;
   const pd = PHASES[phaseIdx] || PHASES[0];
-  const wk = state.phase?.week ?? 1;
+  // Absolute program week (cumulative) so "Wk N" matches the phase labels ("Weeks 5–12", etc.).
+  const wk = (typeof globalWeek === 'function') ? globalWeek() : (state.phase?.week ?? 1);
   const dayInWeek = state.phase?.dayInWeek ?? 1;
   return `<button class="hd-journey" data-go="progress" aria-label="Your progress — phase ${phaseIdx + 1} of ${PHASES.length}, ${escHtml(pd.name)}, week ${wk}, session ${dayInWeek} of ${pd.week.length}">
       <span class="hd-phase">Phase ${phaseIdx + 1}/${PHASES.length} · ${escHtml(pd.name)} · Wk ${wk} · Day ${dayInWeek}/${pd.week.length}</span>
@@ -35,7 +36,7 @@ function brandHome() {
   return `<button class="hd-home" data-go-login aria-label="The Hard Part — back to the login screen"><img class="hd-emblem" src="logo.png" alt=""></button>`;
 }
 function appHeader(screen) {
-  if (screen === 'loading') return '';
+  if (screen === 'loading' || screen === 'capstone') return '';
   if (screen === 'onboarding') return `<header class="app-header"><div class="hd-inner" style="display:block;padding-top:12px;padding-bottom:12px;">${onbCrumb()}</div></header>`;
   let inner;
   if (screen === 'today') {
@@ -54,7 +55,7 @@ function appHeader(screen) {
 }
 // Frozen footer = the bottom bar. Tab + sub-screens get the nav; action screens get their action bar.
 function appFooter(screen) {
-  if (screen === 'loading') return '';
+  if (screen === 'loading' || screen === 'capstone') return '';
   if (screen === 'onboarding') return onbFooter();
   if (screen === 'check') return checkFooter();
   return renderNav(screen);
@@ -68,6 +69,7 @@ function render() {
     case 'today':          body = renderToday(); break;
     case 'check':          body = renderCheck(); break;
     case 'result':         body = renderResult(state.ui.params.outcome); break;
+    case 'capstone':       body = renderCapstone(); break;
     case 'library':        body = renderLibrary(); break;
     case 'progress':       body = renderProgress(); break;
     case 'phase':          body = renderPhaseList(); break;
@@ -124,6 +126,11 @@ function bindEvents() {
     if (typeof logout === 'function') logout();
     navigate('onboarding');
     if (typeof toast === 'function') toast('Back to login — your data is saved', 'success');
+  }));
+  // Capstone celebration → mark seen so it shows once, then on to Today.
+  document.querySelectorAll('[data-celebrate-done]').forEach(el => el.addEventListener('click', () => {
+    state.celebrationSeen = true; if (typeof saveLocal === 'function') saveLocal();
+    navigate('today');
   }));
   document.querySelectorAll('[data-exp]').forEach(el => el.addEventListener('click', () => {
     const i = el.getAttribute('data-exp');

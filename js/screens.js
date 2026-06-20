@@ -408,6 +408,8 @@ function bindCheck() {
     const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
     state.ui.resultOutcome = outcome;
     delete state._chk;
+    // First time the program advances into the Target phase → the capstone celebration, once.
+    if (state.targetReachedAt && !state.celebrationSeen) { navigate('capstone'); return; }
     navigate('result', { outcome: outcome.key });
   });
 }
@@ -439,6 +441,30 @@ function renderResult(outcomeKey) {
     <button data-go="today">${advanced ? 'Start next session' : 'Got it'}</button>
     <div class="sp-12"></div>
     <p class="body-dim" style="font-size: 14px;">Source: Saw, Main &amp; Gastin BJSM 2016. Hooper &amp; Mackinnon MSSE 1995. Lally et al. 2010 (a single miss does not erase progress).</p>
+  </div>`;
+}
+
+// ---------- CAPSTONE CELEBRATION (reaching the Target phase) ----------
+function renderCapstone() {
+  const sc = state.phase?.sessionsCleared ?? 0;
+  return `<div class="screen no-nav cap-screen">
+    <div class="cap-confetti" aria-hidden="true"><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span></div>
+    <div class="brand"><img class="brand-emblem" src="logo.png" alt=""></div>
+    <p class="label" style="text-align:center;color:var(--milestone);">Phase 5 of 5 · The Target</p>
+    <div class="sp-8"></div>
+    <h1 class="display-l serif cap-title">You reached the Target phase.</h1>
+    <div class="sp-12"></div>
+    <p class="body" style="text-align:center;">${sc} sessions of showing up — the slow, unglamorous, do-it-every-day <em>hard part</em>. You built the engine. Now there's one test left:</p>
+    <div class="sp-20"></div>
+    <div class="card-block milestone"><div class="stripe"></div><div class="card" style="padding:16px;">
+      <span class="label" style="color:var(--milestone);">THE CAPSTONE</span><div class="sp-8"></div>
+      <div class="headline serif">10K run + 100 pushups + 100 situps + 100 squats — in one session.</div>
+      <div class="sp-8"></div>
+      <div class="body-dim">You'll get there with quality strength sets, a little power, and the 10K build — plus a lighter week every ~5 weeks. Not by grinding hundreds of reps a day, which only buys injury at 40+.</div>
+    </div></div>
+    <div class="sp-32"></div>
+    <button data-celebrate-done>Keep going — train for the capstone</button>
+    <div class="sp-16"></div>
   </div>`;
 }
 
