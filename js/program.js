@@ -65,9 +65,9 @@ const PHASES = [
   },
   {
     index: 4, name: 'Target', weeks: 'Weeks 41+', totalWeeks: 99,
-    summary: 'Build toward THE capstone — 10K run + 100 pushups + 100 situps + 100 squats, completed in a single session. You get there with quality strength sets (RIR 2-3), a little power, and the 10K build — not by grinding hundreds of reps every day, which raises injury risk at 40+ for no extra gain.',
+    summary: 'Build toward THE capstone — 10K run + 100 pushups + a 2-minute plank + 100 squats, completed in a single session. You get there with quality strength sets (RIR 2-3), a little power, and the 10K build — not by grinding hundreds of reps every day, which raises injury risk at 40+ for no extra gain.',
     focus: ['Train the capstone movements with quality sets, not daily max volume', '4 runs weekly: 2 easy, 1 tempo, 1 long — building to 10K', 'Strength + a little power 2-3× weekly', '+10% session cap and the lighter week still apply'],
-    exit:  ['THE CAPSTONE: 10K run + 100 pushups + 100 situps + 100 squats in one session', '10K continuous run under ~60 minutes', 'Strength + power held with a deload every ~5 weeks'],
+    exit:  ['THE CAPSTONE: 10K run + 100 pushups + a 2-minute plank + 100 squats in one session', '10K continuous run under ~60 minutes', 'Strength + power held with a deload every ~5 weeks'],
     week: [ day('Mon',['opmAm','loaded']), day('Tue',['opmCore','easyRun']), day('Wed',['opmAm','loaded']),
             day('Thu',['opmCore','tempo']), day('Fri',['opmAm','rest']), day('Sat',['ptFull','longRun10k']),
             day('Sun',['opmCore','hooper']) ],
@@ -154,6 +154,107 @@ const BLOCK_EX = {
   rest:    [], hooper: [],
 };
 function exercisesForBlock(key) { return (BLOCK_EX[key] || []).map(k => EXERCISES.find(e => e.key === k)).filter(Boolean); }
+
+// ============================================================
+// RIR 2-3 DOUBLE-PROGRESSION (EVIDENCE-REVIEW §6)
+// Each loaded lift carries a live prescription and advances on the existing Progress
+// signal — no extra daily friction (check-in stays goal+feel+hurt). Two rules climb:
+//   1. reps climb inside the working range per Progress (loaded/bodyweight +1 rep; the plank
+//      climbs +step seconds, clamped to the top of its range);
+//   2. at the top of the range for 2 consecutive sessions, ONE variable bumps (load for loaded
+//      lifts, a harder variation for bodyweight, a harder anti-extension variation for the plank)
+//      and reps reset to the bottom — never both reps and load in the same session (anti-failure
+//      on-ramp). A loaded lift with no weight set yet has nothing to bump, so it pins reps at the
+//      top until the user sets a weight via the ± control (no black box — never a silent reset).
+// state.lifts is per-persona and persisted via saveLocal (whole-state serialization).
+// ============================================================
+// Seed templates (conservative on-ramp): load:null = "Set your weight" until the user sets it
+// (no black box — never invent a starting weight). split_sq starts bodyweight (load 0) and only
+// steps once a load is set (per the library cue: add DBs after 8 clean per leg).
+const LIFT_SEEDS = {
+  goblet_sq: { kind:'loaded',     load:null, unit:'lb', step:2.5, reps:8,  range:[8,12],  goodStreak:0, variation:null },
+  rdl:       { kind:'loaded',     load:null, unit:'lb', step:5,   reps:8,  range:[8,12],  goodStreak:0, variation:null },
+  oh_press:  { kind:'loaded',     load:null, unit:'lb', step:2.5, reps:8,  range:[8,10],  goodStreak:0, variation:null },
+  db_row:    { kind:'loaded',     load:null, unit:'lb', step:2.5, reps:10, range:[8,12],  goodStreak:0, variation:null },
+  split_sq:  { kind:'loaded',     load:0,    unit:'lb', step:2.5, reps:8,  range:[8,12],  goodStreak:0, variation:null },
+  kb_swing:  { kind:'loaded',     load:null, unit:'lb', step:5,   reps:12, range:[12,15], goodStreak:0, variation:null },
+  pushup:    { kind:'bodyweight', load:null, unit:'lb', step:0,   reps:6,  range:[6,12],  goodStreak:0, variation:null },
+  plank:     { kind:'time',       load:null, unit:'s',  step:5,   reps:30, range:[30,60], goodStreak:0, variation:null },
+};
+// Harder-bodyweight progression hints (set as `variation` when the rep range is topped twice).
+const BW_VARIATIONS = { pushup: ['Full pushups', 'Feet-elevated pushups', 'Decline / weighted pushups'] };
+// A plank that has topped its range twice gets a harder anti-extension variation rather than ever-longer holds.
+const PLANK_VARIATION = 'RKC plank / long-lever (harder, not longer)';
+// Lazily seed a lift the first time it is needed; returns the live entry (defaults included).
+function getLift(key) {
+  if (!state.lifts) state.lifts = {};
+  if (!state.lifts[key] && LIFT_SEEDS[key]) state.lifts[key] = { ...LIFT_SEEDS[key], range: LIFT_SEEDS[key].range.slice() };
+  return state.lifts[key] || null;
+}
+function hasLift(key) { return !!LIFT_SEEDS[key]; }
+// User-set load (the ± control). Clamped to >= 0; unit follows current settings (lb/kg display).
+function setLiftLoad(key, load) {
+  const lift = getLift(key); if (!lift || lift.kind !== 'loaded') return;
+  lift.load = (load == null) ? null : Math.max(0, Math.round(load * 10) / 10);
+  saveLocal();
+}
+// The lift keys trained on a day plan = exercisesForBlock over the day's kind==='strength' blocks,
+// de-duped, keeping only those we actually progress (LIFT_SEEDS).
+function dayLiftKeys(dayPlan) {
+  const ks = [];
+  (dayPlan && dayPlan.blocks ? dayPlan.blocks : []).filter(b => b.kind === 'strength')
+    .forEach(b => exercisesForBlock(b.key).forEach(ex => { if (hasLift(ex.key) && !ks.includes(ex.key)) ks.push(ex.key); }));
+  return ks;
+}
+// One double-progression step for a single lift entry (mutates in place).
+function _stepLift(lift, key) {
+  const [lo, hi] = lift.range;
+  if (lift.reps < hi) {                                     // reps climb first (time climbs by step, others by 1)
+    lift.reps = (lift.kind === 'time') ? Math.min(lift.reps + lift.step, hi) : lift.reps + 1;
+    return;
+  }
+  // At the top of the range. A loaded lift with no weight set yet has nothing to bump — pin reps at hi
+  // (no black box: don't silently reset reps or burn the streak before the user sets a weight via ±).
+  if (lift.kind === 'loaded' && lift.load == null) return;
+  lift.goodStreak = (lift.goodStreak || 0) + 1;             // at the top — bank a session
+  if (lift.goodStreak >= 2) {                               // 2 consecutive at-top → bump ONE variable, reset reps
+    if (lift.kind === 'loaded') { lift.load = Math.round((lift.load + lift.step) * 10) / 10; }
+    else if (lift.kind === 'time') { lift.variation = PLANK_VARIATION; }
+    else { const opts = BW_VARIATIONS[key] || []; const cur = opts.indexOf(lift.variation); lift.variation = opts[Math.min(cur + 1, opts.length - 1)] || lift.variation; }
+    lift.reps = lo; lift.goodStreak = 0;
+  }
+}
+// Advance every lift trained today; returns a snapshot of the PRE-advance entries for rollback.
+// Mirrors the pointer's _pre snapshot: capture exactly the lifts we touched, so a same-day
+// downgrade can restore them and a re-check can't double-advance or strand a lift.
+function advanceDayLifts(dayPlan) {
+  const snap = {};
+  dayLiftKeys(dayPlan).forEach(key => {
+    const lift = getLift(key); if (!lift) return;
+    snap[key] = { ...lift, range: lift.range.slice() };   // deep-enough copy (range is the only nested field)
+    _stepLift(lift, key);
+  });
+  return snap;
+}
+// Restore a snapshot taken by advanceDayLifts (same-day downgrade away from Progress).
+function rollbackDayLifts(snap) {
+  if (!snap) return;
+  if (!state.lifts) state.lifts = {};
+  Object.keys(snap).forEach(key => { state.lifts[key] = { ...snap[key], range: snap[key].range.slice() }; });
+}
+// Compact prescription string for a lift (UI helper). unitLabel respects settings (lb default, kg if metric).
+function liftUnitLabel() { return (state.settings && state.settings.units === 'metric') ? 'kg' : 'lb'; }
+function liftPrescription(key) {
+  const lift = getLift(key); if (!lift) return null;
+  if (lift.kind === 'time') return `${lift.reps}s plank · RIR 2-3: stop with form intact${lift.variation ? ` · ${lift.variation}` : ''}`;
+  if (lift.kind === 'bodyweight') return `3×${lift.reps}${lift.variation ? ` · ${lift.variation}` : ' · add reps before making it harder'}`;
+  if (lift.load == null) return 'Set your weight';
+  return `3×${lift.reps} @ ${_fmtLoad(lift.load)} ${liftUnitLabel()} · RIR 2-3: stop ~2-3 reps short`;
+}
+// Round a load for display (drop a trailing .0; keep one decimal otherwise).
+// Named _fmtLoad (not _n) to avoid colliding with figure.js's _n numeric rounder, which loads
+// after program.js in index.html and would otherwise shadow this formatter globally.
+function _fmtLoad(v) { return (Math.round(v * 10) % 10 === 0) ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1); }
 
 // ---- Per-day exercise completion (workout flow) ----
 function ensureSession() { const d = isoToday(); if (!state.session || state.session.date !== d) state.session = { date: d, done: {} }; return state.session; }
@@ -276,4 +377,30 @@ const FRAMES = {
   'ic-kb-carry': ['ic-kb-carry','ic-kb-carry-2'],
 };
 EXERCISES.forEach(e => { e.frames = FRAMES[e.icon] || [e.icon]; });
+
+// ----------------------------------------------------------------------
+// RIR double-progression sanity harness (dev only, like __figPreview) —
+// simulates strength-Progress sessions on Day A and shows reps climbing,
+// then load bumping after 2 at-top sessions. Not shipped UI; returns a log.
+// Run in the page console: __rirTest()
+//   Expected for goblet_sq (range 8-12, step 2.5, load set to 20):
+//   8→9→10→11→12 (reps climb), then 12(streak1)→12(streak2 → load 22.5, reps 8),
+//   i.e. one variable per session, load gated by 2 consecutive at-top sessions.
+// ----------------------------------------------------------------------
+function __rirTest() {
+  const dayA = { blocks: [{ kind:'strength', key:'strA' }] };   // goblet_sq, pushup, db_row, plank
+  state.lifts = {};
+  setLiftLoad('goblet_sq', 20);   // user sets a starting weight (no black box)
+  const log = [];
+  const snapshot = () => dayLiftKeys(dayA).map(k => { const l = getLift(k); return `${k}:${l.reps}${l.kind==='loaded'?`@${l.load}`:''}${l.kind==='bodyweight'&&l.variation?`/${l.variation}`:''}`; }).join('  ');
+  log.push('seed     ' + snapshot());
+  for (let i = 1; i <= 8; i++) { advanceDayLifts(dayA); log.push('prog ' + String(i).padStart(2) + '  ' + snapshot()); }
+  // rollback check: advance once, capture snap, roll back → identical to pre-advance
+  const before = snapshot();
+  const snap = advanceDayLifts(dayA);
+  const after = snapshot();
+  rollbackDayLifts(snap);
+  log.push('rollback before=' + before + ' | after=' + after + ' | restored=' + snapshot() + ' | OK=' + (before === snapshot()));
+  return log.join('\n');
+}
 

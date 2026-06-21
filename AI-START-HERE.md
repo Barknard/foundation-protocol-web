@@ -120,7 +120,7 @@ real usage is consistent.
 `PHASES` (in `program.js`): **0 Infrastructure** (wk 1–4) → **1 Foundation** (5–12) →
 **2 Run Introduction** (13–24) → **3 Build** (25–40) → **4 Target** (41+). Each phase has a
 plain-language **formula + research references** surfaced on the **Phase tab**
-(`PHASE_WHY` in `screens.js`). **Capstone TEST:** a 10K + 100 pushups/situps/squats in one
+(`PHASE_WHY` in `screens.js`). **Capstone TEST:** a 10K + 100 pushups + a 2-minute plank + 100 squats in one
 session. The pointer walks the phases; only Progress carries it forward, so the program is
 exactly as long as the body needs (a clean all-good run reaches the capstone in ~280
 sessions / ~250–460 calendar days once deloads are counted).

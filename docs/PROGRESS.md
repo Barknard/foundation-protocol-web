@@ -189,7 +189,7 @@ direction / limbs don't connect" report, so they were **replaced by a parametric
 
 ## Pending (from EVIDENCE-REVIEW.md, not yet wired into the engine)
 - Explicit **RIR 2–3 double-progression** for load advancement (currently in copy, not the engine).
-- **Situp training gap:** the capstone tests 100 situps but no situp/curl-up movement is trained (core block is plank+carries). Add a graded ab movement or reconcile the test.
+- ~~**Situp training gap:** the capstone tests 100 situps but no situp/curl-up movement is trained (core block is plank+carries). Add a graded ab movement or reconcile the test.~~ **RESOLVED 2026-06-20:** test reconciled — the capstone now requires a **2-minute plank** instead of 100 situps, matching the trained anti-extension core (plank + carries) per EVIDENCE-REVIEW §5.
 - Split readiness into **sleep + soreness** multi-tap; per-meal protein + creatine coaching; **+10% run cap** is advisory copy only (no distance logging).
 - **Sync coverage:** injury/log/session are NOT yet synced to GitHub (only profile/phase/checks); profile/phase push is last-writer-wins. ("Update the save" — next.)
 

@@ -10,6 +10,7 @@ const state = {
   activeUser: null, // slug of the active persona
   session: null,    // { date, done: { exKey: true } } — per-day exercise completion
   injury: null,     // { parts:[], since, riceUntil, kind } — active injury tracking
+  lifts: {},        // { exKey: { kind, load, unit, step, reps, range:[lo,hi], goodStreak, variation } } — RIR double-progression state
   log: [],          // audit log: [{ ts, type, text }]
   settings: { repo: '', pat: '', autoSync: true, units: 'imperial' },
   ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '', openBlocks: {} },

@@ -2,7 +2,7 @@
 
 *A plain-language tour of the engine behind the app — what the user taps, the formula that turns those taps into a call, how it adapts to real life, the evidence under the hood, and how every session points at the capstone.*
 
-The Hard Part is a 40-week plan to get a 40-plus body genuinely fit — to a 10K plus 100 pushups, 100 situps, and 100 squats in one session — **without getting hurt on the way**. The whole app is built around one idea: *load should follow readiness, not the calendar.* You don't earn a harder session by surviving a week; you earn it by doing the work and recovering well. Everything below is how that idea becomes code.
+The Hard Part is a 40-week plan to get a 40-plus body genuinely fit — to a 10K plus 100 pushups, a 2-minute plank, and 100 squats in one session — **without getting hurt on the way**. The whole app is built around one idea: *load should follow readiness, not the calendar.* You don't earn a harder session by surviving a week; you earn it by doing the work and recovering well. Everything below is how that idea becomes code.
 
 ---
 
@@ -126,7 +126,7 @@ The plan is a pointer walking through five phases. **Only Progress moves it**, s
 
 Each phase has explicit **exit criteria** (e.g. Phase 0: walk 60 min comfortably, 30-sec single-leg eyes closed; Phase 3: 5K continuous, 50 pushups unbroken). When the pointer finishes a phase it rolls into the next, but only Progress calls carry it there — so every step forward is a recovered, completed step.
 
-**The capstone:** a 10K run plus 100 pushups, 100 situps, and 100 squats **in a single session.** You arrive there not by grinding hundreds of reps daily (high injury risk at 40-plus for no extra gain), but by the cumulative effect of the autoregulated engine: forty-ish weeks of *progress when ready, hold when steady, ease when tired, stop when hurt* — with layoffs, deloads, and injuries absorbed automatically along the way.
+**The capstone:** a 10K run plus 100 pushups, a 2-minute plank, and 100 squats **in a single session.** You arrive there not by grinding hundreds of reps daily (high injury risk at 40-plus for no extra gain), but by the cumulative effect of the autoregulated engine: forty-ish weeks of *progress when ready, hold when steady, ease when tired, stop when hurt* — with layoffs, deloads, and injuries absorbed automatically along the way.
 
 That's the whole machine. Two taps a day, one formula, four modifiers, and a pointer that only ever moves when your body says yes.
 

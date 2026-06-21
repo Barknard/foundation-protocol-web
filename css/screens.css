@@ -38,6 +38,18 @@
 .ex-card .meta .cue { font-size: 14px; color: var(--paper-dim); margin-top: 6px; line-height: 1.4; }
 .ex-card .meta .more { display: inline-block; margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: var(--milestone); background: transparent; border: none; padding: 0; height: auto; min-width: 0; width: auto; cursor: pointer; }
 
+/* ---------- RIR DOUBLE-PROGRESSION ---------- */
+/* Today: a subtle grouped block of compact per-lift prescriptions, sitting above the exercise grid. */
+.lift-strip { background: var(--surface-1); border: 1px solid var(--rule); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; }
+.lift-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--rule); }
+.lift-line:last-child { border-bottom: none; }
+.lift-name { font-size: 15px; font-weight: 600; color: var(--paper); flex: 0 1 auto; min-width: 0; }
+.lift-rx { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--paper-dim); text-align: right; flex: 1 1 auto; }
+/* Exercise detail: the ± load control (loaded lifts). Tidy tap targets around a readable centered value. */
+.lift-set { display: inline-flex; align-items: stretch; gap: 8px; }
+.lift-step { width: 40px; height: 40px; min-width: 0; padding: 0; flex: 0 0 auto; border-radius: 10px; background: var(--surface-1); color: var(--paper); border: 1px solid var(--rule); font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; line-height: 1; }
+.lift-val { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; padding: 0 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--rule); font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; color: var(--paper); text-align: center; }
+
 /* ---------- CHART ---------- */
 .chart {
   background: var(--surface);

@@ -3,3 +3,9 @@
 node_modules/
 
 gen-logos/
+
+# figure-editor autosave snapshots (dev-only, written by tools/figure-save-server.py)
+.figure-versions/
+# figure dev-tool artifacts (Python bytecode + regression baseline)
+tools/__pycache__/
+tools/.fig-baseline.json

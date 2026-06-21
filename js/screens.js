@@ -22,7 +22,7 @@ function renderOnboarding() {
   const r = Math.min(p.step, ONB_REAL);   // r is 1..3
   let body = '';
   if (r === 1) body = `
-    <div class="brand"><img class="brand-emblem" src="logo.png" alt=""><div class="brand-wordmark">The Hard Part</div></div>
+    <div class="brand"><img class="brand-full" src="logo.png" alt="The Hard Part"></div>
     <p class="hp-quote">“It gets easier. Every day it gets a little easier. But you have to do it every day; that’s the hard part. But it does get easier.”</p>
     <div class="sp-16"></div>
     ${(() => { const others = savedPersonas(); if (!others.length) return ''; return `<div class="card" style="margin-bottom:14px;"><span class="label" style="color:var(--milestone);">Welcome back</span><div class="sp-8"></div><div class="row gap-8"><select id="onb-resume-sel" style="flex:1;min-width:0;padding:11px 12px;background:var(--surface-1);color:var(--paper);border:1px solid var(--rule);border-radius:12px;font-size:16px;">${others.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('')}</select><button class="secondary" id="onb-resume-go" style="width:auto;flex:0 0 auto;">Continue</button></div><div class="help">Or set up a new profile below.</div></div>`; })()}
@@ -155,7 +155,7 @@ function dayWhy() {
   const formula = `Your call = f(goal met?, how you feel 1–5). Done + feel 4–5 → Progress (load steps up a notch). Done + feel 3 → Repeat (consolidate). Feel 2 → easier version, no added load. Feel 1, or any pain → Rest. Load only ever rises when you did the work AND feel recovered — never by the calendar. Coming back from a layoff or an injury window forces a Repeat first (no jump).`;
 
   // WHERE THIS LEADS — personalised to phase/week/progress.
-  const lead = `You're in ${pd.name} — phase ${ph+1} of ${PHASES.length}, week ${wk}${cleared?`, ${cleared} progression${cleared===1?'':'s'} banked`:''}. Each phase earns the next, building toward the capstone: a 10K run plus 100 pushups, situps and squats in one session.`;
+  const lead = `You're in ${pd.name} — phase ${ph+1} of ${PHASES.length}, week ${wk}${cleared?`, ${cleared} progression${cleared===1?'':'s'} banked`:''}. Each phase earns the next, building toward the capstone: a 10K run plus 100 pushups, a 2-minute plank, and 100 squats in one session.`;
 
   // Personalised trend / age pacing.
   const trend = avg
@@ -268,7 +268,12 @@ function renderToday() {
       const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" role="button" tabindex="0" aria-label="${escHtml(ex.name)} — full steps"><div class="fig">${animatedFigure(ex,72)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><span class="more">Full steps &rarr;</span></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
       const todo = exs.filter(e=>!exDone(e.key));
       const done = exs.filter(e=>exDone(e.key));
+      // RIR: on a strength block, a compact one-line prescription per progressed lift (load/reps live).
+      const rxStrip = (b.kind === 'strength' && typeof hasLift === 'function')
+        ? exs.filter(e => hasLift(e.key)).map(e => `<div class="lift-line"><span class="lift-name">${escHtml(e.name)}</span><span class="lift-rx">${escHtml(liftPrescription(e.key))}</span></div>`).join('')
+        : '';
       const panel = `<div class="ex-panel${open?' open':''}" id="ex-panel-${i}">
+        ${rxStrip?`<div class="lift-strip">${rxStrip}</div>`:''}
         ${todo.length?`<div class="ex-grid">${todo.map(card).join('')}</div>`:''}
         ${todo.length?`<button class="markall" data-markall="${escHtml(b.key)}">${svgUse('ic-check',14)} Mark all ${exs.length} complete</button>`:''}
         ${done.length?`<div class="ex-done-label">${svgUse('ic-check',14)} Completed (${done.length})</div><div class="ex-grid">${done.map(card).join('')}</div>`:''}
@@ -458,7 +463,7 @@ function renderCapstone() {
     <div class="sp-20"></div>
     <div class="card-block milestone"><div class="stripe"></div><div class="card" style="padding:16px;">
       <span class="label" style="color:var(--milestone);">THE CAPSTONE</span><div class="sp-8"></div>
-      <div class="headline serif">10K run + 100 pushups + 100 situps + 100 squats — in one session.</div>
+      <div class="headline serif">10K run + 100 pushups + a 2-minute plank + 100 squats — in one session.</div>
       <div class="sp-8"></div>
       <div class="body-dim">You'll get there with quality strength sets, a little power, and the 10K build — plus a lighter week every ~5 weeks. Not by grinding hundreds of reps a day, which only buys injury at 40+.</div>
     </div></div>
@@ -496,12 +501,48 @@ function bindLibrary() {
     const empty = document.getElementById('lib-empty'); if (empty) empty.style.display = anyVisible ? 'none' : '';
   });
 }
+// RIR prescription block for a strength lift (loaded/bodyweight/time). Loaded lifts get a ± load
+// control that writes state.lifts[key].load and saves; bodyweight/plank show the live target + hint.
+function liftRxBlock(key) {
+  if (typeof hasLift !== 'function' || !hasLift(key)) return '';
+  const lift = getLift(key); if (!lift) return '';
+  const rx = liftPrescription(key);
+  if (lift.kind === 'loaded') {
+    const unit = liftUnitLabel();
+    const set = lift.load == null;
+    const ctrl = `<div class="lift-set" data-lift="${escHtml(key)}">
+      <button class="lift-step" data-lift-d="-1" aria-label="Decrease load">−</button>
+      <span class="lift-val">${set ? `Set ${unit}` : `${_fmtLoad(lift.load)} ${unit}`}</span>
+      <button class="lift-step" data-lift-d="1" aria-label="Increase load">+</button></div>`;
+    return `<div class="divider"></div>
+      <p class="label" style="color:var(--milestone);">Today's prescription</p><div class="sp-4"></div>
+      <p class="body">${escHtml(rx)}</p><div class="sp-8"></div>${ctrl}`;
+  }
+  return `<div class="divider"></div>
+    <p class="label" style="color:var(--milestone);">Today's prescription</p><div class="sp-4"></div>
+    <p class="body">${escHtml(rx)}</p>`;
+}
+function bindExerciseDetail() {
+  if (state.ui.screen !== 'exerciseDetail') return;   // deferred bind fired after navigating away
+  document.querySelectorAll('.lift-set').forEach(box => {
+    const key = box.getAttribute('data-lift');
+    box.querySelectorAll('[data-lift-d]').forEach(btn => btn.addEventListener('click', () => {
+      const lift = getLift(key); if (!lift) return;
+      const d = Number(btn.getAttribute('data-lift-d'));
+      const base = (lift.load == null) ? 0 : lift.load;   // first + from null seeds at one step
+      setLiftLoad(key, Math.max(0, base + d * lift.step));
+      render();
+    }));
+  });
+}
 function renderExerciseDetail(key) {
   const ex = EXERCISES.find(e => e.key === key);
   if (!ex) return `<div class="screen no-nav"><p>Not found.</p></div>`;
+  setTimeout(bindExerciseDetail, 0);
   return `<div class="screen no-nav">
     <p class="mono" style="color:var(--milestone); font-size: 15px; letter-spacing:0.05em;">${escHtml(ex.cat)} · ${escHtml(ex.rx)}</p>
     <div class="fig-hero">${animatedFigure(ex,260)}</div>
+    ${liftRxBlock(ex.key)}
     <p class="label">Steps</p><div class="sp-8"></div>
     <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
     <div class="divider"></div>
@@ -594,7 +635,7 @@ const PHASE_WHY = {
        refs: ["Johansen & Nielsen et al. — BJSM, 2025 (+10% session-spike cap limits running injury).","Bohm, Mersmann & Arampatzis — Sports Medicine, 2015 (slow tissue adaptation governs safe running).","Lauersen, Andersen & Andersen — BJSM, 2018 (maintained strength halves running injury)."] },
   3: { formula: "For 16 weeks you steadily grow running distance and strength volume to raise aerobic fitness (VO₂max) — one of the strongest predictors of health and longevity. You advance by hitting progressively bigger goals while still feeling good, always under the +10% weekly cap and with strength still shy of failure.",
        refs: ["Kokkinos et al. — JACC, 2022 (higher VO₂max strongly lowers mortality).","Johansen & Nielsen et al. — BJSM, 2025 (+10% load-spike cap during the build).","ACSM guidelines / Pelland et al., 2025 (progressive overload with 2–3 RIR)."] },
-  4: { formula: "The capstone: sharpen everything toward one session — a 10K plus 100 pushups, situps and squats — by peaking aerobic fitness and strength endurance. You attempt it only when your check-ins confirm you're recovered and ready, never forcing it on a tired body, because readiness is the gate that keeps a hard effort from becoming an injury.",
+  4: { formula: "The capstone: sharpen everything toward one session — a 10K plus 100 pushups, a 2-minute plank, and 100 squats — by peaking aerobic fitness and strength endurance. You attempt it only when your check-ins confirm you're recovered and ready, never forcing it on a tired body, because readiness is the gate that keeps a hard effort from becoming an injury.",
        refs: ["Kokkinos et al. — JACC, 2022 (peak VO₂max underpins the 10K demand).","Saw, Main & Gastin — BJSM, 2016 (subjective readiness gates peak/test efforts).","Lauersen, Andersen & Andersen — BJSM, 2018 (accumulated strength protects the capstone effort)."] },
 };
 function renderPhaseList() {

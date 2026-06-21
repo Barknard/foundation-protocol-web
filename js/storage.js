@@ -7,16 +7,16 @@
 function logout() {
   try { saveLocal(); } catch (_) {}
   state.profile = null; state.phase = null; state.checks = []; state.pending = [];
-  state.session = null; state.injury = null; state.log = []; state._preDay = null; delete state._chk; delete state._onb;
+  state.session = null; state.injury = null; state.log = []; state.lifts = {}; state._preDay = null; delete state._chk; delete state._onb;
   state.activeUser = null;
   try { localStorage.removeItem(ACTIVE_KEY); } catch (_) {}
 }
 function loadUserState(slug) {
-  state.profile = null; state.phase = null; state.checks = []; state.pending = []; state.session = null; state.injury = null; state.log = [];
+  state.profile = null; state.phase = null; state.checks = []; state.pending = []; state.session = null; state.injury = null; state.log = []; state.lifts = {};
   if (!slug) return;
   try {
     const raw = localStorage.getItem(userStateKey(slug));
-    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; state.session = d.session || null; state.injury = d.injury || null; state.log = d.log || []; }
+    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.pending = d.pending || []; state.session = d.session || null; state.injury = d.injury || null; state.log = d.log || []; state.lifts = d.lifts || {}; }
   } catch (e) { console.error('loadUserState failed', e); }
 }
 function loadLocal() {
@@ -50,7 +50,7 @@ function saveLocal() {
     if (slug) {
       state.activeUser = slug;
       localStorage.setItem(ACTIVE_KEY, slug);
-      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending, session: state.session, injury: state.injury, log: state.log }));
+      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, pending: state.pending, session: state.session, injury: state.injury, log: state.log, lifts: state.lifts }));
     }
   } catch (e) { console.error('saveLocal failed', e); }
 }
@@ -67,7 +67,7 @@ function fullBackup() {
     app: 'the-hard-part', appVersion: APP_VERSION, exportedAt: new Date().toISOString(),
     slug: activeSlug(), units: state.settings.units,
     profile: state.profile, phase: state.phase, checks: state.checks,
-    session: state.session, injury: state.injury, log: state.log,
+    session: state.session, injury: state.injury, log: state.log, lifts: state.lifts,
   };
 }
 function downloadBackup() {
@@ -105,6 +105,7 @@ function applyBackup(obj) {
   state.session = obj.session || null;
   state.injury = obj.injury || null;
   state.log = Array.isArray(obj.log) ? obj.log : [];
+  state.lifts = (obj.lifts && typeof obj.lifts === 'object') ? obj.lifts : {};
   if (obj.units) state.settings.units = obj.units;
   state.pending = [];
   saveLocal();

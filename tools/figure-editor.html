@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Figure Editor — The Hard Part (dev tool)</title>
+<link rel="stylesheet" href="figure-editor.css">
+<!--
+  DEV-ONLY animation editor. Loads the REAL renderers from the app so what you see
+  here is exactly what the library + minis render (WYSIWYG). Must NEVER be added to
+  sw.js / shipped to users. Serve the repo with tools/figure-save-server.py so the
+  /api/* autosave + version endpoints exist.
+  Load order mirrors index.html: figure-poses.js (data) BEFORE figure.js (renderers).
+-->
+<script src="../js/figure-poses.js"></script>
+<script src="../js/figure.js"></script>
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">FIGURE EDITOR <span class="devtag">dev-only</span></div>
+    <div class="status" id="status"><span class="dot" id="statusDot"></span><span id="statusText">connecting…</span></div>
+  </header>
+
+  <main id="layout">
+    <!-- LEFT: exercise / move list -->
+    <aside id="leftPane">
+      <div class="paneTitle">Moves</div>
+      <ul id="moveList" class="moveList"></ul>
+    </aside>
+
+    <!-- CENTER: canvas + frame controls -->
+    <section id="centerPane">
+      <div id="frameBar" class="frameBar">
+        <div class="fseg" id="frameSeg">
+          <button class="fbtn active" data-frame="f1">f1</button>
+          <button class="fbtn" data-frame="f2">f2</button>
+        </div>
+        <button class="tbtn" id="btnCopy12" title="copy active frame onto the other">copy f1→f2</button>
+        <button class="tbtn" id="btnMirror" title="mirror the active frame left↔right">mirror frame</button>
+        <label class="chk"><input type="checkbox" id="onionChk" checked> onion-skin</label>
+        <label class="chk"><input type="checkbox" id="gridChk"> grid</label>
+        <label class="chk"><input type="checkbox" id="guideChk"> guides</label>
+        <label class="chk"><input type="checkbox" id="snapGridChk"> snap-grid</label>
+        <label class="chk"><input type="checkbox" id="snapAngChk"> snap-angle</label>
+      </div>
+
+      <div id="canvasWrap">
+        <svg id="canvas" viewBox="0 0 500 600" aria-label="pose canvas"></svg>
+      </div>
+
+      <div id="playBar" class="playBar">
+        <button class="tbtn" id="btnPlay">play</button>
+        <input type="range" id="scrub" min="0" max="1" step="0.01" value="0">
+        <span class="scrubT" id="scrubT">t 0.00</span>
+        <span class="readout" id="jointReadout">—</span>
+      </div>
+
+      <div id="gaitPanel" class="gaitPanel" hidden>
+        <div class="paneTitle">Gait parameters</div>
+        <div id="gaitControls"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: numeric fields + props + tools -->
+    <aside id="rightPane">
+      <div class="paneTitle" id="rightTitle">Fields</div>
+      <div id="fields" class="fields"></div>
+
+      <div class="paneTitle">Props (active frame)</div>
+      <div id="props" class="props"></div>
+      <div class="propAdd">
+        <select id="propType"></select>
+        <button class="tbtn" id="btnAddProp">add prop</button>
+      </div>
+
+      <div class="paneTitle">Copy from exercise</div>
+      <div class="copyFrom">
+        <select id="cfMove"></select>
+        <select id="cfFrame"><option value="f1">f1</option><option value="f2">f2</option></select>
+        <select id="cfField"></select>
+        <button class="tbtn" id="btnCopyFrom">paste → active</button>
+      </div>
+
+      <div class="paneTitle">Versions</div>
+      <div class="versionsBar">
+        <button class="tbtn" id="btnRestoreStart">restore to session start</button>
+        <button class="tbtn" id="btnRefreshVer">refresh</button>
+      </div>
+      <ul id="versionList" class="versionList"></ul>
+    </aside>
+  </main>
+
+  <script src="figure-editor.js"></script>
+</body>
+</html>

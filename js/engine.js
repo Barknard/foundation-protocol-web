@@ -116,7 +116,10 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   const prevEntry = alreadyCheckedToday ? state.checks[existingIdx] : null;
   const prevWasProgress = !!(prevEntry && prevEntry.decision === 'progress');
   const prevPre = (prevEntry && prevEntry._pre) ? prevEntry._pre : null;   // pre-advance pointer snapshot
+  const prevLiftPre = (prevEntry && prevEntry._liftPre) ? prevEntry._liftPre : null;   // pre-advance lift snapshot
   const nowIsProgress = outcome.key === 'progress';
+  // RIR double-progression operates on the session just completed (the CURRENT, pre-advance day plan).
+  const dayPlanNow = (typeof currentDayPlan === 'function') ? currentDayPlan() : null;
   const entry = {
     ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt, parts: parts || [],
     decision: outcome.key, phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1,
@@ -128,6 +131,7 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
     entry._pre = { phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1, sessionsCleared: cur.sessionsCleared ?? 0, lastDecision: cur.lastDecision ?? null };
   } else if (nowIsProgress && prevWasProgress) {
     entry._pre = prevPre;   // already advanced earlier today; keep the original snapshot, don't advance twice
+    entry._liftPre = prevLiftPre;   // ditto for lifts: keep the first-Progress snapshot, don't re-advance
     // stored row records the session that was checked (pre-advance), so it matches the actual pointer
     if (prevPre) { entry.phase = prevPre.phase; entry.week = prevPre.week; entry.dayInWeek = prevPre.dayInWeek; }
   }
@@ -135,10 +139,15 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   if (nowIsProgress && !prevWasProgress) {
     advancePointer();
     willAdvance = true;
+    // RIR: advance the day's strength lifts ONLY on the first Progress of the day, mirroring the
+    // pointer snapshot — capture the touched lifts into _liftPre so a same-day downgrade can roll back.
+    if (typeof advanceDayLifts === 'function') { entry._liftPre = advanceDayLifts(dayPlanNow); }
   } else if (!nowIsProgress && prevWasProgress && prevPre) {
     state.phase = { phase: prevPre.phase, week: prevPre.week, dayInWeek: prevPre.dayInWeek, sessionsCleared: prevPre.sessionsCleared, lastDecision: new Date().toISOString() };
     // keep the stored row consistent with the rolled-back pointer (it was stamped from the post-advance pointer)
     entry.phase = prevPre.phase; entry.week = prevPre.week; entry.dayInWeek = prevPre.dayInWeek;
+    // RIR: undo today's lift advance too, so a re-check can't strand a lift one step ahead
+    if (typeof rollbackDayLifts === 'function') { rollbackDayLifts(prevLiftPre); }
     logEvent('progress', `Rolled back today's advance — re-checked as ${outcome.title}`);
   } else {
     if (!state.phase) state.phase = { phase: 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };

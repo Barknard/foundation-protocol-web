@@ -190,10 +190,10 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 /* brand logo (homepage) */
 .brand { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .brand-logo { width: auto; height: 172px; max-width: 88%; object-fit: contain; margin: 0 auto 4px; display: block; }
-/* Welcome branding: the stone emblem with its baked-in "HARD PART" text cropped off (top ~83%),
-   paired with a bold wordmark in the logo's blue-stone colour. */
+/* Welcome branding: the full uncropped logo WITH its baked-in "HARD PART" text (no separate wordmark). */
+.brand-full { width: auto; max-width: 88%; height: clamp(120px, 34vw, 168px); object-fit: contain; display: block; margin: 0 auto 4px; -webkit-user-drag: none; user-select: none; }
+/* Minis (header/capstone) stay cropped to the emblem (top ~83%) — no "HARD PART" text. */
 .brand-emblem { width: clamp(120px, 40vw, 168px); height: clamp(108px, 36vw, 151px); object-fit: cover; object-position: top center; display: block; margin: 0 auto; -webkit-user-drag: none; user-select: none; }
-.brand-wordmark { font-family: 'Fraunces', serif; font-weight: 800; font-size: clamp(30px, 9vw, 44px); line-height: 1.02; letter-spacing: 0.01em; color: var(--brand-blue); margin-top: 8px; }
 
 /* unit toggle + auto-conversion */
 .unit-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }

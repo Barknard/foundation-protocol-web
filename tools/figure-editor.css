@@ -1,0 +1,104 @@
+/* Figure editor — dev-only tool styling. Dark, dense, single-purpose.
+   Palette echoes the app (paper-on-stone) so the canvas reads like the real renderer. */
+:root{
+  --bg:#1A1614; --panel:#211C19; --line:#3A3431; --ink:#E8E2D2; --dim:#9A9282;
+  --accent:#D9A24E; --good:#7FB069; --bad:#E26B5F; --paper:#E8E2D2; --paper-dim:#6f685c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:13px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;display:flex;flex-direction:column}
+
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
+.brand{font-weight:700;letter-spacing:.12em;font-size:13px}
+.devtag{font-weight:400;letter-spacing:0;color:var(--bad);background:#2c1d1a;border:1px solid var(--bad);border-radius:6px;padding:1px 6px;margin-left:8px;font-size:10px}
+.status{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
+.status .dot{width:9px;height:9px;border-radius:50%;background:var(--dim)}
+.status.ok .dot{background:var(--good)} .status.saving .dot{background:var(--accent)}
+.status.err .dot{background:var(--bad)} .status.ok #statusText{color:var(--good)}
+.status.err #statusText{color:var(--bad)}
+
+#layout{flex:1 1 auto;display:grid;grid-template-columns:190px 1fr 320px;min-height:0}
+aside,section{min-height:0;overflow:auto}
+#leftPane{background:var(--panel);border-right:1px solid var(--line);padding:6px}
+#rightPane{background:var(--panel);border-left:1px solid var(--line);padding:6px 8px}
+#centerPane{display:flex;flex-direction:column;padding:8px;gap:8px}
+
+.paneTitle{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:8px 2px 4px}
+.paneTitle:first-child{margin-top:2px}
+
+/* move list */
+.moveList{list-style:none;margin:0;padding:0}
+.moveList li{padding:6px 8px;border-radius:7px;cursor:pointer;color:var(--ink);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.moveList li:hover{background:#2a2421}
+.moveList li.active{background:#33312b;outline:1px solid var(--accent)}
+.moveList li .tag{font-size:9px;color:var(--bg);background:var(--accent);border-radius:4px;padding:0 4px;margin-left:auto}
+.moveList li.gait .tag{background:var(--good)}
+
+/* center */
+.frameBar,.playBar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.fbtn{background:transparent;color:var(--ink);border:0;padding:5px 14px;cursor:pointer;font:inherit}
+.fbtn.active{background:var(--accent);color:#1a1614;font-weight:700}
+.tbtn{background:#2a2421;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 9px;cursor:pointer;font:inherit}
+.tbtn:hover{border-color:var(--accent)} .tbtn:active{transform:translateY(1px)}
+.chk{display:inline-flex;align-items:center;gap:4px;color:var(--dim);font-size:12px;cursor:pointer}
+
+#canvasWrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;background:#15110f;border:1px solid var(--line);border-radius:12px;min-height:0;overflow:hidden}
+#canvas{width:auto;height:100%;max-width:100%;max-height:560px;color:var(--paper)}
+.gline{stroke:#2c2925;stroke-width:1} .gline.major{stroke:#403b34}
+.guide{stroke:var(--accent);stroke-width:1;stroke-dasharray:6 5;opacity:.55}
+.onion{opacity:.28}
+.handle{fill:#15110f;stroke:var(--accent);stroke-width:2;cursor:grab}
+.handle:hover{fill:var(--accent)}
+.handle.pelvis{stroke:var(--good)} .handle.locked{stroke:var(--bad);cursor:not-allowed}
+.handle.sel{fill:var(--accent)}
+.hlabel{fill:var(--dim);font:9px monospace;pointer-events:none}
+
+.playBar .scrubT,.playBar .readout{font:11px monospace;color:var(--dim)}
+.playBar .readout{margin-left:auto;color:var(--accent)}
+#scrub{flex:1 1 120px;max-width:240px}
+
+/* gait panel */
+.gaitPanel{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--panel)}
+#gaitControls{display:grid;grid-template-columns:1fr;gap:6px}
+.grow{display:grid;grid-template-columns:90px 1fr 52px;align-items:center;gap:8px}
+.grow label{color:var(--dim);font-size:12px}
+.grow output{font:11px monospace;color:var(--accent);text-align:right}
+
+/* right fields */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.field{display:flex;flex-direction:column;gap:2px;background:#1d1916;border:1px solid var(--line);border-radius:7px;padding:4px 6px}
+.field.wide{grid-column:1/-1}
+.field label{font:10px monospace;color:var(--dim)}
+.field .row{display:flex;align-items:center;gap:4px}
+.field input[type=number],.field input[type=text]{flex:1 1 auto;width:100%;background:#15110f;border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:3px 5px;font:12px monospace}
+.field input:focus{outline:1px solid var(--accent)}
+.field .lockbtn{background:#2a2421;border:1px solid var(--line);color:var(--dim);border-radius:4px;cursor:pointer;font-size:11px;padding:1px 5px}
+.field .lockbtn.on{color:var(--bad);border-color:var(--bad)}
+.field .step{background:#2a2421;border:1px solid var(--line);color:var(--ink);border-radius:4px;cursor:pointer;width:22px;font-weight:700}
+
+/* props */
+.props{display:flex;flex-direction:column;gap:5px}
+.prop{background:#1d1916;border:1px solid var(--line);border-radius:7px;padding:5px 6px}
+.prop .phead{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.prop .ptype{font-weight:700;color:var(--accent);font-size:12px}
+.prop .pdel{background:transparent;border:0;color:var(--bad);cursor:pointer;font-size:14px;line-height:1}
+.prop .pbody{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
+.prop .pf{display:flex;flex-direction:column;gap:1px}
+.prop .pf label{font:9px monospace;color:var(--dim)}
+.prop .pf input,.prop .pf select{background:#15110f;border:1px solid var(--line);color:var(--ink);border-radius:4px;padding:2px 4px;font:11px monospace}
+.prop .pf.full{grid-column:1/-1}
+.empty{color:var(--dim);font-size:12px;padding:4px}
+.propAdd{display:flex;gap:6px;margin-top:6px}
+.propAdd select{flex:1 1 auto;background:#15110f;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px;font:12px monospace}
+
+/* copy-from + versions */
+.copyFrom{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.copyFrom select{background:#15110f;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px;font:11px monospace}
+.copyFrom .tbtn{grid-column:1/-1}
+.versionsBar{display:flex;gap:6px;margin-bottom:4px}
+.versionList{list-style:none;margin:0;padding:0;max-height:200px;overflow:auto}
+.versionList li{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;margin-bottom:4px;font:11px monospace;color:var(--dim)}
+.versionList li.start{border-color:var(--good)}
+.versionList li .vts{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.versionList li .rev{flex:0 0 auto}
