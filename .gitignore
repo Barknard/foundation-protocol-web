@@ -9,3 +9,6 @@ gen-logos/
 # figure dev-tool artifacts (Python bytecode + regression baseline)
 tools/__pycache__/
 tools/.fig-baseline.json
+
+# packaged app build artifact
+hard-part-app.zip
