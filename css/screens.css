@@ -119,6 +119,8 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
 .today-head .today-focus { flex: 1; min-width: 0; }
 .why-btn { flex: 0 0 auto; width: auto; background: none; border: none; padding: 4px 4px 4px 8px; margin-top: 2px; color: var(--paper-dim); display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 .why-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--paper-dim); white-space: nowrap; }
+/* Brain "Why this plan?" goes gold while its panel is open, so it reads as active. */
+.why-btn[aria-expanded="true"], .why-btn[aria-expanded="true"] .why-lbl { color: var(--milestone); }
 .why-btn-row { width: auto; background: none; border: 1px solid var(--rule); border-radius: 12px; color: var(--paper-dim); display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 14px; }
 
 /* ---------- INTERACTION FEEDBACK: hover (pointer) + press (all) ---------- */

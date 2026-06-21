@@ -47,7 +47,10 @@ function renderOnboarding() {
       {i:2,t:'I train regularly',s:'Run-walk, strength continuing underneath.'}
      ].map(o=>`<div class="radio-card ${p.phase===o.i?'selected':''}" data-phase="${o.i}" role="radio" tabindex="0" aria-checked="${p.phase===o.i?'true':'false'}"><div class="dot"></div><div><div class="title">${o.t}</div><div class="body-dim" style="margin-top:2px;">${o.s}</div></div></div>`).join('')}
     <div id="plan-preview">${planPreviewHtml(p.phase)}</div>`;
-  return `<div class="screen no-nav onb">${body}</div>`;
+  // Returning users (saved personas → the "Welcome back · Continue" card) get a compacted
+  // step 1 so the extra card never pushes the age field behind the fixed footer.
+  const hasResume = (r === 1) && savedPersonas().length > 0;
+  return `<div class="screen no-nav onb${hasResume ? ' onb-resume' : ''}">${body}</div>`;
 }
 // Onboarding's frozen header (progress crumb) + frozen footer (Back/Next) — placed by the app shell.
 function onbCrumb() {

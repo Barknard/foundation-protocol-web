@@ -49,7 +49,10 @@ function appHeader(screen) {
     if (screen === 'check') title = injuryActive() ? 'Pain re-check' : 'Daily check-in';
     if (screen === 'exerciseDetail') { const ex = EXERCISES.find(e => e.key === state.ui.params?.key); title = ex ? ex.name : 'Exercise'; }
     if (screen === 'phaseDetail') { const p = PHASES[state.ui.params?.index]; title = p ? p.name : 'Phase'; }
-    inner = `<button class="hd-back" data-back aria-label="Back">${svgUse('ic-back', 22)}</button><span class="hd-title">${escHtml(title)}</span>`;
+    // On Settings, the gear shows gold (active) AND acts as a toggle: clicking it again
+    // closes Settings (data-back returns to wherever you opened it from).
+    const gearActive = (screen === 'settings') ? `<button class="hd-gear icon active" data-back aria-label="Close Settings" aria-current="page">${svgUse('ic-settings', 22)}</button>` : '';
+    inner = `<button class="hd-back" data-back aria-label="Back">${svgUse('ic-back', 22)}</button><span class="hd-title">${escHtml(title)}</span>${gearActive}`;
   }
   return `<header class="app-header"><div class="hd-inner">${inner}</div></header>`;
 }
