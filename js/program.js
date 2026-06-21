@@ -267,8 +267,28 @@ function sessionCounts() { ensureSession(); const ks = todayExerciseKeys(); retu
 // ---- Time-aware detraining / layoff (evidence: tendon de-adapts ~2mo; run restarts more conservatively than strength) ----
 // excludeToday: ignore a row already logged for today, so a same-day edit can't collapse the gap to 0 (the return-from-layoff ease-back must survive editing today's check).
 function lastCheckDate(excludeToday) { const t = excludeToday ? isoToday() : null; for (let i = state.checks.length - 1; i >= 0; i--) { const c = state.checks[i]; if (c && c.date && c.date !== t) return c.date; } return null; }
+// Local-midnight day diff between two epoch-ms instants: how many clean local-calendar mornings separate them.
+// Anchors each instant to its own LOCAL midnight (not UTC), so injury/ramp windows expire on morning boundaries
+// and don't shift on DST or evening logging — the same calendar-day model the day-gate uses.
+function localMidnight(ms) { const d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
+function localDayDiff(fromMs, toMs) { return Math.round((localMidnight(toMs) - localMidnight(fromMs)) / 86400000); }
+// The most-recent stored check's real-time ts (newest row, regardless of date) — a tamper anchor for clock checks.
+function lastCheckTs() { for (let i = state.checks.length - 1; i >= 0; i--) { const c = state.checks[i]; if (c && typeof c.ts === 'number') return c.ts; } return null; }
 // Whole-calendar-day math (midnight-to-midnight) so the 15/29/57-day tier boundaries don't jitter with time-of-day or DST.
-function daysSinceLastCheck(excludeToday) { const d = lastCheckDate(excludeToday); if (!d) return 0; const a = new Date(d + 'T00:00:00').getTime(), b = new Date(isoToday() + 'T00:00:00').getTime(); return Math.max(0, Math.round((b - a) / 86400000)); }
+// Sanity-clamp against the stored ts of the last check: if the calendar gap and the real-time ts gap disagree by more
+// than ~1.5 days, the device clock was moved — DISTRUST the calendar and fall back to the smaller (ts-based) value, so
+// a clock glitch can't manufacture a multi-week layoff. Normal real gaps (calendar ≈ ts) pass through untouched.
+function daysSinceLastCheck(excludeToday) {
+  const d = lastCheckDate(excludeToday); if (!d) return 0;
+  const a = new Date(d + 'T00:00:00').getTime(), b = new Date(isoToday() + 'T00:00:00').getTime();
+  const calGap = Math.max(0, Math.round((b - a) / 86400000));
+  const ts = lastCheckTs();
+  if (ts != null) {
+    const tsGap = Math.max(0, localDayDiff(ts, Date.now()));   // real-time gap in local days
+    if (Math.abs(calGap - tsGap) > 1.5) return Math.min(calGap, tsGap);   // clock disagreement → trust the smaller gap
+  }
+  return calGap;
+}
 function layoffTier(gap) {
   const g = (gap == null) ? daysSinceLastCheck() : gap;
   if (g < 15) return null;
@@ -298,13 +318,20 @@ function deloadActive() { return !injuryActive() && (isDeloadWeek() || underReco
 
 // ---- Injury (PEACE & LOVE / overuse loading; red-flag screen) ----
 const BODY_PARTS = ['neck','shoulder','upper back','lower back','elbow','wrist','hip','groin','glute','quad','hamstring','knee','shin','calf','ankle','foot'];
-function injuryEnd(inj) { return (inj && inj.easeUntil) || (inj ? inj.since + 10 * 86400000 : 0); }   // overall recovery-window end
-function injuryActive() { return !!(state.injury && !state.injury.clearedAt && Date.now() <= injuryEnd(state.injury)); }   // false once out of range
-function injuryInRice() { return injuryActive() && state.injury.riceUntil && Date.now() < state.injury.riceUntil; }
+function injuryEnd(inj) { return (inj && inj.easeUntil) || (inj ? inj.since + 10 * 86400000 : 0); }   // overall recovery-window end (ts)
+// User-facing window length in clean local days (length is preserved: ~10d ease, ~3d protect), aligned to morning
+// boundaries via the same local-midnight diff as daysSinceLastCheck — so windows don't expire mid-afternoon or shift on DST.
+function injuryEaseDays(inj) { return inj ? Math.max(1, localDayDiff(inj.since || 0, injuryEnd(inj))) : 0; }
+function injuryRiceDays(inj) { return inj ? Math.max(1, localDayDiff(inj.since || 0, (inj.riceUntil || (inj.since + 3 * 86400000)))) : 0; }
+// Elapsed clean local days since the injury was logged (0 on the logging day, +1 each new local morning).
+function injuryElapsedDays(inj) { return inj ? Math.max(0, localDayDiff(inj.since || Date.now(), Date.now())) : 0; }
+function injuryActive() { return !!(state.injury && !state.injury.clearedAt && injuryElapsedDays(state.injury) < injuryEaseDays(state.injury)); }   // expires on a clean morning boundary
+function injuryInRice() { return injuryActive() && injuryElapsedDays(state.injury) < injuryRiceDays(state.injury); }
 function clearInjury() { if (state.injury) { state.injury.clearedAt = Date.now(); } state.injury = null; saveLocal(); }
 // Auto-expire a stale injury whose recovery window has fully elapsed (out of range → exclude it).
 function pruneInjury() {
-  if (state.injury && !state.injury.clearedAt && Date.now() > injuryEnd(state.injury)) {
+  // Use the same local-day window as injuryActive() so prune and active-state agree on the morning boundary.
+  if (state.injury && !state.injury.clearedAt && injuryElapsedDays(state.injury) >= injuryEaseDays(state.injury)) {
     logEvent('injury', `Recovery window ended (${fmtDate(state.injury.since)}–${fmtDate(injuryEnd(state.injury))}) — back to normal training`);
     clearInjury();
   }
@@ -312,9 +339,11 @@ function pruneInjury() {
 // A call that persists across the days it covers, bounded by explicit start/end dates.
 function standingCall() {
   if (!injuryActive()) return null;
-  const inj = state.injury, since = inj.since || Date.now(), D = 86400000;
-  const days = Math.max(1, Math.round((inj.riceUntil - since) / D));
-  const dayNum = Math.min(days, Math.floor((Date.now() - since) / D) + 1);
+  const inj = state.injury;
+  // "day N of M" counts clean local-calendar mornings (aligned with the day-gate), not raw 24h ticks, so it
+  // advances on each morning and the protect length stays ~3 days regardless of time-of-day or DST.
+  const days = injuryRiceDays(inj);
+  const dayNum = Math.min(days, injuryElapsedDays(inj) + 1);
   const parts = (inj.parts || []).join(', ') || 'injury';
   const ext = inj.extended ? ` · extended ×${inj.extended}` : '';
   if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest & protect', action: `Protect &amp; gently load the area — keep moving everything that does not hurt (PEACE &amp; LOVE). Protect window through ${fmtDate(inj.riceUntil)}.` };
@@ -324,13 +353,20 @@ function standingCall() {
 // ---- Graded return ramp (after a layoff) + unified load reduction ----
 // A layoff arms a ramp (set in applyCheck); while it is active the prescription is shown lighter and rebuilds
 // to baseline over the tier's window — a graded return, not a single eased day, then auto-expires.
-function returnRampActive() { if (state.returnRamp && Date.now() >= state.returnRamp.until) state.returnRamp = null; return !!state.returnRamp; }
+// Expire on a clean local-morning boundary (same day model as the day-gate): the ramp clears once its full-day
+// length has elapsed in local calendar days from startedAt, rather than at a raw UTC-ms instant mid-day.
+function returnRampDays(r) { return r ? Math.max(1, localDayDiff(r.startedAt != null ? r.startedAt : r.until - 0, r.until)) : 0; }
+function returnRampActive() {
+  const r = state.returnRamp;
+  if (r) { const start = (r.startedAt != null) ? r.startedAt : r.until; if (localDayDiff(start, Date.now()) >= returnRampDays(r)) state.returnRamp = null; }
+  return !!state.returnRamp;
+}
 // The single source of truth for "should today's prescription be lighter, and why" — injury > layoff-ramp > deload.
 function loadReduction() {
   if (injuryActive()) return injuryInRice()
     ? { reason: 'injury', pct: 0,  note: 'Protect — offload the painful movement; keep pain-free movement going (PEACE & LOVE)' }
     : { reason: 'injury', pct: 50, note: 'Pain-monitored ease-back — keep pain ≤ ~3–5/10 and gone by next morning' };
-  if (returnRampActive()) { const r = state.returnRamp, left = Math.max(1, Math.ceil((r.until - Date.now()) / 86400000)); return { reason: 'layoff', pct: r.pct, note: `Easing back from time off — about ${r.pct}% of normal load, rebuild over ~${left} more day${left > 1 ? 's' : ''}` }; }
+  if (returnRampActive()) { const r = state.returnRamp, start = (r.startedAt != null) ? r.startedAt : r.until, left = Math.max(1, returnRampDays(r) - localDayDiff(start, Date.now())); return { reason: 'layoff', pct: r.pct, note: `Easing back from time off — about ${r.pct}% of normal load, rebuild over ~${left} more day${left > 1 ? 's' : ''}` }; }
   if (deloadActive()) return { reason: 'deload', pct: 60, note: 'Lighter week — about 2 working sets, ~40% less volume; keep cardio easy' };
   return null;
 }

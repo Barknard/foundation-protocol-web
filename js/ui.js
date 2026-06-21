@@ -3,6 +3,19 @@
 // ROUTER + RENDER
 // ============================================================
 const backStack = [];
+// The local calendar day the screen was last rendered for. An installed PWA resumes from OS
+// background (init() never re-runs), so we compare this against isoToday() on every resume/tick
+// and re-render Today when the day has flipped — otherwise Today is stranded on yesterday's
+// locked card with no check-in button. Set in render(); checked by rerenderIfNewDay().
+let _renderedDay = (typeof isoToday === 'function') ? isoToday() : null;
+function rerenderIfNewDay() {
+  if (typeof isoToday !== 'function') return;
+  const today = isoToday();
+  if (today !== _renderedDay && state.ui && state.ui.screen === 'today') {
+    if (typeof ensureSession === 'function') ensureSession();   // roll the per-day exercise checklist over
+    render();   // render() re-stamps _renderedDay
+  }
+}
 function navigate(screen, params) {
   const prev = state.ui.screen;
   if (TAB_SCREENS.includes(screen)) {
@@ -66,6 +79,7 @@ function appFooter(screen) {
 function render() {
   const root = document.getElementById('app');
   const screen = state.ui.screen;
+  if (typeof isoToday === 'function') _renderedDay = isoToday();   // record the day this render reflects (day-rollover guard)
   let body = '';
   switch (screen) {
     case 'onboarding':     body = renderOnboarding(); break;

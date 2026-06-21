@@ -1,10 +1,25 @@
 /* Foundation Protocol service worker — offline app shell.
    The app is a slim index.html spine + css/*.css + js/*.js modules; cache them
-   all so it opens with no network.
-   GitHub API (data sync) is NEVER cached — it always goes to the network. */
-const CACHE = 'fp-shell-v3.15.0';
+   all (plus icons + self-hosted fonts) so it opens with no network on a first-ever
+   offline launch.
+   GitHub API (data sync) is NEVER cached — it always goes to the network.
+
+   NO-SERVER UPDATE RITUAL (installed local-first copy):
+   The fetch handler is network-first, so an installed copy only picks up new code when
+   it can briefly reach the origin. To update an installed copy:
+     1. Re-run a local server for this folder (the same origin the app was installed from).
+     2. Relaunch the app ONCE while online — the network-first SW pulls the new shell and,
+        because CACHE was bumped below, the new service worker installs and activates
+        (old caches are deleted in 'activate').
+     3. Go back offline — the freshly-cached new shell now serves.
+   If you change ANY shell asset, bump CACHE (vX.Y.Z) so the activate step purges the old cache. */
+const CACHE = 'fp-shell-v3.16.0';
 const SHELL = [
-  './', './index.html', './manifest.json', './icon.png', './logo.png',
+  './', './index.html', './manifest.json',
+  './icon.png', './logo.png',
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png',
+  './fonts/fraunces-latin-var.woff2', './fonts/ibm-plex-sans-latin-var.woff2',
+  './fonts/ibm-plex-mono-latin-400.woff2', './fonts/ibm-plex-mono-latin-500.woff2',
   './css/base.css', './css/components.css', './css/figures.css', './css/screens.css',
   './js/sprite.js', './js/config.js', './js/state.js', './js/program.js',
   './js/figure-poses.js', './js/figure.js',
@@ -53,7 +68,8 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cross-origin (Google Fonts): cache-first, fall back to network.
+  // Cross-origin: cache-first, fall back to network. Fonts are now self-hosted (same-origin),
+  // so this path is only a safety net for any incidental cross-origin GET.
   e.respondWith(
     caches.match(req).then((r) =>
       r || fetch(req).then((resp) => {

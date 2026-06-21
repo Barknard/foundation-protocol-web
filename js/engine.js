@@ -110,8 +110,27 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
     const rampDays = lay.level === 1 ? 7 : lay.level === 2 ? 21 : 42;
     state.returnRamp = { until: Date.now() + rampDays * 86400000, level: lay.level, pct: lay.pct, startedAt: Date.now() };
   }
-  if (!hurt && outcome.key === 'progress' && (lay || wasInjury || underRecoveryTrend())) outcome = OUTCOMES.repeat;
-  const existingIdx = state.checks.findIndex(c => c.date === today);
+  // Hold the pointer on a scheduled/under-recovery deload day too: a Progress becomes Repeat so the documented
+  // "lighter week every ~5 weeks" actually paces recovery instead of only lightening the prescription text.
+  // deloadActive() self-suppresses during an active injury, and the deload is ~1 week in 5, so progression
+  // can't deadlock — clean non-deload weeks still advance normally.
+  if (!hurt && outcome.key === 'progress' && (lay || wasInjury || underRecoveryTrend() || (typeof deloadActive === 'function' && deloadActive()))) outcome = OUTCOMES.repeat;
+  // --- Day-gate (monotonic, clock-tamper hardened) ---
+  // Normal path: a row already stamped with today's date is a same-day re-edit (replace, never a second advance).
+  // Hardened path: even if the local date moved BACKWARD (NTP fix, manual change, eastward travel) so isoToday()
+  // returns an earlier date with no matching row, treat this as a same-day re-edit when EITHER an existing check
+  // has date >= today (string compare — a future-dated row proves we already logged "ahead" of now) OR the most
+  // recent check's real-time ts is within ~12h of Date.now() (we logged moments ago in real time). In those cases
+  // we point existingIdx at that most-recent row so it is REPLACED (no row growth) and prevWasProgress is read
+  // from it (no double advance). Only a genuinely new local day — no future-dated row AND no recent ts — advances.
+  let existingIdx = state.checks.findIndex(c => c.date === today);
+  if (existingIdx < 0 && state.checks.length) {
+    const newestIdx = state.checks.length - 1;          // checks are appended in real-time order; last is most recent
+    const newest = state.checks[newestIdx];
+    const hasFutureDated = state.checks.some(c => c && c.date && c.date >= today);   // a row at/after today's date
+    const recentTs = newest && typeof newest.ts === 'number' && (Date.now() - newest.ts) <= 12 * 3600000 && (Date.now() - newest.ts) >= -12 * 3600000;
+    if (hasFutureDated || recentTs) existingIdx = newestIdx;   // same real day despite a backward clock → re-edit
+  }
   const alreadyCheckedToday = existingIdx >= 0;
   const prevEntry = alreadyCheckedToday ? state.checks[existingIdx] : null;
   const prevWasProgress = !!(prevEntry && prevEntry.decision === 'progress');

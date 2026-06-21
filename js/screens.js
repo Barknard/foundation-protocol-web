@@ -129,11 +129,15 @@ function bindOnboarding() {
     const w = o.unit==='imperial' ? lbToKg(parseFloat(o.weight)) : parseFloat(o.weight);
     const pu = o.pushup==='' ? 0 : parseInt(o.pushup,10), wk = o.walk==='' ? 0 : parseInt(o.walk,10), ag = parseInt(o.age,10), slug = slugify(o.username);
     state.settings.units = o.unit; state.activeUser = slug;
+    // A brand-new persona must not inherit the previous one's RIR loads / rep targets / ramp.
+    state.lifts = {}; state.returnRamp = null;
     state.profile = { username: o.username.trim().slice(0,40), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
     state.phase = { phase:o.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
     state.pending = [];
     markDirty('profile','phase');
     logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[o.phase].name}`);
+    // A real user gesture maximizes the chance the browser grants persistent storage.
+    if (typeof ensurePersistentStorage === 'function' && !state.settings.storagePersisted) { try { ensurePersistentStorage(); } catch (_) {} }
     delete state._onb;
     celebrate("You're set up. Let's do today's session.", () => navigate('today'));
   });
@@ -196,6 +200,7 @@ function dayWhy() {
 function renderToday() {
   ensureSession();
   pruneInjury();
+  setTimeout(bindToday, 0);
   const phaseIdx = state.phase?.phase ?? 0;
   const pd = PHASES[phaseIdx];
   const dayInWeek = state.phase?.dayInWeek ?? 1;
@@ -224,11 +229,25 @@ function renderToday() {
       ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
       ${why.trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.trend)}</p>`:''}
     </div></div>`;
-  // One banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
+  // BACKUP NUDGE: the only off-device copy is a manual export. If it's been >7 days (or never),
+  // prompt a one-tap backup. Dismissible for the session (state._backupNudgeDismissed).
+  const backupNudge = (() => {
+    if (state._backupNudgeDismissed) return '';
+    if (typeof backupAgeDays !== 'function') return '';
+    const age = backupAgeDays();
+    if (age != null && age <= 7) return '';
+    const msg = (age == null) ? 'No backup yet — keep a copy off this phone.' : `${age} day${age === 1 ? '' : 's'} since your last backup.`;
+    return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><div class="rx-head"><span class="label" style="color:var(--milestone);">Back up your data</span><button class="icon" id="backup-dismiss" aria-label="Dismiss backup reminder" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(msg)} <button class="more" id="backup-now">Export now &rarr;</button></div></div></div>`;
+  })();
+  // One coaching banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
     const sc = standingCall();
     if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
-    if (layoff) return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)}</div></div></div>`;
+    // DISMISSIBLE LAYOFF BANNER: a forward clock jump (or a clock fix) can manufacture a bogus "time off".
+    // "I didn't take time off" clears the return-ramp and records the dismissed gap so the same gap
+    // (or smaller) can't re-arm the banner on the next render.
+    if (layoff && state._layoffDismissedGap != null && layoff.gap <= state._layoffDismissedGap) return '';
+    if (layoff) return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><div class="rx-head"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><button class="icon" id="layoff-dismiss" aria-label="Dismiss — I didn't take time off" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)} <button class="more" id="layoff-not-off">I didn't take time off</button></div></div></div>`;
     if (deloadActive()) return `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>`;
     return '';
   })();
@@ -240,6 +259,7 @@ function renderToday() {
     ${whyHead}
     ${whyPanel}
     <div class="sp-8"></div>
+    ${backupNudge}
     ${banners}
     ${lastToday ? (() => {
       // DAY-GATE: already checked in today → call up top + done/countdown. Next session locks until the
@@ -289,6 +309,32 @@ function renderToday() {
   </div>`;
 }
 
+// Today's dynamic buttons: backup nudge (export/dismiss) + dismissible layoff banner.
+function bindToday() {
+  if (state.ui.screen !== 'today') return;   // deferred bind fired after navigating away
+  const dismiss = document.getElementById('backup-dismiss');
+  if (dismiss) dismiss.addEventListener('click', () => { state._backupNudgeDismissed = true; render(); });
+  const backupNow = document.getElementById('backup-now');
+  if (backupNow) backupNow.addEventListener('click', () => {
+    let ok = false;
+    try { ok = downloadBackup(); } catch (_) { ok = false; }
+    if (ok) { state._backupNudgeDismissed = true; toast('Backup saved', 'success'); render(); }
+    else toast('Backup may not have downloaded — try again from Settings.', 'error');
+  });
+  const layoffOff = document.getElementById('layoff-not-off');
+  const clearLayoff = () => {
+    const lt = (typeof layoffTier === 'function') ? layoffTier() : null;
+    state._layoffDismissedGap = lt ? lt.gap : 0;   // suppress re-arm from this gap (or smaller)
+    state.returnRamp = null;                        // drop the bogus return-ramp load reduction
+    if (typeof logEvent === 'function') logEvent('layoff', 'Dismissed layoff banner — "I didn\'t take time off"');
+    if (typeof saveLocal === 'function') saveLocal();
+    render();
+  };
+  if (layoffOff) layoffOff.addEventListener('click', clearLayoff);
+  const layoffX = document.getElementById('layoff-dismiss');
+  if (layoffX) layoffX.addEventListener('click', clearLayoff);
+}
+
 // ---------- CHECK ----------
 function bodyMap(sel) {
   // Keyboard/screen-reader accessible: each region is a focusable toggle (role=button, aria-pressed).
@@ -310,9 +356,10 @@ function renderCheck() {
   ensureSession();
   const { done, total } = sessionCounts();
   const allEx = total > 0 && done === total;
-  // Editing today's answer: pre-fill from the existing record (research: lock-with-edit, not re-check).
+  // Editing today's answer: pre-fill from the SAVED record unconditionally so the pencil always shows
+  // the logged answer, not a stale half-edited draft left over from an abandoned check-in.
   const todayCheck = state.checks.find(c => c.date === isoToday());
-  if (state.ui.params && state.ui.params.edit && todayCheck && !state._chk) {
+  if (state.ui.params && state.ui.params.edit && todayCheck) {
     state._chk = { goalMet: todayCheck.goalMet, feel: todayCheck.feel, hurt: !!todayCheck.hurt, parts: (todayCheck.parts || []).slice(), redFlag: false, painChecked: true };
   }
   state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: [], redFlag: false };
@@ -414,6 +461,17 @@ function bindCheck() {
     const t = state._chk;
     if (!(t.goalMet && t.feel)) return;
     const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
+    // A check-in is a user gesture — a good moment to lock in persistent storage.
+    if (typeof ensurePersistentStorage === 'function' && !state.settings.storagePersisted) { try { ensurePersistentStorage(); } catch (_) {} }
+    // QUOTA FAILURE VISIBLE: applyCheck's save can silently fail when the phone is full. The storage
+    // lane sets state._saveError on a failed write; surface it loudly with a one-tap export to recover.
+    if (state._saveError) {
+      toast('Could not save — phone storage is full. Export a backup now.', 'error');
+      try { downloadBackup(); } catch (_) {}
+    } else if (typeof storagePressure === 'function') {
+      // Pressure warning after a successful save, so the user backs up before the next one fails.
+      Promise.resolve().then(async () => { try { const pct = await storagePressure(); if (pct != null && pct > 0.8) toast('Phone storage is almost full — export a backup soon.', 'error'); } catch (_) {} });
+    }
     state.ui.resultOutcome = outcome;
     delete state._chk;
     // First time the program advances into the Target phase → the capstone celebration, once.
@@ -713,26 +771,45 @@ function renderSettings() {
   return `<div class="screen no-nav">
         <div class="sp-8"></div>
     <p class="label">Persona</p><div class="sp-8"></div>
-    <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona keeps its own files in the repo: <span class="mono" style="font-size:13px;">data/users/${escHtml(activeSlug()||'…')}/</span></p>
+    <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona's data lives on this device.</p>
     <div class="sp-12"></div>
-    <div class="field"><label for="s-user">Switch / load a persona</label><input type="text" id="s-user" value="${escHtml(activeSlug())}" placeholder="username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Type a username, then load it from GitHub to use this device as that persona.</div></div>
-    <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
-    <div class="sp-8"></div>
+    ${(() => {
+      // LOCAL persona switcher — works with zero GitHub. Lists personas saved on this device
+      // (excludes backup/aux keys, which carry a ':' in the slug). Loading navigates into that persona.
+      const others = (typeof savedPersonas === 'function' ? savedPersonas() : []).filter(sl => sl && sl.indexOf(':') === -1);
+      if (others.length <= 1 && others.includes(activeSlug())) return '';
+      if (!others.length) return '';
+      return `<div class="field"><label for="s-persona-sel">Switch persona</label>
+        <select id="s-persona-sel" style="width:100%;padding:11px 12px;background:var(--surface-1);color:var(--paper);border:1px solid var(--rule);border-radius:12px;font-size:16px;">${others.map(sl => `<option value="${escHtml(sl)}"${sl===activeSlug()?' selected':''}>${escHtml(sl)}</option>`).join('')}</select>
+        <div class="help">Switch between profiles saved on this phone — no account needed.</div></div>
+        <button class="secondary" id="s-persona-go">Switch to this persona</button><div class="sp-8"></div>`;
+    })()}
     <button class="ghost" id="s-logout">Log out${state.profile ? ` — ${escHtml(state.profile.username || activeSlug())}` : ''}</button>
     <p class="help" style="margin-top:6px;">Log out keeps your data saved on this device — pick your profile again from the welcome screen anytime.</p>
     <div class="divider"></div>
-    <p class="label">GitHub Sync</p><div class="sp-8"></div>
-    <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Without this, data stays in this browser only.</p>
+    <p class="label">On-device storage</p><div class="sp-8"></div>
+    ${state.settings.storagePersisted
+      ? `<p class="body-dim" style="font-size:16px;">${svgUse('ic-check',13)} On-device storage: <strong style="color:var(--mobility);">protected</strong> — the system won't evict your data.</p>`
+      : `<button class="secondary" id="s-persist">On-device storage: best-effort (tap to protect)</button><p class="help" style="margin-top:6px;">Ask the system to protect your data from automatic cleanup.</p>`}
+    <div class="divider"></div>
+    <details class="adv-sync"${isConfigured() ? ' open' : ''}>
+    <summary class="label" style="cursor:pointer;list-style:revert;">Advanced · optional cloud sync</summary>
+    <div class="sp-12"></div>
+    <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Not needed for normal use — your data already lives on this phone.</p>
     <div class="sp-12"></div>
     ${isConfigured() ? `<p class="body-dim" style="font-size:14px;">Connected · syncing to <span class="mono" style="font-size:13px;">${escHtml(s.repo)}</span></p><div class="sp-8"></div>` : ''}
     <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
     <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
+    <div class="sp-12"></div>
+    <div class="field"><label for="s-user">Load a persona from GitHub</label><input type="text" id="s-user" value="${escHtml(activeSlug())}" placeholder="username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Type a username, then load it from GitHub to use this device as that persona.</div></div>
+    <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
     <div class="sp-8"></div>
     <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
     <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
     <div class="sp-24"></div>
     <div class="row between"><div><div class="title">Auto-sync</div><div class="body-dim" style="font-size: 16px;">Push every change automatically.</div></div>
       <label class="switch"><input type="checkbox" id="s-autosync" ${s.autoSync?'checked':''}><span class="slider"></span></label></div>
+    </details>
     <div class="divider"></div>
     <p class="label">Data</p><div class="sp-12"></div>
     <button class="secondary" data-go="log">Activity log</button><div class="sp-8"></div>
@@ -763,11 +840,30 @@ function renderSettings() {
   </div>`;
 }
 function bindSettings() {
+  if (state.ui.screen !== 'settings') return;   // deferred bind fired after navigating away
+  // LOCAL persona switcher (no GitHub): load the chosen persona and navigate into it.
+  const personaSel = document.getElementById('s-persona-sel'), personaGo = document.getElementById('s-persona-go');
+  if (personaSel && personaGo) personaGo.addEventListener('click', () => {
+    const slug = personaSel.value;
+    if (!slug || slug === activeSlug()) return;
+    state.activeUser = slug; try { localStorage.setItem(ACTIVE_KEY, slug); } catch (_) {}
+    loadUserState(slug);
+    if (typeof logEvent === 'function' && state.profile) logEvent('persona', `Switched to persona "${slug}"`);
+    navigate(state.profile ? 'today' : 'onboarding');
+    toast(state.profile ? `Switched to ${state.profile.username || slug}` : `No data for ${slug}`, state.profile ? 'success' : 'error');
+  });
+  // Persistent-storage opt-in (user gesture → best chance of a grant).
+  const persistBtn = document.getElementById('s-persist');
+  if (persistBtn) persistBtn.addEventListener('click', async () => {
+    if (typeof ensurePersistentStorage !== 'function') return;
+    try { await ensurePersistentStorage(); } catch (_) {}
+    render();
+    toast(state.settings.storagePersisted ? 'On-device storage protected' : 'Could not enable protection — your data is still saved locally', state.settings.storagePersisted ? 'success' : 'error');
+  });
   const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
-  if (!repo || !pat) return;   // DOM moved on before this deferred bind ran
-  repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
-  pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
-  autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
+  if (repo) repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
+  if (pat) pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
+  if (autosync) autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
   const logoutBtn = document.getElementById('s-logout');
   if (logoutBtn) logoutBtn.addEventListener('click', () => {
     if (!confirm('Log out? Your data stays saved on this device — pick your profile again from the welcome screen anytime.')) return;
@@ -804,7 +900,10 @@ function bindSettings() {
     snapshotBeforeDestroy();   // keep a local restore point before overwriting
     await syncFromRemote(); logEvent('sync', 'Pulled all data from GitHub'); render(); toast('Pulled from GitHub','success');
   });
-  document.getElementById('s-export').addEventListener('click', () => { downloadBackup(); toast('Backup downloaded','success'); });
+  document.getElementById('s-export').addEventListener('click', () => {
+    let ok = false; try { ok = downloadBackup(); } catch (_) { ok = false; }
+    toast(ok ? 'Backup saved' : 'Backup may not have downloaded — try again', ok ? 'success' : 'error');
+  });
   const importBtn = document.getElementById('s-import'), importFile = document.getElementById('s-import-file');
   if (importBtn && importFile) {
     importBtn.addEventListener('click', () => importFile.click());
@@ -812,13 +911,20 @@ function bindSettings() {
       const file = importFile.files && importFile.files[0]; if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        try {
-          const obj = JSON.parse(reader.result);
-          if (state.profile && !confirm('Replace this device\'s data with the imported backup?')) return;
-          applyBackup(obj);
-          navigate(state.profile ? 'today' : 'onboarding');
-          toast('Backup imported','success');
-        } catch (e) { toast('Could not import: ' + e.message, 'error'); }
+        let obj;
+        try { obj = JSON.parse(reader.result); }
+        catch (e) { toast('Not a valid Hard Part backup', 'error'); return; }
+        if (state.profile && !confirm('Replace this device\'s data with the imported backup?')) return;
+        // SAFETY: snapshot the current persona BEFORE applyBackup so a bad/wrong file is recoverable
+        // via "Restore last auto-backup". Only proceed if applyBackup confirms a valid backup.
+        try { snapshotBeforeDestroy(); } catch (_) {}
+        // applyBackup signals invalid by returning false (storage-lane contract) or by throwing
+        // (current behavior); anything else (true / undefined) is a success.
+        let ok = true;
+        try { const r = applyBackup(obj); if (r === false) ok = false; } catch (e) { ok = false; }
+        if (!ok) { toast('Not a valid Hard Part backup', 'error'); return; }
+        navigate(state.profile ? 'today' : 'onboarding');
+        toast('Backup imported','success');
       };
       reader.onerror = () => toast('Could not read that file', 'error');
       reader.readAsText(file);
@@ -831,17 +937,23 @@ function bindSettings() {
     catch (e) { toast(e.message, 'error'); }
   });
   document.getElementById('s-reset').addEventListener('click', () => {
-    if (!confirm('Delete this persona\'s data on this device? We\'ll save a backup to your device first. GitHub data is untouched.')) return;
+    // HONEST RESET: snapshot first, attempt a download, then make the confirm reflect whether the
+    // backup actually downloaded — never claim "Backup saved" when the file may not have landed.
     snapshotBeforeDestroy();          // keep a local restore point
-    try { downloadBackup(); } catch (_) {}   // and drop a file in Downloads
+    let ok = false; try { ok = downloadBackup(); } catch (_) { ok = false; }
+    const msg = ok
+      ? 'Backup saved to your device — delete local data? (A restore point is also kept on this device.)'
+      : 'Backup may not have downloaded — delete anyway? (A restore point is kept on this device.)';
+    if (!confirm(msg)) return;
     const slug = activeSlug();
     if (slug) localStorage.removeItem(userStateKey(slug));
     // Fully zero the in-memory persona (mirrors loadUserState('')) so nothing — log, injury, session,
-    // or the active-user pointer — bleeds into the next persona created from onboarding.
+    // lifts, return-ramp, or the active-user pointer — bleeds into the next persona created from onboarding.
     state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
     state.session=null; state.injury=null; state.log=[]; state._preDay=null;
+    state.lifts={}; state.returnRamp=null;
     state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}
-    navigate('onboarding'); toast('Backup saved · local data cleared','success');
+    navigate('onboarding'); toast(ok ? 'Backup saved · local data cleared' : 'Local data cleared (verify your backup)', ok ? 'success' : 'error');
   });
 }
 
