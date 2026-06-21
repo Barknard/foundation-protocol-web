@@ -372,32 +372,52 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write('  %s - %s\n' % (self.address_string(), fmt % args))
 
 
-def _banner(port):
+def _lan_ip():
+    # best-effort primary LAN IPv4 (no traffic actually sent)
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1)); ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
+
+
+def _banner(port, lan):
     line = '=' * 64
     print(line)
     print(' The Hard Part — figure save-server')
     print(line)
     print(' Port           : %d' % port)
+    print(' Bind           : %s' % ('0.0.0.0 (LAN — phones/tablets on your wifi can reach it)' if lan else 'localhost (this machine only; pass --lan for wifi access)'))
     print(' Serving        : %s  (the full app, statically)' % ROOT)
     print(' Also accepts   : editor autosaves -> js/figure-poses.js + .figure-versions/')
     print(' Endpoints      : GET /api/current  POST /api/save  GET /api/versions  POST /api/revert')
     print(' Editor URL     : http://localhost:%d/tools/figure-editor.html' % port)
     print(' App URL        : http://localhost:%d/' % port)
+    if lan:
+        print(' App (LAN)      : http://%s:%d/   (open this on your phone/tablet)' % (_lan_ip(), port))
+        print(' Note           : --lan exposes the editor write API to your LAN; use on a trusted home network only.')
     print(line)
     print(' (Replaces `python -m http.server %d` while editing figures.)' % port)
     sys.stdout.flush()
 
 
 def main():
+    args = [a for a in sys.argv[1:]]
+    lan = '--lan' in args
+    args = [a for a in args if a != '--lan']
     port = PORT
-    if len(sys.argv) > 1:
+    if args:
         try:
-            port = int(sys.argv[1])
+            port = int(args[0])
         except ValueError:
-            sys.exit('usage: figure-save-server.py [port]')
+            sys.exit('usage: figure-save-server.py [port] [--lan]')
     load_current_from_disk()  # seed the in-memory /api/current copy from js/figure-poses.js
-    httpd = ThreadingHTTPServer(('localhost', port), Handler)
-    _banner(port)
+    httpd = ThreadingHTTPServer(('0.0.0.0' if lan else 'localhost', port), Handler)
+    _banner(port, lan)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
