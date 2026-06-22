@@ -452,10 +452,17 @@ function renderCheck() {
     `}
   </div>`;
 }
+// Can the check-in be submitted? Normally needs goal + feel. But in HURT mode, marking where it hurts IS
+// the answer (the hurt path drives a Rest/injury call regardless of goal/feel), so >=1 selected part enables it.
+function chkReady(t) {
+  if (!t) return false;
+  if (t.hurt) return !!((t.parts && t.parts.length) || (t.goalMet && t.feel));
+  return !!(t.goalMet && t.feel);
+}
 // Check-in's frozen footer action (placed by the app shell).
 function checkFooter() {
   const t = state._chk || {};
-  const ready = t.goalMet && t.feel;
+  const ready = chkReady(t);
   // In hurt mode the "Nothing hurts — clear" escape lives here (not in the scroll area) so the body figure
   // can fill the screen with no scroll. Single primary CTA otherwise.
   const clear = t.hurt ? `<button class="onb-back ghost" data-clearhurt>Nothing hurts</button>` : '';
@@ -522,6 +529,7 @@ function bindCheck() {
       el.setAttribute('aria-pressed', on ? 'true' : 'false');
       const pick = document.getElementById('bm-pick');   // live "Hurting: …" breadcrumb
       if (pick) pick.textContent = bmPickText(state._chk.parts);
+      refreshGo();   // marking where it hurts enables "See the call"
     };
     el.addEventListener('click', toggle);
     el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
@@ -531,12 +539,15 @@ function bindCheck() {
     requestAnimationFrame(() => { try { fitBodyMap(); } catch (_) {} });
     if (!window._bmFitBound) { window._bmFitBound = true; window.addEventListener('resize', () => { try { fitBodyMap(); } catch (_) {} }); }
   }
-  function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
+  function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !chkReady(state._chk); }
   function updateGate() { const el = document.getElementById('chk-gate'); if (el) el.textContent = (state._chk.goalMet && state._chk.feel) ? '' : 'Pick a goal and how you feel to see your call.'; }
   const go = document.getElementById('chk-go');
   if (go) go.addEventListener('click', () => {
     const t = state._chk;
-    if (!(t.goalMet && t.feel)) return;
+    if (!chkReady(t)) return;
+    // Hurt path: marking where it hurts is the answer; backfill neutral goal/feel so the stored record and
+    // readiness trend stay valid (the call is Rest/injury regardless of these values).
+    if (t.hurt) { if (!t.goalMet) t.goalMet = 'partial'; if (!t.feel) t.feel = 2; }
     const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
     // A check-in is a user gesture — a good moment to lock in persistent storage.
     if (typeof ensurePersistentStorage === 'function' && !state.settings.storagePersisted) { try { ensurePersistentStorage(); } catch (_) {} }
