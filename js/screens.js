@@ -688,7 +688,7 @@ function renderExerciseDetail(key) {
   const ex = EXERCISES.find(e => e.key === key);
   if (!ex) return `<div class="screen no-nav"><p>Not found.</p></div>`;
   setTimeout(bindExerciseDetail, 0);
-  return `<div class="screen no-nav">
+  return `<div class="screen no-nav ex-detail">
     <p class="mono" style="color:var(--milestone); font-size: 15px; letter-spacing:0.05em;">${escHtml(ex.cat)} · ${escHtml(ex.rx)}</p>
     <div class="fig-hero">${animatedFigure(ex,260)}</div>
     ${liftRxBlock(ex.key)}

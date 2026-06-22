@@ -43,6 +43,15 @@
 .step-list { display: grid; grid-template-columns: 28px 1fr; gap: 8px 12px; }
 .step-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-low); padding-top: 3px; }
 .step-list .t { font-size: 17px; color: var(--paper); line-height: 1.5; padding-bottom: 6px; }
+/* Exercise detail — tightened so most steps-detail pages fit one screen with no scroll
+   (the scroll cue still covers the long strength pages with a weight stepper). */
+.ex-detail > p { margin: 0; }                 /* drop default <p> margins on the category line + cue body */
+.ex-detail .fig-hero { height: clamp(168px, 46vw, 236px); margin: 6px 0; }
+.ex-detail .fig-hero .afig { width: clamp(150px, 42vw, 216px) !important; height: clamp(150px, 42vw, 216px) !important; }
+.ex-detail .step-list { gap: 5px 12px; }
+.ex-detail .step-list .t { line-height: 1.4; padding-bottom: 3px; }
+.ex-detail .divider { margin: 10px 0; }
+.ex-detail .sp-16 { height: 8px; }
 
 /* ---------- ANIMATED FIGURE ---------- */
 .afig { position: relative; display: inline-block; color: var(--paper); line-height: 0; }
