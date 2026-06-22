@@ -70,3 +70,29 @@ Reinstall the APK on the phone (data survives a reinstall/update; it's cleared o
 ## Install on the phone
 Transfer `app-debug.apk` to the phone → tap it → allow "install unknown apps" for that source →
 Install → tap the **The Hard Part** icon. No server, no Termux, offline.
+
+## Publish for download (GitHub Release)
+GitHub **Pages** is blocked account-wide (Actions disabled for `Barknard`), but a GitHub
+**Release** still serves binaries on a public repo — a no-login download link you can open
+on the phone. The repo is `Barknard/foundation-protocol-web` (public). We use a single
+**stable tag `apk`** so the download URL never changes across rebuilds.
+
+Stable links (open on the phone):
+- Release page: `https://github.com/Barknard/foundation-protocol-web/releases/tag/apk`
+- Direct APK:   `https://github.com/Barknard/foundation-protocol-web/releases/download/apk/TheHardPart.apk`
+
+**First publish (one time — the `apk` release already exists, so you won't need this again):**
+```bash
+gh release create apk ~/TheHardPart.apk -R Barknard/foundation-protocol-web \
+  -t "The Hard Part — Android APK" -n "Sideloadable debug APK (offline, no server)."
+```
+
+**Republish after a rebuild (the normal path):** rebuild the APK (the "Updating the app"
+section above → copy `www/`, `npx cap sync android`, Gradle step 5), copy it to
+`~/TheHardPart.apk`, then overwrite the release asset in place — the URL stays the same:
+```bash
+cp ~/hardpart-apk/android/app/build/outputs/apk/debug/app-debug.apk ~/TheHardPart.apk
+gh release upload apk ~/TheHardPart.apk --clobber -R Barknard/foundation-protocol-web
+```
+`--clobber` replaces the existing `TheHardPart.apk` asset, so the link above always serves
+the newest build. (Needs `gh auth status` = logged in as `Barknard`.)
