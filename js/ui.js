@@ -18,6 +18,9 @@ function rerenderIfNewDay() {
 }
 function navigate(screen, params) {
   const prev = state.ui.screen;
+  // Leaving an unsubmitted check-in (not heading to its result) → drop the draft so it never leaks
+  // into the next "Daily check-in" / "Pain re-check" entry. (Submit already deletes _chk before navigating.)
+  if (prev === 'check' && screen !== 'result') { delete state._chk; state._focusFeel = null; state._focusAfter = null; }
   if (TAB_SCREENS.includes(screen)) {
     backStack.length = 0;   // tabs are top-level — Back shouldn't cycle through them
   } else if (prev && prev !== screen && prev !== 'loading') {
@@ -28,7 +31,10 @@ function navigate(screen, params) {
   render(); window.scrollTo(0,0);
 }
 function goBack(fallback) {
-  if (backStack.length > 0) { const prev = backStack.pop(); state.ui.screen = prev.screen; state.ui.params = prev.params; render(); window.scrollTo(0,0); }
+  const leaving = state.ui.screen;
+  if (backStack.length > 0) { const prev = backStack.pop();
+    if (leaving === 'check' && prev.screen !== 'result') { delete state._chk; state._focusFeel = null; state._focusAfter = null; }
+    state.ui.screen = prev.screen; state.ui.params = prev.params; render(); window.scrollTo(0,0); }
   else navigate(fallback || 'today');
 }
 const TAB_SCREENS = ['today','library','progress','phase'];

@@ -96,7 +96,9 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   if (hurt) {
     const prev = (state.injury && !state.injury.clearedAt) ? state.injury : null;   // re-flagging extends the window
     const now = Date.now();
-    state.injury = { parts: parts || [], since: now, riceUntil: now + 3 * 86400000, easeUntil: now + 10 * 86400000, kind: 'acute', redFlag: !!redFlag, extended: prev ? (prev.extended || 0) + 1 : 0, firstSince: prev ? (prev.firstSince || prev.since) : now };
+    // Preserve the prior location when a re-check flags "still hurts" with no region re-selected,
+    // so the recovery banner never degrades to a generic "injury" with the original spot lost.
+    state.injury = { parts: (parts && parts.length) ? parts : (prev ? (prev.parts || []) : []), since: now, riceUntil: now + 3 * 86400000, easeUntil: now + 10 * 86400000, kind: 'acute', redFlag: !!redFlag, extended: prev ? (prev.extended || 0) + 1 : 0, firstSince: prev ? (prev.firstSince || prev.since) : now };
   } else if (injuryActive()) {
     // re-checked with no pain: the injury is settling — clear it (with an audit timestamp + log) and resume
     clearInjury();
@@ -130,6 +132,10 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
     const hasFutureDated = state.checks.some(c => c && c.date && c.date >= today);   // a row at/after today's date
     const recentTs = newest && typeof newest.ts === 'number' && (Date.now() - newest.ts) <= 12 * 3600000 && (Date.now() - newest.ts) >= -12 * 3600000;
     if (hasFutureDated || recentTs) existingIdx = newestIdx;   // same real day despite a backward clock → re-edit
+    // NOTE: the recentTs (<=12h real-elapsed) window is INTENTIONAL anti-tamper / anti-timezone design — a
+    // check <12h after the last one is the same TRAINING day even across a calendar midnight (verified by
+    // tools/_daysim.js "timezone shift" + "TAMPER" scenarios). Do not gate this on date alone; doing so makes
+    // a date-line hop advance a phantom session. (A code audit flagged this as a bug; the sim proved otherwise.)
   }
   const alreadyCheckedToday = existingIdx >= 0;
   const prevEntry = alreadyCheckedToday ? state.checks[existingIdx] : null;

@@ -403,7 +403,9 @@ function fitBodyMap() {
   const main = document.querySelector('.app-main');
   const padB = (main ? parseFloat(getComputedStyle(main).paddingBottom) : 0) || 96;   // reserves the fixed footer
   const avail = (window.innerHeight || 800) - top - padB - 14;   // +14 = figure bottom margin + safety
-  svg.style.height = Math.max(260, Math.min(avail, 540)) + 'px';
+  // Floor kept low (180) so short/landscape viewports stay within `avail` (no scroll under the fixed footer);
+  // `avail` already subtracts the footer reservation, so we never force the figure taller than fits.
+  svg.style.height = Math.max(180, Math.min(avail, 540)) + 'px';
 }
 function renderCheck() {
   ensureSession();
@@ -413,10 +415,13 @@ function renderCheck() {
   // the logged answer, not a stale half-edited draft left over from an abandoned check-in.
   const todayCheck = state.checks.find(c => c.date === isoToday());
   if (state.ui.params && state.ui.params.edit && todayCheck) {
-    state._chk = { goalMet: todayCheck.goalMet, feel: todayCheck.feel, hurt: !!todayCheck.hurt, parts: (todayCheck.parts || []).slice(), redFlag: false, painChecked: true };
+    state._chk = { goalMet: todayCheck.goalMet, feel: todayCheck.feel, hurt: !!todayCheck.hurt, parts: (todayCheck.parts || []).slice(), redFlag: false, painChecked: !!todayCheck.hurt || (todayCheck.feel != null && todayCheck.feel <= 2) };
     state.ui.params.edit = false;   // consume ONCE — otherwise every re-render (e.g. changing feel calls render()) re-prefills from the saved check and clobbers the in-progress edit
   }
-  state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: [], redFlag: false };
+  // On a pain re-check, pre-seed the prior injury location so the body-map shows what was already flagged
+  // (and a "still hurts" submit keeps it) instead of starting blank and erasing the location.
+  const reChkSeed = (injuryActive() && state.injury && state.injury.parts) ? state.injury.parts.slice() : [];
+  state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: reChkSeed, redFlag: false };
   if (!state._chk.parts) state._chk.parts = [];
   setTimeout(bindCheck, 0);
   const t = state._chk;
@@ -472,7 +477,7 @@ function renderCheck() {
 // the answer (the hurt path drives a Rest/injury call regardless of goal/feel), so >=1 selected part enables it.
 function chkReady(t) {
   if (!t) return false;
-  if (t.hurt) return !!((t.parts && t.parts.length) || (t.goalMet && t.feel));
+  if (t.hurt) return !!(t.parts && t.parts.length);   // hurt mode: must mark WHERE it hurts (re-check pre-seeds the prior spot)
   return !!(t.goalMet && t.feel);
 }
 // Check-in's frozen footer action (placed by the app shell).
@@ -482,7 +487,8 @@ function checkFooter() {
   // In hurt mode the "Nothing hurts — clear" escape lives here (not in the scroll area) so the body figure
   // can fill the screen with no scroll. Single primary CTA otherwise.
   const clear = t.hurt ? `<button class="onb-back ghost" data-clearhurt>Nothing hurts</button>` : '';
-  return `<div class="wiz-nav">${clear}<button class="onb-next" id="chk-go" ${ready?'':'disabled'} aria-describedby="chk-gate">See the call</button></div>`;
+  // aria-describedby only when the #chk-gate hint actually exists (it's rendered in the non-hurt branch only).
+  return `<div class="wiz-nav">${clear}<button class="onb-next" id="chk-go" ${ready?'':'disabled'}${t.hurt ? '' : ' aria-describedby="chk-gate"'}>See the call</button></div>`;
 }
 function bindCheck() {
   if (state.ui.screen !== 'check' || !state._chk) return;   // deferred bind fired after navigating away
@@ -492,6 +498,8 @@ function bindCheck() {
     if (f) f.focus();
     state._focusFeel = null;
   }
+  // Restore focus after a hurt-toggle / pain-discriminator / clear re-render (else focus drops to <body>).
+  if (state._focusAfter) { const fa = document.querySelector(state._focusAfter); if (fa) fa.focus(); state._focusAfter = null; }
   // Arrow-key roving-tabindex helper shared by both radiogroups.
   const wireArrows = (radios, idx, select) => radios[idx].addEventListener('keydown', e => {
     let n = -1;
@@ -517,23 +525,24 @@ function bindCheck() {
     const selectFeel = (btn) => { state._chk.feel = Number(btn.getAttribute('data-val')); state._focusFeel = state._chk.feel; render(); };
     radios.forEach((btn, idx) => { btn.addEventListener('click', () => selectFeel(btn)); wireArrows(radios, idx, selectFeel); });
   }
+  // These handlers re-render the whole screen; set _focusAfter so keyboard focus lands somewhere sensible
+  // afterward (render() replaces #app wholesale, otherwise focus drops to <body>). Restored in bindCheck's top block.
   const hurt = document.getElementById('chk-hurt');
   if (hurt) hurt.addEventListener('click', () => {
     state._chk.hurt = !state._chk.hurt;
     if (!state._chk.hurt) { state._chk.parts = []; state._chk.redFlag = false; }
+    state._focusAfter = state._chk.hurt ? '.bm-seg[data-part]' : '#chk-hurt';
     render();
   });
   // Low-feel pain discriminator (feel 1–2): 3-way, default fatigue — keeps soreness ≠ injury (DOMS isn't in a joint).
   const pno = document.getElementById('chk-pain-no');
-  if (pno) pno.addEventListener('click', () => { state._chk.painChecked = true; state._chk.hurt = false; render(); });
+  if (pno) pno.addEventListener('click', () => { state._chk.painChecked = true; state._chk.hurt = false; state._focusAfter = '#chk-hurt'; render(); });
   const pspot = document.getElementById('chk-pain-spot');
-  if (pspot) pspot.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; render(); });
+  if (pspot) pspot.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._focusAfter = '.bm-seg[data-part]'; render(); });
   const psharp = document.getElementById('chk-pain-sharp');
-  if (psharp) psharp.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._chk.painSharp = true; render(); });
+  if (psharp) psharp.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._focusAfter = '.bm-seg[data-part]'; render(); });
   // Clear / "nothing hurts" / "change" → back to the goal+feel questions.
-  document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; state._chk.parts = []; state._chk.redFlag = false; state._chk.painChecked = false; render(); }));
-  const flag = document.getElementById('chk-flag');
-  if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
+  document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; state._chk.parts = []; state._chk.redFlag = false; state._chk.painChecked = false; state._focusAfter = '#chk-hurt'; render(); }));
   // Body-map regions are SVG shapes with role=button (multi-select, aria-pressed). Toggle in place
   // (no re-render → keeps scroll position and focus). SVG isn't a native button, so wire Enter/Space.
   document.querySelectorAll('[data-part]').forEach(el => {
