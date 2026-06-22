@@ -191,7 +191,18 @@ function figureInnerFront(pose, opts) {
   if (pose.intensity) { const i = typeof pose.intensity === 'function' ? pose.intensity(J) : pose.intensity; out.push(_intensity(i, opts && opts.feel)); }
   return out.join('');
 }
-function propGobletFront(J) { const a = J.leftArm && J.leftArm.hand, b = J.rightArm && J.rightArm.hand; if (!a || !b) return ''; const x = _n((a[0] + b[0]) / 2), y = _n((a[1] + b[1]) / 2); return `<rect x="${x - 2.2}" y="${y - 2.2}" width="4.4" height="4.4" rx="1" fill="#D9A24E"/>`; }
+function propGobletFront(J) {
+  const a = J.leftArm && J.leftArm.hand, b = J.rightArm && J.rightArm.hand; if (!a || !b) return '';
+  const x = _n((a[0] + b[0]) / 2), y = _n((a[1] + b[1]) / 2);
+  // A recognizable vertical dumbbell (two plates + handle), ~2x the old featureless square and outlined so it
+  // reads on the dark card — shape carries the meaning, not colour alone (step text: "hold dumbbell vertically").
+  const fill = '#E3AC3C', edge = '#8a6a2e';
+  return `<g fill="${fill}" stroke="${edge}" stroke-width="0.5" stroke-linejoin="round">`
+    + `<rect x="${x - 2.6}" y="${_n(y - 4.6)}" width="5.2" height="2.4" rx="0.7"/>`   // top plate
+    + `<rect x="${x - 1.1}" y="${_n(y - 2.4)}" width="2.2" height="4.8" rx="0.5"/>`   // handle
+    + `<rect x="${x - 2.6}" y="${_n(y + 2.2)}" width="5.2" height="2.4" rx="0.7"/>`   // bottom plate
+    + `</g>`;
+}
 function propBandFront(J) { if (!J.leftLeg || !J.rightLeg) return ''; const a = J.leftLeg.knee, b = J.rightLeg.knee; return `<line x1="${_n(a[0])}" y1="${_n(a[1])}" x2="${_n(b[0])}" y2="${_n(b[1])}" stroke="#D9A24E" stroke-width="1.4" stroke-dasharray="2 1.5"/>`; }
 
 // Public: build an <svg> for a pose with a class (a/b for cross-fade frames)
@@ -252,7 +263,11 @@ if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(_figFram
 function skeletonFigure(key, size) {
   const s = size || 44; const def = FIG_POSES[key];
   const inner = def ? figureInner(def.f1, { feel: 1 }) : '';
-  return `<span class="afig" style="width:${s}px;height:${s}px;display:inline-block;line-height:0;"><svg class="skfig" data-fig="${escAttr(key)}" viewBox="0 0 50 60" width="${s}" height="${s}" aria-hidden="true">${inner}</svg></span>`;
+  // Horizontal floor poses (side-lying, supine) occupy only a thin band of the default 0 0 50 60 box and
+  // render as an unreadable smudge at thumbnail scale. A per-pose `frame` viewBox zooms+centres them to fill
+  // the box. The animator sets innerHTML only, so the viewBox chosen here persists across the f1↔f2 cycle.
+  const vb = (def && def.frame) ? def.frame : '0 0 50 60';
+  return `<span class="afig" style="width:${s}px;height:${s}px;display:inline-block;line-height:0;"><svg class="skfig" data-fig="${escAttr(key)}" viewBox="${vb}" width="${s}" height="${s}" aria-hidden="true">${inner}</svg></span>`;
 }
 function escAttr(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function hasFigurePose(key) { return !!FIG_POSES[key]; }

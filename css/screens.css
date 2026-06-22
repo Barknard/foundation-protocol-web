@@ -16,18 +16,18 @@
 .ex-done-label svg { width: 14px; height: 14px; }
 .markall { width: 100%; height: 44px; margin-top: 8px; background: var(--surface-1); color: var(--paper); border: 1px solid var(--rule); border-radius: 12px; font-size: 14px; font-weight: 600; }
 .rx-count { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--mobility); white-space: nowrap; }
-/* body map (injury) — a head→foot grid of labelled buttons. Every target clears the 48px tap minimum
-   with real gutters (the old SVG silhouette had ~27px regions jammed edge-to-edge — WCAG 2.5.5/2.5.8 fail). */
-.bodymap-grid { display: flex; flex-direction: column; gap: 8px; max-width: 340px; margin: 0 auto 4px; }
-.bm-row { display: flex; gap: 8px; }
-.bm-row > .bm-btn { flex: 1; }
-.bm-btn { min-height: 50px; height: auto; width: auto; padding: 8px 12px; background: var(--surface-1); color: var(--paper-dim); border: 1px solid var(--rule); border-radius: 12px; font-size: 16px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 120ms ease, border-color 120ms ease; }
-.bm-btn svg { width: 16px; height: 16px; display: none; }   /* ✓ hidden until selected */
-.bm-btn.sel svg { display: inline-block; }
-.bm-btn.sel { background: var(--strength); border-color: var(--paper); color: #fff; font-weight: 600; }   /* fill + bright border + leading ✓ glyph = non-colour cue (CVD) */
-/* legacy SVG body-map styles kept for any external reference; no longer rendered */
-.bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; }
-.bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2; }
+/* body map (injury) — a tappable front-facing silhouette. Regions are enlarged so each renders >=48px in
+   both axes at phone width with a centre gutter between left/right pairs (the old figure had ~27px regions
+   jammed edge-to-edge — a WCAG 2.5.5/2.5.8 tap-target fail). Scrolls if taller than the viewport; the fixed
+   header/footer stay put and content clears them. */
+/* Height-bound so the whole figure + prompt + breadcrumb + action fit one phone screen with NO scroll.
+   The 100x150 stocky viewBox keeps width adequate when height-constrained, so regions stay ~48px. */
+.bodymap { width: auto; height: clamp(360px, 56vh, 482px); max-width: 100%; display: block; margin: 2px auto 6px; }
+.bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
+.bm-seg:hover { fill: var(--surface-2); }
+.bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2.5; }   /* red fill + bright white outline = non-colour cue (CVD) */
+.bm-prompt { margin: 0; }
+.bm-pick { font-size: 15px; color: var(--paper); margin: 4px 0 2px; min-height: 20px; text-align: center; }
 /* `.more` is an inline TEXT LINK, not a button. Without this a bare <button class="more"> inherits the
    solid-gold primary-button style (it did for the backup, injury re-check, and layoff banner actions),
    double-spending the one colour that should mean "the primary action". Reserve solid gold for true CTAs. */
@@ -46,7 +46,7 @@
 .logtime { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--paper-low); }
 .logbody { font-size: 14px; color: var(--paper); line-height: 1.45; }
 .logtype { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; border-radius: 6px; margin-right: 8px; background: var(--surface-2); color: var(--paper-dim); }
-.logtype.progress { color: var(--mobility); } .logtype.injury { color: var(--strength); } .logtype.layoff { color: var(--milestone); } .logtype.sync, .logtype.persona { color: var(--cardio); } .logtype.profile { color: var(--milestone); }
+.logtype.progress { color: var(--mobility); } .logtype.injury { color: var(--red-text); } .logtype.layoff { color: var(--milestone); } .logtype.sync, .logtype.persona { color: var(--cardio); } .logtype.profile { color: var(--milestone); }
 .ex-card .meta .name { font-size: 17px; font-weight: 600; color: var(--paper); }
 .ex-card .meta .rx { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
 .ex-card .meta .cue { font-size: 14px; color: var(--paper-dim); margin-top: 6px; line-height: 1.4; }

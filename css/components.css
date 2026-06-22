@@ -24,7 +24,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 button:active:not(:disabled) { transform: scale(0.98); }
 button.secondary { background: var(--surface-1); color: var(--paper); }
 button.ghost { background: transparent; color: var(--paper); border: 1px solid var(--rule); }
-button.danger { background: transparent; color: var(--strength); border: 1px solid var(--strength); }
+button.danger { background: transparent; color: var(--red-text); border: 1px solid var(--red-text); }
 button.compact { height: 44px; width: auto; padding: 0 16px; font-size: 17px; }
 button.icon { width: 48px; height: 48px; padding: 0; background: transparent; color: var(--paper-dim); border-radius: 12px; }
 
@@ -40,7 +40,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 }
 .chip.active { background: var(--milestone); color: var(--ink); border-color: var(--milestone); font-weight: 600; }
 .chip.yes.active { background: var(--mobility); border-color: var(--mobility); }
-.chip.no.active  { background: var(--strength); border-color: var(--strength); color: var(--paper); }
+.chip.no.active  { background: var(--red-text); border-color: var(--red-text); color: var(--ink); }   /* lighter-red fill + dark text clears 4.5:1 */
 
 /* ---------- FEEL GRID (daily check) ---------- */
 .feel-grid {
@@ -69,7 +69,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 /* tint the active label by readiness band */
 .feel.feel-5.active .feel-label, .feel.feel-4.active .feel-label { color: var(--mobility); }
 .feel.feel-3.active .feel-label { color: var(--milestone); }
-.feel.feel-2.active .feel-label, .feel.feel-1.active .feel-label { color: var(--strength); }
+.feel.feel-2.active .feel-label, .feel.feel-1.active .feel-label { color: var(--red-text); }
 .feel.feel-5.active { border-color: var(--mobility); }
 .feel.feel-4.active { border-color: var(--mobility); }
 .feel.feel-3.active { border-color: var(--milestone); }
@@ -111,7 +111,7 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .card-block.milestone .stripe { background: var(--milestone); }
 .card-block.rest      .stripe { background: var(--paper-low); }
 .card-block.mobility  .label  { color: var(--mobility); }
-.card-block.strength  .label  { color: var(--strength); }
+.card-block.strength  .label  { color: var(--red-text); }
 .card-block.cardio    .label  { color: var(--cardio); }
 .card-block.milestone .label  { color: var(--milestone); }
 .card-block.rest      .label  { color: var(--paper-low); }
@@ -128,7 +128,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .zone.yellow { border-color: var(--milestone); background: color-mix(in srgb, var(--milestone) 12%, transparent); }
 .zone.yellow .score, .zone.yellow .label-line { color: var(--milestone); }
 .zone.red    { border-color: var(--strength);  background: color-mix(in srgb, var(--strength) 12%, transparent); }
-.zone.red    .score, .zone.red    .label-line { color: var(--strength); }
+.zone.red    .score { color: var(--strength); }   /* 38px display = large text, 3:1 ok */
+.zone.red    .label-line { color: var(--red-text); }   /* small label needs 4.5:1 */
 
 /* ---------- INPUTS ---------- */
 .field {
@@ -322,6 +323,6 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   text-align: center;
 }
 .toast.show { opacity: 1; }
-.toast.error { border-color: var(--strength); color: var(--strength); }
+.toast.error { border-color: var(--strength); color: var(--red-text); }
 .toast.success { border-color: var(--mobility); color: var(--mobility); }
 

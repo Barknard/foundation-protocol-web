@@ -247,7 +247,7 @@ function renderToday() {
   // One coaching banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
     const sc = standingCall();
-    if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--${sc.cls});">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
+    if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
     // DISMISSIBLE LAYOFF BANNER: a forward clock jump (or a clock fix) can manufacture a bogus "time off".
     // "I didn't take time off" clears the return-ramp and records the dismissed gap so the same gap
     // (or smaller) can't re-arm the banner on the next render.
@@ -269,9 +269,15 @@ function renderToday() {
       // DAY-GATE: already checked in today → call up top + done/countdown. Next session locks until the
       // next local calendar day (msUntilTomorrow), so you can't run ahead. One session a day.
       const o = OUTCOMES[lastToday.decision] || OUTCOMES.repeat;
-      return `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
-      <div class="sp-12"></div>
-      <div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
+      // When an injury is active the recovery banner above already states the call (e.g. "Rest & protect")
+      // and carries the "Re-check pain" action — repeating it as a separate "Today's call: Rest today" card
+      // is pure redundancy, so skip it. The countdown card still shows when the next session opens.
+      const callCard = standingCall() ? '' : `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
+      <div class="sp-12"></div>`;
+      const doneMsg = standingCall()
+        ? `Logged — your next check-in opens in`
+        : `Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in`;
+      return `${callCard}<div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">${doneMsg} <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
       `;
     })() : `
     ${(() => {
@@ -342,31 +348,48 @@ function bindToday() {
 
 // ---------- CHECK ----------
 function bodyMap(sel) {
-  // A head→foot grid of labelled toggle buttons. Real <button>s give native keyboard activation and
-  // ≥50px hit targets with real gutters — the old SVG silhouette packed ~27×22px regions edge-to-edge
-  // (WCAG 2.5.5/2.5.8 fail) on the app's single most safety-critical input. The data-part strings are
-  // unchanged, so engine.applyCheck()/injury logic sees exactly the same parts.
-  const ROWS = [
-    ['head/neck'],
-    ['left shoulder', 'right shoulder'],
-    ['left arm', 'right arm'],
-    ['chest'],
-    ['core'],
-    ['hip / groin'],
-    ['left thigh', 'right thigh'],
-    ['left knee', 'right knee'],
-    ['left lower leg', 'right lower leg'],
-    ['left foot', 'right foot'],
-  ];
-  const disp = (p) => p.charAt(0).toUpperCase() + p.slice(1);
-  const btn = (p) => {
-    const on = sel.includes(p);
-    // The ✓ glyph is always present; CSS reveals it only on .sel (selection = fill + glyph, a non-colour cue).
-    return `<button type="button" class="bm-btn${on ? ' sel' : ''}" data-part="${escHtml(p)}" aria-pressed="${on ? 'true' : 'false'}" aria-label="${escHtml(p)}">${svgUse('ic-check', 16)}<span class="bm-lbl">${escHtml(disp(p))}</span></button>`;
-  };
-  return `<div class="bodymap-grid" role="group" aria-label="Body map — choose where it hurts. Tap all that apply.">
-    ${ROWS.map(r => `<div class="bm-row">${r.map(btn).join('')}</div>`).join('')}
-  </div>`;
+  // A tappable front-facing body silhouette (the visual "where does it hurt?" figure). Every region is
+  // an enlarged hit zone that renders >=48px in BOTH axes at phone width, with a real gutter between the
+  // left/right pairs — so it's a clear image AND clears the WCAG 2.5.5/2.5.8 tap-target minimum (the
+  // previous figure packed ~27x22px regions edge-to-edge). data-part strings are unchanged → engine/injury
+  // logic is identical. role=button + aria-pressed + Enter/Space keyboard (wired in bindCheck).
+  const a = (part) => `data-part="${escHtml(part)}" role="button" tabindex="0" aria-label="${escHtml(part)}" aria-pressed="${sel.includes(part) ? 'true' : 'false'}"`;
+  const on = (part) => sel.includes(part) ? ' sel' : '';
+  const seg = (part, x, y, w, h, rx) => `<rect class="bm-seg${on(part)}" ${a(part)} x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx == null ? 4 : rx}"/>`;
+  const segC = (part, cx, cy, r) => `<circle class="bm-seg${on(part)}" ${a(part)} cx="${cx}" cy="${cy}" r="${r}"/>`;
+  // Stocky proportions (viewBox 100x152) so the WHOLE figure fits one phone screen with no scroll, while
+  // every region still renders ~44-48px at phone width (the figure is height-fitted by fitBodyMap()).
+  // Distinct shapes per leg segment so they don't all read as identical squares: thigh = wide tall block,
+  // knee = CIRCLE (a joint), shin = narrower tall block, foot = wide landscape block. Centre gutter (x48|x52).
+  return `<svg viewBox="0 0 100 152" class="bodymap" role="group" aria-label="Body map — tap where it hurts. Select all that apply.">
+    ${segC('head/neck',50,12,11)}
+    ${seg('left shoulder',22,24,16,15,5)}${seg('right shoulder',62,24,16,15,5)}
+    ${seg('chest',38,25,24,15,5)}${seg('core',39,42,22,15,5)}
+    ${seg('left arm',13,26,15,42,7)}${seg('right arm',72,26,15,42,7)}
+    ${seg('hip / groin',34,59,32,16,6)}
+    ${seg('left thigh',31,77,17,20,7)}${seg('right thigh',52,77,17,20,7)}
+    ${segC('left knee',39.5,105,8.5)}${segC('right knee',60.5,105,8.5)}
+    ${seg('left lower leg',32,115,15,18,5)}${seg('right lower leg',53,115,15,18,5)}
+    ${seg('left foot',29,135,19,15,7)}${seg('right foot',52,135,19,15,7)}
+  </svg>`;
+}
+// Live breadcrumb text for the body-map selection.
+function bmPickText(parts) {
+  if (!parts || !parts.length) return 'Tap the figure to mark where it hurts.';
+  return 'Hurting: ' + parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' · ');
+}
+// Size the body figure to fill exactly the space left between the prompt above and the "Nothing hurts"
+// button + fixed footer below, so the whole hurt screen fits one phone viewport with NO scroll on any
+// device. Regions then render as large as that space allows (~48px on a 390x844 phone).
+function fitBodyMap() {
+  const svg = document.querySelector('svg.bodymap');
+  if (!svg) return;
+  // top is fixed by the prompt/breadcrumb above (independent of the figure's own height), so no reset needed.
+  const top = svg.getBoundingClientRect().top;
+  const main = document.querySelector('.app-main');
+  const padB = (main ? parseFloat(getComputedStyle(main).paddingBottom) : 0) || 96;   // reserves the fixed footer
+  const avail = (window.innerHeight || 800) - top - padB - 14;   // +14 = figure bottom margin + safety
+  svg.style.height = Math.max(260, Math.min(avail, 540)) + 'px';
 }
 function renderCheck() {
   ensureSession();
@@ -390,11 +413,10 @@ function renderCheck() {
     ${reChk ? `<p class="body-dim">Still sore, or good to ease back in?</p><div class="sp-20"></div>` : `<div class="sp-8"></div>`}
     ${t.hurt ? `
     <button class="chk-min" data-clearhurt aria-label="Change your goal or feeling answer">${gl} · Feel ${t.feel?`${t.feel}/5`:'—'} <span class="more">change</span></button>
-    <div class="sp-12"></div>
-    <p class="label">Where does it hurt? Tap all that apply.</p><div class="sp-8"></div>
+    <div class="sp-8"></div>
+    <p class="label bm-prompt">Where does it hurt? Tap all that apply.</p>
+    <p class="bm-pick" id="bm-pick" aria-live="polite">${escHtml(bmPickText(t.parts))}</p>
     ${bodyMap(t.parts)}
-    <div class="sp-12"></div>
-    <button class="ghost" data-clearhurt>Nothing hurts — clear</button>
     ` : `
     <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
     ${(() => {
@@ -434,7 +456,10 @@ function renderCheck() {
 function checkFooter() {
   const t = state._chk || {};
   const ready = t.goalMet && t.feel;
-  return `<div class="wiz-nav"><button class="onb-next" id="chk-go" ${ready?'':'disabled'} aria-describedby="chk-gate">See the call</button></div>`;
+  // In hurt mode the "Nothing hurts — clear" escape lives here (not in the scroll area) so the body figure
+  // can fill the screen with no scroll. Single primary CTA otherwise.
+  const clear = t.hurt ? `<button class="onb-back ghost" data-clearhurt>Nothing hurts</button>` : '';
+  return `<div class="wiz-nav">${clear}<button class="onb-next" id="chk-go" ${ready?'':'disabled'} aria-describedby="chk-gate">See the call</button></div>`;
 }
 function bindCheck() {
   if (state.ui.screen !== 'check' || !state._chk) return;   // deferred bind fired after navigating away
@@ -486,17 +511,26 @@ function bindCheck() {
   document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; state._chk.parts = []; state._chk.redFlag = false; state._chk.painChecked = false; render(); }));
   const flag = document.getElementById('chk-flag');
   if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
-  // Body-map regions are real <button>s (native Enter/Space), multi-select (aria-pressed). Toggle in place,
-  // keeping the leading ✓ glyph in sync so selection reads without colour (CVD) and focus isn't lost.
+  // Body-map regions are SVG shapes with role=button (multi-select, aria-pressed). Toggle in place
+  // (no re-render → keeps scroll position and focus). SVG isn't a native button, so wire Enter/Space.
   document.querySelectorAll('[data-part]').forEach(el => {
-    el.addEventListener('click', () => {
+    const toggle = () => {
       const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
       const on = i < 0;
       if (on) state._chk.parts.push(p); else state._chk.parts.splice(i, 1);
-      el.classList.toggle('sel', on);   // CSS reveals the always-present ✓ glyph on .sel
+      el.classList.toggle('sel', on);
       el.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
+      const pick = document.getElementById('bm-pick');   // live "Hurting: …" breadcrumb
+      if (pick) pick.textContent = bmPickText(state._chk.parts);
+    };
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
   });
+  // Fit the body figure to fill the viewport (no scroll); keep it fitted on rotate/resize.
+  if (state._chk.hurt) {
+    requestAnimationFrame(() => { try { fitBodyMap(); } catch (_) {} });
+    if (!window._bmFitBound) { window._bmFitBound = true; window.addEventListener('resize', () => { try { fitBodyMap(); } catch (_) {} }); }
+  }
   function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
   function updateGate() { const el = document.getElementById('chk-gate'); if (el) el.textContent = (state._chk.goalMet && state._chk.feel) ? '' : 'Pick a goal and how you feel to see your call.'; }
   const go = document.getElementById('chk-go');
@@ -688,13 +722,13 @@ function renderProgress() {
       <div><span class="label">Last 14</span><div class="sp-8"></div>
         <div class="row between"><span class="body-dim">${svgUse('ic-check',12)} Done</span><span class="metric" style="color:var(--mobility);">${done}</span></div>
         <div class="row between"><span class="body-dim">${svgUse('ic-goal-partial',12)} Partial</span><span class="metric" style="color:var(--milestone);">${partial}</span></div>
-        <div class="row between"><span class="body-dim">${svgUse('ic-goal-missed',12)} Missed</span><span class="metric" style="color:var(--strength);">${missed}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-goal-missed',12)} Missed</span><span class="metric" style="color:var(--red-text);">${missed}</span></div>
       </div>
       <div><span class="label">All-time calls</span><div class="sp-8"></div>
         <div class="row between"><span class="body-dim">${svgUse('ic-call-progress',12)} Progress</span><span class="metric" style="color:var(--mobility);">${mix.progress}</span></div>
         <div class="row between"><span class="body-dim">${svgUse('ic-call-repeat',12)} Repeat</span><span class="metric" style="color:var(--cardio);">${mix.repeat}</span></div>
         <div class="row between"><span class="body-dim">${svgUse('ic-call-modify',12)} Modify</span><span class="metric" style="color:var(--milestone);">${mix.modify}</span></div>
-        <div class="row between"><span class="body-dim">${svgUse('ic-call-rest',12)} Rest</span><span class="metric" style="color:var(--strength);">${mix.rest}</span></div>
+        <div class="row between"><span class="body-dim">${svgUse('ic-call-rest',12)} Rest</span><span class="metric" style="color:var(--red-text);">${mix.rest}</span></div>
       </div>
     </div></div>`}
     <div class="sp-8"></div>

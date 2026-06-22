@@ -345,8 +345,9 @@ function standingCall() {
   const days = injuryRiceDays(inj);
   const dayNum = Math.min(days, injuryElapsedDays(inj) + 1);
   const parts = (inj.parts || []).join(', ') || 'injury';
-  const ext = inj.extended ? ` · extended ×${inj.extended}` : '';
-  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest & protect', action: `Protect &amp; gently load the area — keep moving everything that does not hurt (PEACE &amp; LOVE). Protect window through ${fmtDate(inj.riceUntil)}.` };
+  const ext = inj.extended ? ' · extended' : '';
+  // Keep it tight — the "day N of M" label already conveys the protect window, so don't repeat the end date.
+  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest & protect', action: `Keep moving everything that doesn't hurt — gentle, pain-free motion heals faster than total rest (PEACE &amp; LOVE).` };
   return { cls: 'milestone', label: `Recovering · ${parts} · easing back${ext}`, title: 'Ease back in', action: `Pain-monitored loading — keep pain at or under ~3–5/10 and gone by next morning. Re-check by ${fmtDate(injuryEnd(inj))}.` };
 }
 

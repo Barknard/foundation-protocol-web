@@ -516,6 +516,7 @@ const FIG_POSES = {
     }
   },
   "hip_abd": {
+    "frame": "8 34 48 28",
     "f1": {
       "pelvis": [
         33,
