@@ -256,7 +256,7 @@ function renderToday() {
     if (age != null && age <= 7) return '';
     const msg = (age == null) ? 'Your log lives only on this phone — keep a copy somewhere safe.' : `It's been ${age} day${age === 1 ? '' : 's'} since your last backup.`;
     // Neutral strip (no gold stripe / no gold button) — solid gold is reserved for the day's primary action.
-    return `<div class="card-block" style="margin-bottom:12px;"><div class="stripe"></div><div class="card bordered" style="padding:14px 16px;"><div class="rx-head"><span class="label">Back up your data</span><button class="icon" id="backup-dismiss" aria-label="Dismiss backup reminder" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(msg)} <button class="more" id="backup-now">Export now &rarr;</button></div></div></div>`;
+    return `<div class="card-block" style="margin-bottom:12px;"><div class="stripe"></div><div class="card bordered" style="padding:14px 16px;"><div class="rx-head"><span class="label">Back up your data</span><button class="icon" id="backup-dismiss" aria-label="Dismiss backup reminder" style="background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(msg)} <button class="more" id="backup-now">Export now &rarr;</button></div></div></div>`;
   })();
   // One coaching banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
@@ -266,7 +266,7 @@ function renderToday() {
     // "I didn't take time off" clears the return-ramp and records the dismissed gap so the same gap
     // (or smaller) can't re-arm the banner on the next render.
     if (layoff && state._layoffDismissedGap != null && layoff.gap <= state._layoffDismissedGap) return '';
-    if (layoff) return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><div class="rx-head"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><button class="icon" id="layoff-dismiss" aria-label="Dismiss — I didn't take time off" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)} <button class="more" id="layoff-not-off">I didn't take time off</button></div></div></div>`;
+    if (layoff) return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><div class="rx-head"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><button class="icon" id="layoff-dismiss" aria-label="Dismiss — I didn't take time off" style="background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)} <button class="more" id="layoff-not-off">I didn't take time off</button></div></div></div>`;
     if (deloadActive()) return `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>`;
     return '';
   })();
@@ -286,7 +286,7 @@ function renderToday() {
       // When an injury is active the recovery banner above already states the call (e.g. "Rest & protect")
       // and carries the "Re-check pain" action — repeating it as a separate "Today's call: Rest today" card
       // is pure redundancy, so skip it. The countdown card still shows when the next session opens.
-      const callCard = standingCall() ? '' : `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
+      const callCard = standingCall() ? '' : `<div class="card-block ${o.cls}"><div class="stripe"></div><div class="card" style="padding:16px;"><div class="rx-head"><span class="label">${svgUse('ic-check',13)} Today's call</span><button class="icon" data-go="check" data-p-edit="1" aria-label="Edit today's answer" style="background:none;border:none;color:var(--paper-dim);">${PENCIL}</button></div><div class="sp-4"></div><div class="headline serif">${escHtml(o.title)}</div><div class="sp-4"></div><div class="body-dim">${escHtml(o.action)}</div></div></div>
       <div class="sp-12"></div>`;
       const doneMsg = standingCall()
         ? `Logged — your next check-in opens in`

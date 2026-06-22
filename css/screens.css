@@ -1,6 +1,9 @@
 /* ---------- TODAY: EXPANDABLE PRESCRIPTION ---------- */
 .today-block { width: 100%; text-align: left; background: transparent; border: none; padding: 0; margin: 0; display: block; height: auto; color: var(--paper); cursor: pointer; }
-.rx-head { display: grid; grid-template-columns: 1fr 20px; gap: 10px; align-items: center; }
+.rx-head { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+/* card-header icons (dismiss ×, edit pencil): drop the base button's 64px min-width floor so they don't
+   balloon and overflow the card's right edge — sit as a tidy 48px tap target inside the card padding. */
+.rx-head .icon { min-width: 0; }
 .rx-chev { color: var(--paper-low); transition: transform 220ms ease; display: flex; align-items: center; justify-content: center; }
 .today-block[aria-expanded="true"] .rx-chev { transform: rotate(90deg); }
 .ex-panel { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 340ms ease, opacity 240ms ease; }
