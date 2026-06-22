@@ -42,6 +42,13 @@
 #scroll-cue .sc-chev { display: block; animation: scrollbob 1.3s ease-in-out infinite; }
 @keyframes scrollbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { #scroll-cue .sc-chev { animation: none; } }
+/* "The call" result — trim the generous spacers + default <p> margins so the common calls
+   (Progress / Repeat / Rest) fit one screen with no scroll; the longer Modify (with the
+   "Today, easier" plan cards) keeps the scroll cue. */
+.result-screen > p { margin: 0; }
+.result-screen .sp-24 { height: 12px; }
+.result-screen .sp-48 { height: 16px; }
+.result-screen .sp-20 { height: 10px; }
 .bm-prompt { margin: 0; }
 .bm-pick { font-size: 15px; color: var(--paper); margin: 4px 0 2px; min-height: 20px; text-align: center; }
 /* `.more` is an inline TEXT LINK, not a button. Without this a bare <button class="more"> inherits the

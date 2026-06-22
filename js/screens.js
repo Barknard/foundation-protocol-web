@@ -596,7 +596,7 @@ function renderResult(outcomeKey) {
         <div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div></div></div>`).join('')}`;
   }
   const advanced = o.key === 'progress';
-  return `<div class="screen no-nav">
+  return `<div class="screen no-nav result-screen">
     <div class="sp-24"></div>
     <p class="label">The call</p><div class="sp-8"></div>
     <div style="color:var(--${o.cls});display:flex;align-items:center;gap:10px;">${svgUse('ic-call-'+o.key,30)}<h1 class="display-l serif" style="color:var(--${o.cls});margin:0;">${escHtml(o.title)}</h1></div>
