@@ -414,6 +414,7 @@ function renderCheck() {
   const todayCheck = state.checks.find(c => c.date === isoToday());
   if (state.ui.params && state.ui.params.edit && todayCheck) {
     state._chk = { goalMet: todayCheck.goalMet, feel: todayCheck.feel, hurt: !!todayCheck.hurt, parts: (todayCheck.parts || []).slice(), redFlag: false, painChecked: true };
+    state.ui.params.edit = false;   // consume ONCE — otherwise every re-render (e.g. changing feel calls render()) re-prefills from the saved check and clobbers the in-progress edit
   }
   state._chk = state._chk || { goalMet: allEx ? 'done' : null, feel: null, hurt: false, parts: [], redFlag: false };
   if (!state._chk.parts) state._chk.parts = [];
