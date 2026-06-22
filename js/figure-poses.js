@@ -124,10 +124,10 @@ const FIG_POSES = {
     "dur": 2200,
     "f1": {
       "pelvis": [
-        26.46,
-        42.29
+        30.04,
+        52.3
       ],
-      "torso": 140.93,
+      "torso": 177.64,
       "head": 175.92,
       "nearArm": [
         16,
@@ -138,39 +138,39 @@ const FIG_POSES = {
         4
       ],
       "nearLeg": [
-        11.29,
-        86.03,
+        311.48,
+        80.39,
         0
       ],
       "farLeg": [
-        13.04,
-        84.33,
-        354.93
+        315.96,
+        84.48,
+        356.34
       ]
     },
     "f2": {
       "pelvis": [
-        29.32,
-        48.2
+        28.46,
+        45.35
       ],
-      "torso": 163.43,
-      "head": 176.33,
+      "torso": 156.04,
+      "head": 169.72,
       "nearArm": [
-        14.54,
+        22.44,
         359.34
       ],
       "farArm": [
-        15.78,
-        356.65
+        22.42,
+        3.44
       ],
       "nearLeg": [
-        341.63,
+        353.18,
         90.46,
         0
       ],
       "farLeg": [
-        340.46,
-        93.5,
+        352,
+        89.44,
         0
       ]
     }
@@ -198,8 +198,8 @@ const FIG_POSES = {
       ],
       "farLeg": [
         122,
-        130,
-        6
+        116,
+        20.25
       ],
       "ground": 56,
       "wallX": 44,
@@ -241,9 +241,9 @@ const FIG_POSES = {
         2
       ],
       "farLeg": [
-        122,
-        118,
-        12
+        116.71,
+        112.67,
+        2.19
       ],
       "ground": 56,
       "wallX": 44,
@@ -357,8 +357,8 @@ const FIG_POSES = {
   "sl_stance": {
     "f1": {
       "pelvis": [
-        25,
-        34
+        25.11,
+        33.01
       ],
       "torso": 271,
       "head": 271,
@@ -411,8 +411,8 @@ const FIG_POSES = {
   "sl_squat": {
     "f1": {
       "pelvis": [
-        25,
-        33
+        24.89,
+        32.58
       ],
       "torso": 272,
       "head": 272,
@@ -427,7 +427,7 @@ const FIG_POSES = {
       "nearLeg": [
         90,
         90,
-        5
+        359.99
       ],
       "farLeg": [
         118,
@@ -437,8 +437,8 @@ const FIG_POSES = {
     },
     "f2": {
       "pelvis": [
-        25,
-        35.36
+        23.61,
+        33.44
       ],
       "torso": 276,
       "head": 276,
@@ -452,8 +452,8 @@ const FIG_POSES = {
       ],
       "nearLeg": [
         72,
-        100,
-        5
+        101.14,
+        358.95
       ],
       "farLeg": [
         120,
@@ -467,14 +467,14 @@ const FIG_POSES = {
     "f1": {
       "view": "front",
       "pelvis": [
-        25,
-        35.1
+        29.96,
+        34.51
       ],
       "torso": 266,
       "hipW": 7,
       "leftLeg": [
-        93,
-        97
+        120.39,
+        87.29
       ],
       "rightLeg": [
         80,
@@ -582,8 +582,8 @@ const FIG_POSES = {
     "f1": {
       "view": "front",
       "pelvis": [
-        25,
-        35.23
+        24.68,
+        33.58
       ],
       "torso": 269,
       "hipW": 9,
@@ -610,8 +610,8 @@ const FIG_POSES = {
       ],
       "intensity": {
         "at": [
-          18,
-          47
+          15.5,
+          44.5
         ],
         "dir": 180,
         "r": 2.2
@@ -620,8 +620,8 @@ const FIG_POSES = {
     "f2": {
       "view": "front",
       "pelvis": [
-        25,
-        35.35
+        24.68,
+        33.36
       ],
       "torso": 269,
       "hipW": 9,
@@ -634,7 +634,7 @@ const FIG_POSES = {
         90
       ],
       "leftLeg": [
-        114,
+        109.01,
         80
       ],
       "rightLeg": [
@@ -727,8 +727,8 @@ const FIG_POSES = {
     "f1": {
       "view": "front",
       "pelvis": [
-        25,
-        33
+        24.89,
+        32.86
       ],
       "torso": 269.86,
       "hipW": 8,
@@ -758,8 +758,8 @@ const FIG_POSES = {
     "f2": {
       "view": "front",
       "pelvis": [
-        25,
-        38.46
+        25.04,
+        36.36
       ],
       "torso": 271,
       "hipW": 8,
@@ -844,18 +844,18 @@ const FIG_POSES = {
   "plank": {
     "f1": {
       "pelvis": [
-        26,
-        45.94
+        25.54,
+        44.36
       ],
       "torso": 12,
       "head": 12,
       "nearArm": [
         95,
-        180
+        359.57
       ],
       "farArm": [
         92,
-        180
+        359.71
       ],
       "nearLeg": [
         162,
@@ -870,18 +870,18 @@ const FIG_POSES = {
     },
     "f2": {
       "pelvis": [
-        26,
-        45.94
+        25.25,
+        44.58
       ],
       "torso": 12,
       "head": 12,
       "nearArm": [
         95,
-        180
+        0.63
       ],
       "farArm": [
         92,
-        180
+        359.08
       ],
       "nearLeg": [
         162,
@@ -898,8 +898,8 @@ const FIG_POSES = {
   "rdl": {
     "f1": {
       "pelvis": [
-        25,
-        33
+        22.25,
+        32.79
       ],
       "torso": 270,
       "head": 270,
@@ -933,17 +933,17 @@ const FIG_POSES = {
       ],
       "intensity": {
         "at": [
-          22,
+          20,
           40
         ],
-        "dir": 200,
-        "r": 2.4
+        "dir": 195,
+        "r": 2.2
       }
     },
     "f2": {
       "pelvis": [
-        22,
-        35.08
+        22.04,
+        33.08
       ],
       "torso": 20,
       "head": 12,
@@ -970,8 +970,8 @@ const FIG_POSES = {
   "oh_press": {
     "f1": {
       "pelvis": [
-        25,
-        34.65
+        24.75,
+        32.94
       ],
       "torso": 270,
       "head": 270,
@@ -1006,8 +1006,8 @@ const FIG_POSES = {
     },
     "f2": {
       "pelvis": [
-        25,
-        34.65
+        24.75,
+        33.01
       ],
       "torso": 270,
       "head": 270,
@@ -1044,8 +1044,8 @@ const FIG_POSES = {
   "split_sq": {
     "f1": {
       "pelvis": [
-        26,
-        35.09
+        32.96,
+        34.01
       ],
       "torso": 278,
       "head": 278,
@@ -1058,14 +1058,14 @@ const FIG_POSES = {
         124
       ],
       "nearLeg": [
-        86,
-        96,
+        66.79,
+        100.97,
         0
       ],
       "farLeg": [
-        120,
-        195,
-        5
+        144.96,
+        179.8,
+        180.06
       ],
       "ground": 57,
       "propsBehind": [
@@ -1082,8 +1082,8 @@ const FIG_POSES = {
     },
     "f2": {
       "pelvis": [
-        25,
-        36.44
+        28.18,
+        39.36
       ],
       "torso": 280,
       "head": 280,
@@ -1096,14 +1096,14 @@ const FIG_POSES = {
         132
       ],
       "nearLeg": [
-        64,
+        27.76,
         104,
         0
       ],
       "farLeg": [
-        121.5,
-        200.22,
-        0.13
+        134.99,
+        215.68,
+        182.64
       ],
       "ground": 57,
       "propsBehind": [
@@ -1123,7 +1123,7 @@ const FIG_POSES = {
     "f1": {
       "pelvis": [
         30,
-        54
+        53.5
       ],
       "torso": 180,
       "head": 180,
@@ -1149,7 +1149,7 @@ const FIG_POSES = {
     "f2": {
       "pelvis": [
         30,
-        54
+        53.5
       ],
       "torso": 180,
       "head": 180,
@@ -1177,8 +1177,8 @@ const FIG_POSES = {
     "dur": 2200,
     "f1": {
       "pelvis": [
-        26,
-        40
+        25.18,
+        32.94
       ],
       "torso": 305,
       "head": 312,
@@ -1191,12 +1191,12 @@ const FIG_POSES = {
         110
       ],
       "nearLeg": [
-        98,
+        83.87,
         100,
         4
       ],
       "farLeg": [
-        94,
+        82.89,
         98,
         4
       ],
