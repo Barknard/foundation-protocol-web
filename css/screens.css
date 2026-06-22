@@ -26,6 +26,19 @@
 .bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
 .bm-seg:hover { fill: var(--surface-2); }
 .bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2.5; }   /* red fill + bright white outline = non-colour cue (CVD) */
+/* "scroll for more" cue — nested down-chevron that bobs; shown only on scrollable screens, hidden at bottom */
+#scroll-cue { position: fixed; left: 50%; transform: translateX(-50%); z-index: 45; pointer-events: none;
+  bottom: calc(clamp(66px, 9.5vh, 96px) + env(safe-area-inset-bottom) + 10px);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 8px 18px 6px;
+  color: var(--paper-dim); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+  /* soft dark halo so the cue reads cleanly when it floats over content */
+  background: radial-gradient(60% 64% at 50% 52%, var(--ink) 38%, rgba(26,22,20,0) 78%);
+  opacity: 0; transition: opacity 220ms ease; }
+#scroll-cue.show { opacity: .92; }
+#scroll-cue .sc-chev { display: block; animation: scrollbob 1.3s ease-in-out infinite; }
+@keyframes scrollbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { #scroll-cue .sc-chev { animation: none; } }
 .bm-prompt { margin: 0; }
 .bm-pick { font-size: 15px; color: var(--paper); margin: 4px 0 2px; min-height: 20px; text-align: center; }
 /* `.more` is an inline TEXT LINK, not a button. Without this a bare <button class="more"> inherits the

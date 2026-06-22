@@ -46,7 +46,8 @@
   --strength: #CE4F38;   /* red  (Rest / missed / injury) — warmer + darker, anchors the low end. Use for STRIPES/FILLS/BORDERS. */
   --red-text: #E0735C;   /* lighter red for SMALL TEXT/labels/digits: ~5.8:1 on ink (vs --strength 4.1:1 which fails 4.5). */
   --cardio: #5B86C4;     /* blue (Repeat) — slightly deeper */
-  --mobility: #92C285;   /* green (Progress / done) — same sage hue, lighter so it clears red */
+  --mobility: #B6D9A8;   /* green (Progress / done) — lightened so its LUMINANCE clears gold/milestone too
+                            (was #92C285 ≈ same luminance as gold → the two collapsed together in greyscale/CVD) */
   --milestone: #E3AC3C;  /* gold (brand / Modify / partial) — a touch lighter to clear red under CVD */
   --brand-blue: #7C9AB8; /* the "HARD" blue-stone of the logo, lightened for legible title text */
   --tap-min: 48px;

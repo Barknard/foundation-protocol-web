@@ -108,6 +108,20 @@ function render() {
   bindEvents();
   setSync(state.ui.syncStatus, state.ui.syncMessage);
   syncHeaderOffset();
+  requestAnimationFrame(updateScrollCue);   // show/hide the "scroll for more" hint for this screen
+}
+// Show the bobbing "scroll" cue only when the page is scrollable AND not yet at the bottom; hide otherwise.
+function updateScrollCue() {
+  const cue = document.getElementById('scroll-cue'); if (!cue) return;
+  const se = document.scrollingElement || document.documentElement;
+  const remaining = se.scrollHeight - se.scrollTop - se.clientHeight;
+  const scrollable = se.scrollHeight > se.clientHeight + 8;
+  cue.classList.toggle('show', scrollable && remaining > 24);
+}
+if (typeof window !== 'undefined' && !window._scrollCueBound) {
+  window._scrollCueBound = true;
+  window.addEventListener('scroll', updateScrollCue, { passive: true });
+  window.addEventListener('resize', updateScrollCue);
 }
 // The header is fixed; clear the scrolling main by the header's ACTUAL height so a 2-line journey crumb
 // (long phase names on narrow phones), a 1-line title screen, and notch safe-areas all clear exactly.
