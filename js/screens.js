@@ -197,6 +197,20 @@ function dayWhy() {
   return { line, points, formula, lead, trend };
 }
 
+// A quiet engraved-stone / Sisyphus-spirit line for the post-check "done" card — keeps the brand's
+// voice alive on a screen people see daily. Deterministic: advances one line per completed check-in.
+const STONE_LINES = [
+  'You showed up. That is the whole job today.',
+  'Slow, repeated, unglamorous — that is how it holds.',
+  'You did the part most people skip.',
+  'One more stone up the hill. It counts.',
+  'Nothing dramatic happened. That is the win.',
+  'The work is showing up again tomorrow. You will.',
+  'Quietly stronger than yesterday. That is enough.',
+  'It gets easier — because of days exactly like this one.',
+];
+function stoneLine() { return STONE_LINES[(state.checks ? state.checks.length : 0) % STONE_LINES.length]; }
+
 function renderToday() {
   ensureSession();
   pruneInjury();
@@ -277,7 +291,7 @@ function renderToday() {
       const doneMsg = standingCall()
         ? `Logged — your next check-in opens in`
         : `Nice work showing up. Rest up — hydrate and get some protein in. Your next session opens in`;
-      return `${callCard}<div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">${doneMsg} <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div></div></div>
+      return `${callCard}<div class="card-block mobility"><div class="stripe"></div><div class="card" style="padding:16px;"><span class="label" style="color:var(--mobility);">You're done for today</span><div class="sp-4"></div><div class="body">${doneMsg} <span id="next-unlock" class="metric" style="color:var(--milestone);">${fmtCountdown(msUntilTomorrow())}</span> (tomorrow).</div>${standingCall() ? '' : `<div class="sp-12"></div><p class="label" style="text-transform:none;letter-spacing:.02em;font-style:italic;color:var(--paper-dim);margin:0;">${escHtml(stoneLine())}</p>`}</div></div>
       `;
     })() : `
     ${(() => {
@@ -447,7 +461,8 @@ function renderCheck() {
       </div></div>`
     : `<button class="hurt-toggle" id="chk-hurt">Something hurts?</button>`}
     <div class="sp-16"></div>
-    <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016) — feel rough or flag pain and it eases you back with pain-monitored loading.</p>
+    <p class="body-dim" style="font-size: 14px;">How you feel drives the call — flag pain or feel rough and it eases you back, keeping pain low and gone by morning.</p>
+    ${(!state.checks || state.checks.length === 0) ? `<div class="sp-8"></div><p class="body-dim" style="font-size:14px;">Your two answers become your call for today — the app's read on whether to push, hold, ease off, or rest.</p>` : ''}
     <p class="gate-hint" id="chk-gate" aria-live="polite">${ready ? '' : 'Pick a goal and how you feel to see your call.'}</p>
     `}
   </div>`;

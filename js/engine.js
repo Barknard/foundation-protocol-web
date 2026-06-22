@@ -79,7 +79,7 @@ function advancePointer() {
   }
   state.phase = { phase, week, dayInWeek, sessionsCleared: (cur.sessionsCleared ?? 0) + 1, lastDecision: new Date().toISOString() };
 }
-const INJURY_REST = { key: 'rest', title: 'Rest & protect', cls: 'strength',
+const INJURY_REST = { key: 'rest', title: 'Rest and protect', cls: 'strength',
   action: 'Offload the painful movement today. Keep moving everything that does not hurt.',
   why: 'For a fresh tweak, current guidance is PEACE & LOVE, not RICE: Protect (briefly offload), Elevate, Avoid anti-inflammatories/ice as a "healing" step, Compress, Educate — then over the next days gently Load, stay Optimistic, do easy pain-free cardio (Vascularization) and graded Exercise. Gentle early loading beats prolonged rest (BJSM 2019/2020). Prefer paracetamol over NSAIDs for pain; re-check tomorrow. Warning signs — can\'t bear weight, numbness, a visible deformity, joint locking/giving way, a "pop", or rapid swelling — mean see a clinician (GP, physio, urgent care) before training it, more so at 40+.' };
 const INJURY_FLAG = { key: 'rest', title: 'See a clinician first', cls: 'strength',

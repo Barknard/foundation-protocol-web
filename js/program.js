@@ -3,7 +3,7 @@
 // PHASE + EXERCISE DEFINITIONS (carried from PDF)
 // ============================================================
 const BLOCKS = {
-  ptFull:   { kind: 'mobility',  label: 'PT • 10 min',       title: 'Neuromuscular + Hip', detail: 'Balance • Hip • Tibialis • Calf' },
+  ptFull:   { kind: 'mobility',  label: 'PT • 10 min',       title: 'Neuromuscular + Hip', detail: 'Balance • Hip • Shin • Calf' },
   ptLight:  { kind: 'mobility',  label: 'PT • 8 min',        title: 'Quick mobility',      detail: 'Hips + ankles • Optional' },
   walk30:   { kind: 'cardio',    label: 'Easy • 30 min',       title: 'Walk, conversational', detail: 'Talk-test pace' },
   walk40:   { kind: 'cardio',    label: 'Easy • 40 min',       title: 'Walk, conversational', detail: 'Small hills if available' },
@@ -130,7 +130,7 @@ const EXERCISES = [
     steps:['Conversational pace. Full sentences while moving.','Talk test is the only intensity gauge needed.','Mixed terrain when ready.'],
     cue:'If you cannot finish a sentence, you are over pace.' },
   { key:'run', name:'Easy Run', rx:'30 – 60 min', icon:'ic-running', cat:'Cardio',
-    steps:['Easy, conversational pace — you can talk in full sentences.','HR over pace as the priority.','+10% rule: never more than 110% of 30-day longest.'],
+    steps:['Easy, conversational pace — you can talk in full sentences.','Let heart rate, not pace, set the effort.','+10% rule: never more than 110% of 30-day longest.'],
     cue:'Easy runs feel suspiciously slow. That is the point.' },
   { key:'kb_swing', name:'Kettlebell Swing', rx:'3 × 12 – 15', icon:'ic-kb-swing', cat:'Kettlebell',
     steps:['Hinge at the hips (not a squat) — push hips back, soft knees.','Hike the bell back between your legs, then snap hips forward to float it to chest height.','Arms stay relaxed — hips do the work, not shoulders.','Start ~15 lb; go up (20, 25) as it feels easy. Stop if your low back rounds.'],
@@ -347,8 +347,8 @@ function standingCall() {
   const parts = (inj.parts || []).join(', ') || 'injury';
   const ext = inj.extended ? ' · extended' : '';
   // Keep it tight — the "day N of M" label already conveys the protect window, so don't repeat the end date.
-  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest & protect', action: `Keep moving everything that doesn't hurt — gentle, pain-free motion heals faster than total rest (PEACE &amp; LOVE).` };
-  return { cls: 'milestone', label: `Recovering · ${parts} · easing back${ext}`, title: 'Ease back in', action: `Pain-monitored loading — keep pain at or under ~3–5/10 and gone by next morning. Re-check by ${fmtDate(injuryEnd(inj))}.` };
+  if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest and protect', action: `Keep moving everything that doesn't hurt — gentle, pain-free motion heals faster than total rest.` };
+  return { cls: 'milestone', label: `Recovering · ${parts} · easing back${ext}`, title: 'Ease back in', action: `Ease back in by feel — keep any pain at or under ~3–5/10 and gone by next morning. Re-check by ${fmtDate(injuryEnd(inj))}.` };
 }
 
 // ---- Graded return ramp (after a layoff) + unified load reduction ----

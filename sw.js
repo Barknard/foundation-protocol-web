@@ -13,7 +13,7 @@
         (old caches are deleted in 'activate').
      3. Go back offline — the freshly-cached new shell now serves.
    If you change ANY shell asset, bump CACHE (vX.Y.Z) so the activate step purges the old cache. */
-const CACHE = 'fp-shell-v3.16.11';
+const CACHE = 'fp-shell-v3.16.12';
 const SHELL = [
   './', './index.html', './manifest.json',
   './icon.png', './logo.png',
