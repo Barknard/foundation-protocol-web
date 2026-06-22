@@ -438,6 +438,35 @@ function scenarioGenuine2MonthLayoff() {
   return { name, gap, tier: tier ? tier.level : null, returnRamp: S().returnRamp ? S().returnRamp.level : null };
 }
 
+// Graded STAGE regression on return from a layoff: 5 vs 45 vs 90 vs 250 vs 1000 days set the appropriate stage,
+// regression only ever moves EARLIER (never bumps a low phase up), and the away-days never advance the pointer.
+function scenarioLayoffRegression() {
+  const name = 'layoff stage-regression by gap';
+  const cases = [
+    { days: 5,    from: 3, expect: 3 },   // <2wk: no layoff, no regression
+    { days: 45,   from: 3, expect: 3 },   // ~6wk: load-ease only, no stage reset
+    { days: 90,   from: 3, expect: 2 },   // ~3mo: restart running from Run Introduction
+    { days: 250,  from: 3, expect: 1 },   // ~8mo: rebuild from Foundation
+    { days: 1000, from: 3, expect: 0 },   // ~3yr: full restart from Infrastructure
+    { days: 90,   from: 1, expect: 1 },   // floor is P2 but already at P1 → never bump UP
+  ];
+  const out = [];
+  for (const c of cases) {
+    resetPersona(c.from);
+    setDay('2026-01-01'); doCheck(name, 'done', 5, false);          // baseline (advances within the phase)
+    const clearedBaseline = S().phase.sessionsCleared;
+    const future = addDaysIso('2026-01-01', c.days);
+    setDay(future);
+    doCheck(name, 'done', 5, false);                                // the return check
+    const after = S().phase.phase;
+    assert(after === c.expect, name, `${c.days}d off from P${c.from} → expected P${c.expect}, got P${after}`);
+    // never count an unearned day: a layoff return (>=15d) is held to Repeat, so it must NOT advance the tally
+    if (c.days >= 15) assert(S().phase.sessionsCleared === clearedBaseline, name, `${c.days}d return advanced an unearned session: ${clearedBaseline}->${S().phase.sessionsCleared}`);
+    out.push({ days: c.days, from: c.from, to: after, expected: c.expect });
+  }
+  return { name, cases: out };
+}
+
 // ============================================================
 // RUN
 // ============================================================
@@ -459,6 +488,7 @@ results.push(scenarioDeloadCadence());
 results.push(scenarioTamperBackwardWeek());
 results.push(scenarioTamperForward2Months());
 results.push(scenarioGenuine2MonthLayoff());
+results.push(scenarioLayoffRegression());
 
 console.log('\n==== SCENARIO RESULTS ====');
 for (const r of results) console.log(' ', JSON.stringify(r));

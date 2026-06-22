@@ -89,7 +89,7 @@ const INJURY_FLAG = { key: 'rest', title: 'See a clinician first', cls: 'strengt
 function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   // Single source of truth: hurt → the dedicated injury outcome (clinician on a red flag, else PEACE & LOVE); else decide().
   let outcome = hurt ? (redFlag ? INJURY_FLAG : INJURY_REST) : decide(goalMet, feel, hurt);
-  const cur = state.phase || {};
+  let cur = state.phase || {};
   const today = isoToday();
   // --- Injury handling (PEACE & LOVE / red-flag screen) ---
   const wasInjury = injuryActive();   // ease-back spans the WHOLE injury window (~10d), not just the 3-day protect
@@ -111,6 +111,18 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   if (lay) {   // arm a graded return ramp once, on the real return day — it lightens the prescription over the tier's window
     const rampDays = lay.level === 1 ? 7 : lay.level === 2 ? 21 : 42;
     state.returnRamp = { until: Date.now() + rampDays * 86400000, level: lay.level, pct: lay.pct, startedAt: Date.now() };
+  }
+  // STAGE regression on the genuine return day from a LONG layoff (research-backed — see layoffRegressPhase +
+  // docs/EVIDENCE-REVIEW.md "Detraining model"). Fires once (skipped on a same-day re-edit, which already has
+  // today's row) and only ever moves the pointer to an EARLIER phase. The return day is still held to Repeat
+  // below (the `lay` deload-gate), so this SETS the stage without advancing — and re-progression from here is
+  // fast (muscle memory). It never counts forward a day you didn't complete.
+  const regressTo = (typeof layoffRegressPhase === 'function') ? layoffRegressPhase(priorGap) : null;
+  const isReturnDay = !state.checks.some(c => c && c.date === today);
+  if (regressTo != null && isReturnDay && (cur.phase ?? 0) > regressTo) {
+    state.phase = { phase: regressTo, week: 1, dayInWeek: 1, sessionsCleared: cur.sessionsCleared ?? 0, lastDecision: cur.lastDecision ?? null };
+    cur = state.phase;
+    logEvent('layoff', `${priorGap} days off — detraining reset to ${(typeof PHASES !== 'undefined' && PHASES[regressTo]) ? PHASES[regressTo].name : 'an earlier phase'}; re-progression is faster the second time.`);
   }
   // Hold the pointer on a scheduled/under-recovery deload day too: a Progress becomes Repeat so the documented
   // "lighter week every ~5 weeks" actually paces recovery instead of only lightening the prescription text.

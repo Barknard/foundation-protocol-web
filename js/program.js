@@ -296,6 +296,21 @@ function layoffTier(gap) {
   if (g < 57) return { gap: g, level: 2, pct: 70, title: 'Easing back in', msg: `${g} days off (~1-2 months). Start ~30% lighter, higher reps, +10%/week. Running throttles back to early run-walk intervals — tendons de-adapt faster than your heart and muscle.` };
   return { gap: g, level: 3, pct: 60, title: 'Restart, smartly', msg: `${g}+ days off. Start ~40% lighter and rebuild running from the run-walk start, regardless of your old level. Muscle memory means it comes back much faster the second time.` };
 }
+// Graded STAGE regression on return from a layoff — sets the program pointer to an EARLIER phase by how long
+// you were away, then you re-progress (fast, per muscle memory). Returns the floor phase index, or null for none.
+// Evidence (docs/EVIDENCE-REVIEW.md): muscle/neural strength returns fast and 1–8wk costs little real strength
+// (Stronger By Science 2023), so SHORT breaks (<2mo) only ease LOAD (layoffTier), no stage reset. Tendon stiffness
+// de-adapts by ~2 months (Kubo 2010) → 2–6mo restarts RUNNING from the Run-Introduction stage. 6–12mo rebuilds the
+// strength/tendon base from Foundation. 1yr+ does the full graded restart from Infrastructure (bone BMD lags most),
+// but myonuclear/epigenetic "muscle memory" (Cumming 2024; Seaborne) means reclaim ≈ half the layoff — so the
+// re-progression is quick. Never advances an unearned day: only Progress check-ins move the pointer back up.
+function layoffRegressPhase(gap) {
+  const g = (gap == null) ? daysSinceLastCheck() : gap;
+  if (g < 57) return null;    // < ~2 months: ease load only (strength largely retained) — no stage reset
+  if (g < 180) return 2;      // ~2–6 months: restart running from Run Introduction (P2)
+  if (g < 365) return 1;      // ~6–12 months: rebuild from Foundation (P1)
+  return 0;                   // 1 year+: full graded restart from Infrastructure (P0)
+}
 
 // ---- Deload (evidence: lighter week every ~4-6 weeks; or early on under-recovery trend) ----
 function underRecoveryTrend() {
