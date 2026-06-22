@@ -70,11 +70,14 @@ function appHeader(screen) {
   return `<header class="app-header"><div class="hd-inner">${inner}</div></header>`;
 }
 // Frozen footer = the bottom bar. Tab + sub-screens get the nav; action screens get their action bar.
+// Child screens reached from a tab keep that tab's nav item highlighted
+// (e.g. tapping an exercise in Library opens exerciseDetail — Library stays lit).
+const NAV_PARENT = { exerciseDetail: 'library', phaseDetail: 'phase' };
 function appFooter(screen) {
   if (screen === 'loading' || screen === 'capstone') return '';
   if (screen === 'onboarding') return onbFooter();
   if (screen === 'check') return checkFooter();
-  return renderNav(screen);
+  return renderNav(NAV_PARENT[screen] || screen);
 }
 function render() {
   const root = document.getElementById('app');

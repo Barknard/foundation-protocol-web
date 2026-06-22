@@ -16,11 +16,25 @@
 .ex-done-label svg { width: 14px; height: 14px; }
 .markall { width: 100%; height: 44px; margin-top: 8px; background: var(--surface-1); color: var(--paper); border: 1px solid var(--rule); border-radius: 12px; font-size: 14px; font-weight: 600; }
 .rx-count { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--mobility); white-space: nowrap; }
-/* body map (injury) */
-.bodymap { width: auto; height: clamp(300px, 54vh, 470px); max-width: 100%; display: block; margin: 0 auto 8px; }
-.bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
-.bm-seg:hover { fill: var(--surface-2); }
-.bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2; }   /* bright outline = non-color cue (CVD) */
+/* body map (injury) — a head→foot grid of labelled buttons. Every target clears the 48px tap minimum
+   with real gutters (the old SVG silhouette had ~27px regions jammed edge-to-edge — WCAG 2.5.5/2.5.8 fail). */
+.bodymap-grid { display: flex; flex-direction: column; gap: 8px; max-width: 340px; margin: 0 auto 4px; }
+.bm-row { display: flex; gap: 8px; }
+.bm-row > .bm-btn { flex: 1; }
+.bm-btn { min-height: 50px; height: auto; width: auto; padding: 8px 12px; background: var(--surface-1); color: var(--paper-dim); border: 1px solid var(--rule); border-radius: 12px; font-size: 16px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 120ms ease, border-color 120ms ease; }
+.bm-btn svg { width: 16px; height: 16px; display: none; }   /* ✓ hidden until selected */
+.bm-btn.sel svg { display: inline-block; }
+.bm-btn.sel { background: var(--strength); border-color: var(--paper); color: #fff; font-weight: 600; }   /* fill + bright border + leading ✓ glyph = non-colour cue (CVD) */
+/* legacy SVG body-map styles kept for any external reference; no longer rendered */
+.bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; }
+.bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2; }
+/* `.more` is an inline TEXT LINK, not a button. Without this a bare <button class="more"> inherits the
+   solid-gold primary-button style (it did for the backup, injury re-check, and layoff banner actions),
+   double-spending the one colour that should mean "the primary action". Reserve solid gold for true CTAs. */
+.more { display: inline; width: auto; min-width: 0; height: auto; padding: 0; background: transparent; border: none; border-radius: 0; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--milestone); cursor: pointer; }
+/* screen-reader-only (visible to AT, off-screen visually) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.gate-hint { font-size: 14px; color: var(--paper-low); margin-top: 10px; text-align: center; }
 /* inline redundant-encoding glyphs sit on the text baseline */
 .chip svg, .row.between .body-dim svg { vertical-align: -2px; }
 .chip svg { margin-right: 2px; }

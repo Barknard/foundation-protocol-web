@@ -234,10 +234,15 @@ function renderToday() {
   const backupNudge = (() => {
     if (state._backupNudgeDismissed) return '';
     if (typeof backupAgeDays !== 'function') return '';
+    // Housekeeping never competes with the day's real content: hide it during an active injury
+    // (the recovery card owns the screen) and before there's any history worth protecting (day 1).
+    if (typeof standingCall === 'function' && standingCall()) return '';
+    if ((state.checks ? state.checks.length : 0) < 2) return '';
     const age = backupAgeDays();
     if (age != null && age <= 7) return '';
-    const msg = (age == null) ? 'No backup yet — keep a copy off this phone.' : `${age} day${age === 1 ? '' : 's'} since your last backup.`;
-    return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><div class="rx-head"><span class="label" style="color:var(--milestone);">Back up your data</span><button class="icon" id="backup-dismiss" aria-label="Dismiss backup reminder" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(msg)} <button class="more" id="backup-now">Export now &rarr;</button></div></div></div>`;
+    const msg = (age == null) ? 'Your log lives only on this phone — keep a copy somewhere safe.' : `It's been ${age} day${age === 1 ? '' : 's'} since your last backup.`;
+    // Neutral strip (no gold stripe / no gold button) — solid gold is reserved for the day's primary action.
+    return `<div class="card-block" style="margin-bottom:12px;"><div class="stripe"></div><div class="card bordered" style="padding:14px 16px;"><div class="rx-head"><span class="label">Back up your data</span><button class="icon" id="backup-dismiss" aria-label="Dismiss backup reminder" style="width:auto;padding:4px;background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(msg)} <button class="more" id="backup-now">Export now &rarr;</button></div></div></div>`;
   })();
   // One coaching banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
@@ -259,7 +264,6 @@ function renderToday() {
     ${whyHead}
     ${whyPanel}
     <div class="sp-8"></div>
-    ${backupNudge}
     ${banners}
     ${lastToday ? (() => {
       // DAY-GATE: already checked in today → call up top + done/countdown. Next session locks until the
@@ -305,6 +309,7 @@ function renderToday() {
     }).join('')}</div></div>
     <div class="sp-12"></div>
     <button data-go="check">Daily check-in</button>`}
+    ${backupNudge ? `<div class="sp-24"></div>${backupNudge}` : ''}
     <div class="sp-16"></div>
   </div>`;
 }
@@ -337,20 +342,31 @@ function bindToday() {
 
 // ---------- CHECK ----------
 function bodyMap(sel) {
-  // Keyboard/screen-reader accessible: each region is a focusable toggle (role=button, aria-pressed).
-  const a = (part) => `data-part="${escHtml(part)}" role="button" tabindex="0" aria-label="${escHtml(part)}" aria-pressed="${sel.includes(part)?'true':'false'}"`;
-  const seg = (part,x,y,w,h)=>`<rect class="bm-seg${sel.includes(part)?' sel':''}" ${a(part)} x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/>`;
-  return `<svg viewBox="0 0 100 188" class="bodymap" role="group" aria-label="Body map — choose where it hurts">
-    <circle class="bm-seg${sel.includes('head/neck')?' sel':''}" ${a('head/neck')} cx="50" cy="13" r="10"/>
-    ${seg('left shoulder',26,26,16,9)}${seg('right shoulder',58,26,16,9)}
-    ${seg('chest',38,30,24,15)}${seg('core',39,47,22,15)}
-    ${seg('left arm',21,30,11,44)}${seg('right arm',68,30,11,44)}
-    ${seg('hip / groin',37,64,26,12)}
-    ${seg('left thigh',38,78,11,33)}${seg('right thigh',51,78,11,33)}
-    ${seg('left knee',38,112,11,9)}${seg('right knee',51,112,11,9)}
-    ${seg('left lower leg',39,122,10,36)}${seg('right lower leg',51,122,10,36)}
-    ${seg('left foot',35,159,13,9)}${seg('right foot',52,159,13,9)}
-  </svg>`;
+  // A head→foot grid of labelled toggle buttons. Real <button>s give native keyboard activation and
+  // ≥50px hit targets with real gutters — the old SVG silhouette packed ~27×22px regions edge-to-edge
+  // (WCAG 2.5.5/2.5.8 fail) on the app's single most safety-critical input. The data-part strings are
+  // unchanged, so engine.applyCheck()/injury logic sees exactly the same parts.
+  const ROWS = [
+    ['head/neck'],
+    ['left shoulder', 'right shoulder'],
+    ['left arm', 'right arm'],
+    ['chest'],
+    ['core'],
+    ['hip / groin'],
+    ['left thigh', 'right thigh'],
+    ['left knee', 'right knee'],
+    ['left lower leg', 'right lower leg'],
+    ['left foot', 'right foot'],
+  ];
+  const disp = (p) => p.charAt(0).toUpperCase() + p.slice(1);
+  const btn = (p) => {
+    const on = sel.includes(p);
+    // The ✓ glyph is always present; CSS reveals it only on .sel (selection = fill + glyph, a non-colour cue).
+    return `<button type="button" class="bm-btn${on ? ' sel' : ''}" data-part="${escHtml(p)}" aria-pressed="${on ? 'true' : 'false'}" aria-label="${escHtml(p)}">${svgUse('ic-check', 16)}<span class="bm-lbl">${escHtml(disp(p))}</span></button>`;
+  };
+  return `<div class="bodymap-grid" role="group" aria-label="Body map — choose where it hurts. Tap all that apply.">
+    ${ROWS.map(r => `<div class="bm-row">${r.map(btn).join('')}</div>`).join('')}
+  </div>`;
 }
 function renderCheck() {
   ensureSession();
@@ -381,16 +397,20 @@ function renderCheck() {
     <button class="ghost" data-clearhurt>Nothing hurts — clear</button>
     ` : `
     <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
-    <div class="chip-row" data-q="goal">
-      <button class="chip yes ${t.goalMet==='done'?'active':''}" data-val="done">${svgUse('ic-check',13)} Done</button>
-      <button class="chip ${t.goalMet==='partial'?'active':''}" data-val="partial">${svgUse('ic-goal-partial',13)} Partial</button>
-      <button class="chip no ${t.goalMet==='missed'?'active':''}" data-val="missed">${svgUse('ic-goal-missed',13)} Missed</button>
-    </div>
+    ${(() => {
+      const opts = [['done','yes',`${svgUse('ic-check',13)} Done`],['partial','',`${svgUse('ic-goal-partial',13)} Partial`],['missed','no',`${svgUse('ic-goal-missed',13)} Missed`]];
+      const selIdx = opts.findIndex(o => o[0] === t.goalMet);
+      const tab = selIdx >= 0 ? selIdx : 0;   // roving tabindex: one stop into the group
+      return `<div class="chip-row" data-q="goal" role="radiogroup" aria-label="Did you meet today's goal?">${opts.map((o,i) => { const on = o[0] === t.goalMet; return `<button class="chip ${o[1]} ${on?'active':''}" data-val="${o[0]}" role="radio" aria-checked="${on?'true':'false'}" tabindex="${i===tab?'0':'-1'}">${o[2]}</button>`; }).join('')}</div>`;
+    })()}
     <div class="sp-24"></div>
     <p class="label">How do you feel?</p><div class="sp-8"></div>
-    <div class="feel-grid" data-q="feel">
-      ${[5,4,3,2,1].map(v=>`<button class="feel ${t.feel===v?'active':''} feel-${v}" data-val="${v}"><span class="feel-face">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`).join('')}
-    </div>
+    ${(() => {
+      const order = [5,4,3,2,1];
+      const selIdx = order.indexOf(t.feel);
+      const tab = selIdx >= 0 ? selIdx : 0;
+      return `<div class="feel-grid" data-q="feel" role="radiogroup" aria-label="How do you feel?">${order.map((v,i) => { const on = t.feel===v; return `<button class="feel ${on?'active':''} feel-${v}" data-val="${v}" role="radio" aria-checked="${on?'true':'false'}" aria-label="${escHtml(FEEL_LABELS[v])}" tabindex="${i===tab?'0':'-1'}"><span class="feel-face" aria-hidden="true">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`; }).join('')}</div>`;
+    })()}
     <div class="sp-20"></div>
     ${(t.feel && t.feel <= 2 && !t.painChecked) ? `
       <div class="card-block strength pain-nudge"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
@@ -406,6 +426,7 @@ function renderCheck() {
     : `<button class="hurt-toggle" id="chk-hurt">Something hurts?</button>`}
     <div class="sp-16"></div>
     <p class="body-dim" style="font-size: 14px;">Readiness drives the call (Saw, Main &amp; Gastin, BJSM 2016) — feel rough or flag pain and it eases you back with pain-monitored loading.</p>
+    <p class="gate-hint" id="chk-gate" aria-live="polite">${ready ? '' : 'Pick a goal and how you feel to see your call.'}</p>
     `}
   </div>`;
 }
@@ -413,21 +434,41 @@ function renderCheck() {
 function checkFooter() {
   const t = state._chk || {};
   const ready = t.goalMet && t.feel;
-  return `<div class="wiz-nav"><button class="onb-next" id="chk-go" ${ready?'':'disabled'}>See the call</button></div>`;
+  return `<div class="wiz-nav"><button class="onb-next" id="chk-go" ${ready?'':'disabled'} aria-describedby="chk-gate">See the call</button></div>`;
 }
 function bindCheck() {
   if (state.ui.screen !== 'check' || !state._chk) return;   // deferred bind fired after navigating away
+  // Restore keyboard focus to the chosen feel after a feel change re-renders the screen (radiogroup continuity).
+  if (state._focusFeel != null) {
+    const f = document.querySelector(`[data-q="feel"] [data-val="${state._focusFeel}"]`);
+    if (f) f.focus();
+    state._focusFeel = null;
+  }
+  // Arrow-key roving-tabindex helper shared by both radiogroups.
+  const wireArrows = (radios, idx, select) => radios[idx].addEventListener('keydown', e => {
+    let n = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (idx + 1) % radios.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (idx - 1 + radios.length) % radios.length;
+    if (n >= 0) { e.preventDefault(); select(radios[n]); }
+  });
+  // GOAL radiogroup — selection updates in place (no re-render) + announces via aria-checked + roving tabindex.
   const goal = document.querySelector('[data-q="goal"]');   // absent in hurt mode (goal/feel minimized)
-  if (goal) goal.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
-    state._chk.goalMet = btn.getAttribute('data-val');
-    goal.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); refreshGo();
-  }));
+  if (goal) {
+    const radios = [...goal.querySelectorAll('[role=radio]')];
+    const selectGoal = (btn) => {
+      state._chk.goalMet = btn.getAttribute('data-val');
+      radios.forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+      btn.focus(); refreshGo(); updateGate();
+    };
+    radios.forEach((btn, idx) => { btn.addEventListener('click', () => selectGoal(btn)); wireArrows(radios, idx, selectGoal); });
+  }
+  // FEEL radiogroup — selection re-renders (the low-feel pain nudge appears for feel 1–2); _focusFeel restores focus.
   const feel = document.querySelector('[data-q="feel"]');
-  if (feel) feel.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
-    state._chk.feel = Number(btn.getAttribute('data-val'));
-    render();   // re-render so the low-feel pain nudge appears/updates for feel 1–2
-  }));
+  if (feel) {
+    const radios = [...feel.querySelectorAll('[role=radio]')];
+    const selectFeel = (btn) => { state._chk.feel = Number(btn.getAttribute('data-val')); state._focusFeel = state._chk.feel; render(); };
+    radios.forEach((btn, idx) => { btn.addEventListener('click', () => selectFeel(btn)); wireArrows(radios, idx, selectFeel); });
+  }
   const hurt = document.getElementById('chk-hurt');
   if (hurt) hurt.addEventListener('click', () => {
     state._chk.hurt = !state._chk.hurt;
@@ -445,17 +486,19 @@ function bindCheck() {
   document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; state._chk.parts = []; state._chk.redFlag = false; state._chk.painChecked = false; render(); }));
   const flag = document.getElementById('chk-flag');
   if (flag) flag.addEventListener('click', () => { state._chk.redFlag = !state._chk.redFlag; render(); });
+  // Body-map regions are real <button>s (native Enter/Space), multi-select (aria-pressed). Toggle in place,
+  // keeping the leading ✓ glyph in sync so selection reads without colour (CVD) and focus isn't lost.
   document.querySelectorAll('[data-part]').forEach(el => {
-    const toggle = () => {
+    el.addEventListener('click', () => {
       const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
-      if (i >= 0) state._chk.parts.splice(i,1); else state._chk.parts.push(p);
-      const on = el.classList.toggle('sel');
+      const on = i < 0;
+      if (on) state._chk.parts.push(p); else state._chk.parts.splice(i, 1);
+      el.classList.toggle('sel', on);   // CSS reveals the always-present ✓ glyph on .sel
       el.setAttribute('aria-pressed', on ? 'true' : 'false');
-    };
-    el.addEventListener('click', toggle);
-    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    });
   });
   function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !(state._chk.goalMet && state._chk.feel); }
+  function updateGate() { const el = document.getElementById('chk-gate'); if (el) el.textContent = (state._chk.goalMet && state._chk.feel) ? '' : 'Pick a goal and how you feel to see your call.'; }
   const go = document.getElementById('chk-go');
   if (go) go.addEventListener('click', () => {
     const t = state._chk;
