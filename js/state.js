@@ -6,7 +6,6 @@ const state = {
   profile: null,
   phase: null,     // { phase, week, dayInWeek, sessionsCleared, lastDecision }
   checks: [],      // [{ ts, date, goalMet, feel, hurt, decision, phase, week, dayInWeek }]
-  pending: [],
   activeUser: null, // slug of the active persona
   session: null,    // { date, done: { exKey: true } } — per-day exercise completion
   injury: null,     // { parts:[], since, riceUntil, kind } — active injury tracking
@@ -16,8 +15,8 @@ const state = {
   targetReachedAt: null,  // ts the user first reached their target (set by engine.js)
   celebrationSeen: false, // has the target-reached celebration been shown (set by ui.js)
   capstoneReached: false, // has the capstone milestone been reached (set by engine.js)
-  settings: { repo: '', pat: '', autoSync: true, units: 'imperial', storagePersisted: false, lastBackupAt: null },
-  ui: { screen: 'loading', params: {}, syncStatus: 'idle', syncMessage: '', openBlocks: {} },
+  settings: { units: 'imperial', storagePersisted: false, lastBackupAt: null },
+  ui: { screen: 'loading', params: {}, openBlocks: {} },
   _saveError: false,      // set true by saveLocal() when localStorage quota is exceeded
 };
 

@@ -13,7 +13,7 @@
         (old caches are deleted in 'activate').
      3. Go back offline — the freshly-cached new shell now serves.
    If you change ANY shell asset, bump CACHE (vX.Y.Z) so the activate step purges the old cache. */
-const CACHE = 'fp-shell-v3.16.17';
+const CACHE = 'fp-shell-v3.17.0';
 const SHELL = [
   './', './index.html', './manifest.json',
   './icon.png', './logo.png',
@@ -48,9 +48,6 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-
-  // Never intercept the data-sync API — must always hit the live network.
-  if (url.hostname === 'api.github.com') return;
 
   // Same-origin app shell: network-first with cache bypass so a freshly-deployed
   // version always wins online (GitHub Pages sets a 10-min Cache-Control we must skip);

@@ -133,7 +133,6 @@ function bindOnboarding() {
     state.lifts = {}; state.returnRamp = null;
     state.profile = { username: o.username.trim().slice(0,40), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
     state.phase = { phase:o.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
-    state.pending = [];
     markDirty('profile','phase');
     logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[o.phase].name}`);
     // A real user gesture maximizes the chance the browser grants persistent storage.
@@ -859,7 +858,7 @@ function renderLog() {
   const log = (state.log || []).slice().reverse();
   return `<div class="screen no-nav">
         <div class="sp-4"></div>
-    <p class="body-dim">A timestamped record of every check-in, call, progression, injury, layoff, and sync for ${escHtml(state.profile?.username || 'this persona')}.</p>
+    <p class="body-dim">A timestamped record of every check-in, call, progression, injury, and layoff for ${escHtml(state.profile?.username || 'this persona')}.</p>
     <div class="sp-16"></div>
     ${log.length ? log.map(e => `<div class="logrow"><div class="logtime">${escHtml(fmtLogTime(e.ts))}</div><div class="logbody"><span class="logtype ${escHtml(e.type)}">${escHtml(e.type)}</span>${escHtml(e.text)}</div></div>`).join('') : '<p class="body-dim">No activity yet — your first check-in will show up here.</p>'}
     <div class="sp-20"></div>
@@ -905,25 +904,6 @@ function renderSettings() {
       ? `<p class="body-dim" style="font-size:16px;">${svgUse('ic-check',13)} On-device storage: <strong style="color:var(--mobility);">protected</strong> — the system won't evict your data.</p>`
       : `<button class="secondary" id="s-persist">On-device storage: best-effort (tap to protect)</button><p class="help" style="margin-top:6px;">Ask the system to protect your data from automatic cleanup.</p>`}
     <div class="divider"></div>
-    <details class="adv-sync"${isConfigured() ? ' open' : ''}>
-    <summary class="label" style="cursor:pointer;list-style:revert;">Advanced · optional cloud sync</summary>
-    <div class="sp-12"></div>
-    <p class="body-dim" style="font-size: 16px;">Save your training data to your own GitHub so it follows you to any device. Not needed for normal use — your data already lives on this phone.</p>
-    <div class="sp-12"></div>
-    ${isConfigured() ? `<p class="body-dim" style="font-size:14px;">Connected · syncing to <span class="mono" style="font-size:13px;">${escHtml(s.repo)}</span></p><div class="sp-8"></div>` : ''}
-    <div class="field"><label for="s-repo">Repository (username/repo)</label><input type="text" id="s-repo" value="${escHtml(s.repo)}" placeholder="eddie/foundation-protocol-data" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-    <div class="field"><label for="s-pat">Personal Access Token</label><input type="password" id="s-pat" value="${escHtml(s.pat)}" placeholder="github_pat_…" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Fine-grained PAT with Contents: Read &amp; Write. Stored only in this browser.</div></div>
-    <div class="sp-12"></div>
-    <div class="field"><label for="s-user">Load a persona from GitHub</label><input type="text" id="s-user" value="${escHtml(activeSlug())}" placeholder="username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="help">Type a username, then load it from GitHub to use this device as that persona.</div></div>
-    <button class="secondary" id="s-loaduser">Load persona from GitHub</button>
-    <div class="sp-8"></div>
-    <button class="secondary" id="s-test">Test &amp; sync now</button><div class="sp-8"></div>
-    <button class="ghost" id="s-pull">Pull from GitHub (overwrite local)</button>
-    <div class="sp-24"></div>
-    <div class="row between"><div><div class="title">Auto-sync</div><div class="body-dim" style="font-size: 16px;">Push every change automatically.</div></div>
-      <label class="switch"><input type="checkbox" id="s-autosync" ${s.autoSync?'checked':''}><span class="slider"></span></label></div>
-    </details>
-    <div class="divider"></div>
     <p class="label">Data</p><div class="sp-12"></div>
     <button class="secondary" data-go="log">Activity log</button><div class="sp-8"></div>
     <button class="secondary" id="s-export">Export backup (JSON)</button><div class="sp-8"></div>
@@ -932,14 +912,14 @@ function renderSettings() {
     ${hasBackup() ? `<div class="sp-8"></div><button class="ghost" id="s-restore">Restore last auto-backup</button>` : ''}
     <div class="sp-8"></div>
     <button class="danger" id="s-reset">Reset all local data…</button>
-    <p class="help" style="margin-top:6px;">Export saves your whole history (incl. injuries &amp; log). Import restores it on any device — no GitHub needed. Reset auto-saves a backup first.</p>
+    <p class="help" style="margin-top:6px;">Export saves your whole history (incl. injuries &amp; log). Import restores it on any device. Reset auto-saves a backup first.</p>
     <div class="divider"></div>
     <p class="label">How the call is made</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Each day you answer two things: did you meet the goal, and how do you feel. The app maps that to one of four calls. Progress only when you did the work and feel good or great. Feel rough, it gives an easier version. Feel wrecked or flag pain, it rests you. Anything in between repeats the session so you consolidate before adding load.</p>
     <div class="divider"></div>
     <p class="label">About</p><div class="sp-8"></div>
     <p class="body">The Hard Part v${APP_VERSION}.</p>
-    <p class="body-dim" style="font-size: 16px; margin-top:4px;">Evidence-based 40-week framework. Local-first, no telemetry. Sync optional via GitHub Contents API.</p>
+    <p class="body-dim" style="font-size: 16px; margin-top:4px;">Evidence-based 40-week framework. Local-first, no telemetry. Your data stays on this device.</p>
     <div class="sp-16"></div>
     <p class="label">Evidence base</p><div class="sp-8"></div>
     ${['Hooper SL et al. Markers for monitoring overtraining and recovery. Med Sci Sports Exerc 1995;27(1):106–112.',
@@ -973,45 +953,12 @@ function bindSettings() {
     render();
     toast(state.settings.storagePersisted ? 'On-device storage protected' : 'Could not enable protection — your data is still saved locally', state.settings.storagePersisted ? 'success' : 'error');
   });
-  const repo=document.getElementById('s-repo'), pat=document.getElementById('s-pat'), autosync=document.getElementById('s-autosync');
-  if (repo) repo.addEventListener('input', () => { state.settings.repo=repo.value.trim(); saveLocal(); });
-  if (pat) pat.addEventListener('input',  () => { state.settings.pat=pat.value.trim(); saveLocal(); });
-  if (autosync) autosync.addEventListener('change', () => { state.settings.autoSync=autosync.checked; saveLocal(); });
   const logoutBtn = document.getElementById('s-logout');
   if (logoutBtn) logoutBtn.addEventListener('click', () => {
     if (!confirm('Log out? Your data stays saved on this device — pick your profile again from the welcome screen anytime.')) return;
     logout();
     navigate('onboarding');
     toast('Logged out — your data is saved', 'success');
-  });
-  const loaduser = document.getElementById('s-loaduser');
-  if (loaduser) loaduser.addEventListener('click', async () => {
-    const slug = slugify(document.getElementById('s-user').value);
-    if (!slug) { toast('Enter a username','error'); return; }
-    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
-    if (!confirm(`Switch this device to persona "${slug}" and load its data from GitHub?`)) return;
-    state.activeUser = slug;
-    localStorage.setItem(ACTIVE_KEY, slug);
-    loadUserState(slug);            // use any local copy first
-    await syncFromRemote();         // then pull the latest for this persona
-    saveLocal();
-    if (state.profile) logEvent('persona', `Loaded persona "${slug}" from GitHub`);
-    navigate(state.profile ? 'today' : 'onboarding');
-    toast(state.profile ? `Loaded persona ${slug}` : `No data yet for ${slug} — set it up`, state.profile ? 'success' : 'error');
-  });
-  document.getElementById('s-test').addEventListener('click', async () => {
-    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
-    if (!activeSlug()) { toast('Set a username first (finish onboarding)','error'); return; }
-    state.pending = [...DATA_KEYS]; await syncToRemote();
-    if (state.ui.syncStatus==='online') logEvent('sync', 'Pushed all data to GitHub');
-    toast(state.ui.syncStatus==='online'?'Pushed to GitHub':'Sync failed — check repo and token', state.ui.syncStatus==='online'?'success':'error');
-  });
-  document.getElementById('s-pull').addEventListener('click', async () => {
-    if (!isConfigured()) { toast('Enter repo + token first','error'); return; }
-    if (state.pending.length && !confirm(`You have ${state.pending.length} unsynced change${state.pending.length===1?'':'s'} that will be overwritten. Continue?`)) return;
-    if (!confirm('Replace local data with what is in GitHub?')) return;
-    snapshotBeforeDestroy();   // keep a local restore point before overwriting
-    await syncFromRemote(); logEvent('sync', 'Pulled all data from GitHub'); render(); toast('Pulled from GitHub','success');
   });
   document.getElementById('s-export').addEventListener('click', () => {
     let ok = false; try { ok = downloadBackup(); } catch (_) { ok = false; }
@@ -1062,7 +1009,7 @@ function bindSettings() {
     if (slug) localStorage.removeItem(userStateKey(slug));
     // Fully zero the in-memory persona (mirrors loadUserState('')) so nothing — log, injury, session,
     // lifts, return-ramp, or the active-user pointer — bleeds into the next persona created from onboarding.
-    state.profile=null; state.phase=null; state.checks=[]; state.pending=[];
+    state.profile=null; state.phase=null; state.checks=[];
     state.session=null; state.injury=null; state.log=[]; state._preDay=null;
     state.lifts={}; state.returnRamp=null;
     state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}

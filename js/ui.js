@@ -112,7 +112,6 @@ function render() {
   if (screen === 'onboarding') cls.push('onb-main');
   root.innerHTML = header + `<main class="${cls.join(' ')}">${body}</main>` + footer;
   bindEvents();
-  setSync(state.ui.syncStatus, state.ui.syncMessage);
   syncHeaderOffset();
   requestAnimationFrame(updateScrollCue);   // show/hide the "scroll for more" hint for this screen
 }
