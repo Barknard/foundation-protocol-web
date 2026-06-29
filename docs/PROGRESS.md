@@ -2,18 +2,18 @@
 
 **App name:** **The Hard Part** (logo: stone-block "HARD PART" emblem, `logo.png` / `icon.png`). Formerly "Foundation Protocol".
 **Live:** https://barknard.github.io/foundation-protocol-web/ · **Repo:** `Barknard/foundation-protocol-web` (GitHub Pages, branch `main`)
-**Source:** `~/foundation-protocol-web`
+**Source:** `~/the-hard-part`
 **Last updated:** 2026-06-19
 **New AI / engineer?** Read [`AI-START-HERE.md`](../AI-START-HERE.md) first — it's the one-screen download for this repo.
 
-A 40-week, research-grounded get-in-shape-without-injury program for ~40+, run as a daily two-tap autoregulated decision. Offline-capable PWA; optional GitHub data-sync per persona.
+A 40-week, research-grounded get-in-shape-without-injury program for ~40+, run as a daily two-tap autoregulated decision. Offline-capable, **local-first** PWA — data lives in `localStorage` per persona; the only backup is manual Export/Import JSON.
 
 > ⚠️ **Hosting blocker (2026-06-17):** ALL of Eddie's GitHub Pages sites are 404 (foundation-protocol-web, datatrax-audiobook, princess-sparkle-v2 — the last builds cleanly yet 404s — and the `barknard.github.io` root). Cause is **account-level**: "Actions has been disabled for this user" (modern Pages builds run through Actions). Fix is on Eddie's account (verify email → billing → GitHub Support), not in any repo. A GitHub-Actions deploy workflow (`.github/workflows/deploy-pages.yml`) is already in place for when Actions is re-enabled.
 
 ## Architecture (refactored 2026-06-17)
 No longer one giant HTML file. Now a **slim `index.html` spine** + modular assets, zero build step (classic ordered scripts share one global scope; deploys on Pages as-is):
 - `css/` — `base.css` (tokens/type/layout), `components.css` (buttons/cards/fields/nav/wizard), `figures.css`, `screens.css`
-- `js/` — `sprite.js` (injects the SVG icon/figure sheet), `config.js`, `state.js`, `program.js` (phases/exercises/blocks + injury/layoff/deload), **`figure.js`** (parametric skeleton figure engine: FK joints, side/front poses, continuous animator, procedural gait), `engine.js` (decide/applyCheck/advance), `storage.js` (localStorage + GitHub sync), `util.js`, `ui.js` (router/render), `screens.js`, `init.js` (boot + SW). Load order: sprite → config → state → program → **figure** → engine → storage → util → ui → screens → init.
+- `js/` — `sprite.js` (injects the SVG icon/figure sheet), `config.js`, `state.js`, `program.js` (phases/exercises/blocks + injury/layoff/deload), **`figure.js`** (parametric skeleton figure engine: FK joints, side/front poses, continuous animator, procedural gait), `engine.js` (decide/applyCheck/advance), `storage.js` (localStorage persistence + Export/Import JSON), `util.js`, `ui.js` (router/render), `screens.js`, `init.js` (boot + SW). Load order: sprite → config → state → program → **figure** → engine → storage → util → ui → screens → init.
 - `sw.js` precaches the spine + all css/js. Python is NOT used at runtime (browser app); kept zero-build deliberately.
 
 ---
@@ -27,7 +27,7 @@ No longer one giant HTML file. Now a **slim `index.html` spine** + modular asset
 - Summit logo on the homepage (generated with open-source FLUX, recolored to the app palette) + matching SVG favicon/app icon.
 - **Imperial default** weight (lb) with a lb/kg toggle and a greyed live auto-conversion to the side. Stored internally in kg.
 - **Plain-language starting point** ("New / back after a break", "exercise sometimes", "train regularly") instead of phase jargon; conservative default, recommended-marked.
-- **Username personas** — each profile saved as its own files: `data/users/<slug>/{profile,phase,checks}.json`. Switch/load a persona in Settings. Per-persona local storage (`foundation-protocol-state-v2:<slug>`). Legacy single-user data auto-migrates.
+- **Username personas** — each profile is its own per-persona local store (`localStorage`, key `foundation-protocol-state-v2:<slug>`). Switch/load a persona in Settings. Legacy single-user data auto-migrates.
 
 **Today**
 - "Today · why" card: a one-line rationale + expandable research detail + your own trend (readiness avg, % completed, progressions).
@@ -46,7 +46,7 @@ No longer one giant HTML file. Now a **slim `index.html` spine** + modular asset
 - 19 exercises, each a **parametric skeleton figure** (`js/figure.js`) animated start↔end of the rep; walk + run are procedural gait. Joints are connected by construction (no more hand-drawn-SVG limb gaps). Solid floor/wall, pulsing red "feel-it-here" intensity markers, side or front view per exercise. Semantic color: floor=taupe, equipment=gold, motion=blue, body=cream.
 
 **Data, sync, audit**
-- **GitHub sync** (optional, per persona): push on check-in, pull on a fresh device, Test/Pull buttons. Hardened: 409 stale-SHA retry, `cache:'no-store'` on all sync GETs, cross-device checks merge, in-flight guard, allSettled pulls, auth-error surfacing. Token is user-pasted only (never embedded).
+- **Local-first data** (per persona): all state lives in the browser (`localStorage`, key `foundation-protocol-state-v2:<slug>`); the only backup/transfer is manual **Export / Import JSON**. There are **zero network calls to GitHub** for data. *(A former optional GitHub Contents-API data-sync — user-pasted fine-grained PAT, per-persona push/pull — was **REMOVED 2026-06-24**, commit `ca9cea4`: using the repo as an application datastore tripped GitHub's abuse detection and blocked Pages.)*
 - **Activity log** (Settings → Data → Activity log): timestamped, color-tagged record of check-ins, calls, progressions, injuries, layoffs, syncs, persona/profile events; JSON export. Persisted per persona, capped at 500.
 - Offline: service worker precaches the app shell (network-first `no-store` so deploys land instantly; API never cached). `.nojekyll` so Pages serves files as-is.
 
@@ -187,11 +187,14 @@ direction / limbs don't connect" report, so they were **replaced by a parametric
   start/end of every body part as angle (with arrow) **and** on-screen (x, y), plus a list of
   off-canvas reaches worth tweaking. SW cache `fp-shell-v3.3.0`.
 
+## 2026-06-24 — GitHub data-sync removed (now strictly local-first)
+The optional GitHub Contents-API data-sync (user-pasted fine-grained PAT, per-persona push/pull on check-in) was **removed entirely** (commit `ca9cea4`). Using the repo as an application datastore tripped GitHub's abuse detection and blocked Pages, so the app is now **strictly local-first**: data lives in `localStorage` per persona and the only backup/transfer is manual **Export / Import JSON** — zero network calls to GitHub. Earlier dated entries that mention sync / PAT / "Pull" describe that now-removed feature. (GitHub **Pages** hosting and the public repo are unaffected.)
+
 ## Pending (from EVIDENCE-REVIEW.md, not yet wired into the engine)
 - Explicit **RIR 2–3 double-progression** for load advancement (currently in copy, not the engine).
 - ~~**Situp training gap:** the capstone tests 100 situps but no situp/curl-up movement is trained (core block is plank+carries). Add a graded ab movement or reconcile the test.~~ **RESOLVED 2026-06-20:** test reconciled — the capstone now requires a **2-minute plank** instead of 100 situps, matching the trained anti-extension core (plank + carries) per EVIDENCE-REVIEW §5.
 - Split readiness into **sleep + soreness** multi-tap; per-meal protein + creatine coaching; **+10% run cap** is advisory copy only (no distance logging).
-- **Sync coverage:** injury/log/session are NOT yet synced to GitHub (only profile/phase/checks); profile/phase push is last-writer-wins. ("Update the save" — next.)
+- ~~**Sync coverage:** injury/log/session are NOT yet synced to GitHub (only profile/phase/checks); profile/phase push is last-writer-wins.~~ **OBSOLETE 2026-06-24:** GitHub data-sync was removed entirely (see above); the app is local-first, so there is no sync to extend — backup is Export/Import JSON.
 
 ## Updating
-Edit files under `css/`+`js/` (or the `index.html` spine), `git push` to `main`. Data lives in `data/users/<slug>/` and is untouched by code updates. To sync, paste a fine-grained GitHub PAT (Contents: Read & Write) in Settings.
+Edit files under `css/`+`js/` (or the `index.html` spine), `git push` to `main`. Data lives locally in the browser (`localStorage`, per persona) and is untouched by code updates.

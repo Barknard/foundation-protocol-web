@@ -1,6 +1,6 @@
-# Foundation Protocol — Web
+# The Hard Part
 
-A single-file web app that runs the 40-week training program as a daily two-tap decision. Open from any browser, anywhere. Your data saves to your GitHub repo on every check-in, so the git history is your training log.
+A 40-week, research-grounded program to get in shape without getting hurt, built for people around 40 and up. It runs as an offline-first PWA, and the whole daily interaction is two taps.
 
 **The whole daily interaction is two taps:**
 
@@ -16,18 +16,9 @@ From those two answers the app gives one of four calls, each grounded in trainin
 
 Nothing to type. The only typing in the entire app is the one-time profile at the start.
 
-```
-foundation-web/
-|- index.html       <- the entire app (86 KB, self-contained)
-|- README.md        <- this file
-\- data/.gitkeep    <- placeholder; the app writes data here
-```
-
 ---
 
 ## How the call is made
-
-The decision logic lives in `index.html` (search for "DECISION ENGINE") and is fully readable:
 
 | You answer | The app says |
 |---|---|
@@ -46,52 +37,70 @@ The original program used a weekly 4-item Hooper Index (sleep, stress, fatigue, 
 
 ---
 
-## What you do once
+## Your data
 
-### 1. Push this folder to a public GitHub repo
+Strictly local-first. Everything lives in this browser's `localStorage`, scoped per persona. Nothing is sent anywhere — there is no account, no login, no token, and no personal data ever leaves the device.
 
-```bash
-git init
-git add .
-git commit -m "Foundation Protocol web app"
-gh repo create foundation-protocol-web --public --source=. --push
+To back up your progress or move to a new device, use **Settings -> Export backup** to download a JSON file, and **Import backup** to load it on the other device. A **Reset** auto-saves a backup first, so you cannot wipe yourself out by accident. You can also opt in to persistent storage so the browser does not evict your data.
+
+---
+
+## Architecture
+
+Zero build step. The app is a set of plain static files:
+
+```
+the-hard-part/
+|- index.html       <- slim HTML spine
+|- css/             <- stylesheets
+|- js/              <- app modules, loaded as ordered classic <script> tags
+|- sw.js            <- service worker (offline cache)
+|- manifest.json    <- PWA manifest
+\- icons/, fonts/   <- app icon and Fraunces typeface
 ```
 
-Public is needed for free GitHub Pages. Your data is mild (a readiness rating and a done/partial/missed flag per day, no PII). If that is not comfortable, a paid GitHub plan allows private Pages.
+No bundler, no module loader — the `js/` files are loaded in order as classic `<script>` tags. `sw.js` caches the shell so the app works offline and launches from the home screen.
 
-### 2. Turn on GitHub Pages
+---
 
-Repo -> **Settings -> Pages -> Source: Deploy from a branch -> Branch: `main` / root -> Save**.
+## Run / host
 
-GitHub prints a URL like `https://barknard.github.io/foundation-protocol-web/`. That is your app. Open it on any device.
+It is just static files.
 
-### 3. Create a Personal Access Token
+**Locally:**
 
-Without a token the app is local-only (data stays in that one browser). With one, every check-in commits to your repo so you can use it from any device and never lose data.
+```bash
+python -m http.server 8801
+```
 
-GitHub -> Settings -> Developer settings -> Fine-grained tokens -> Generate new token.
+Then open `http://localhost:8801`.
 
-- **Repository access:** Only select repositories -> your `foundation-protocol-web` repo.
-- **Permissions:** Repository permissions -> **Contents: Read and write**. Nothing else.
+**On the web — GitHub Pages:** in the repo, **Settings -> Pages -> Deploy from a branch -> `main` / root -> Save**. Pages serves the PWA at:
 
-Generate, copy the `github_pat_...` value.
+```
+https://barknard.github.io/foundation-protocol-web/
+```
 
-### 4. Configure the app
-
-Open your app URL, finish the one-time onboarding (weight, max pushup, longest walk, age, starting phase), then tap the gear -> Settings.
-
-- **Repository:** `Barknard/foundation-protocol-web`
-- **Personal Access Token:** paste it
-- Tap **Test and sync now**. "Pushed to GitHub" means it worked. Your repo now has `data/profile.json`, `data/phase.json`, `data/checks.json`.
-
-Every check-in after this commits in the background.
-
-### 5. Add to your home screen
+Open that on any device and add it to your home screen:
 
 - **iPhone / Safari:** Share -> Add to Home Screen.
 - **Android / Chrome:** menu -> Add to Home screen -> Install.
 
-Opens like a native app. The favicon (a Fraunces "F" on warm dark) becomes the icon.
+It opens like a native app.
+
+## Updating the app
+
+Edit the `css/`/`js/` files (or the `index.html` spine), bump the `CACHE` constant in `sw.js` so clients pick up the new shell, and push to `main`. GitHub Pages redeploys within a minute or so. No build step. User data is untouched, because it lives locally in each browser, not in the deploy.
+
+## Android
+
+A sideloadable debug APK is published on the GitHub Releases page under the tag `apk`:
+
+```
+https://github.com/Barknard/foundation-protocol-web/releases/download/apk/TheHardPart.apk
+```
+
+Download it on the phone, tap to install, and allow installs from this source when prompted.
 
 ---
 
@@ -101,25 +110,6 @@ Opens like a native app. The favicon (a Fraunces "F" on warm dark) becomes the i
 - **Library** — all 19 exercises with animated step figures (each cycles between two poses to show the movement), grouped by category. Tap any for steps and a coaching cue.
 - **Progress** — where you are in the program, a readiness trend line (your "how do you feel" over time), adherence over the last 14 check-ins, and the all-time tally of the four calls. All of it built from the two-tap data; nothing to enter.
 - **Phase** — all five phases (Infrastructure -> Foundation -> Run Introduction -> Build -> Target) with summary, focus, exit criteria, and the full sample week.
-
-## Files in the repo as you use it
-
-```
-data/
-|- profile.json   <- {weightKg, maxPushup, longestWalkMin, age, startingPhase, createdAt}
-|- phase.json     <- {phase, week, dayInWeek, sessionsCleared, lastDecision}
-\- checks.json    <- [{ts, date, goalMet, feel, hurt, decision, phase, week, dayInWeek}, ...]
-```
-
-Plain JSON. Each commit message is `Update data/checks.json`, so your repo's commit history reads as a chronological training log.
-
-## How sync works
-
-Local-first. Every check-in writes to `localStorage` instantly, then PUTs the changed file to `https://api.github.com/repos/{owner}/{repo}/contents/data/{file}.json`. Offline check-ins queue and flush when you reconnect. Last write wins; fine for a single user. The token sits only in the browser you set it up in, scoped to one repo, Contents only.
-
-## Updating the app
-
-Edit `index.html`, commit, push. GitHub Pages serves the new version within ~60 seconds. No build step. Your data is untouched because it lives in `data/*.json`.
 
 ## What I am deliberately not doing
 

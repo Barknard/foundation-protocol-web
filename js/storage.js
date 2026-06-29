@@ -65,8 +65,7 @@ function saveLocal() {
   }
 }
 function markDirty(..._keys) {
-  // Local-first, on-device only: persist to localStorage. (The former GitHub-API sync was
-  // removed — using a repo as an app datastore tripped GitHub's automated abuse detection.)
+  // Local-first, on-device only: persist to localStorage.
   saveLocal();
 }
 
@@ -94,7 +93,7 @@ async function storagePressure() {
   } catch (_) { return null; }
 }
 
-// ---- Backup / restore (local-first data safety — works with no GitHub) ----
+// ---- Backup / restore (local-first data safety) ----
 // LOSSLESS: includes profile, phase, checks, session, injury, log, and units.
 function fullBackup() {
   return {

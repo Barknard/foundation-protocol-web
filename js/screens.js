@@ -886,7 +886,7 @@ function renderSettings() {
     <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona's data lives on this device.</p>
     <div class="sp-12"></div>
     ${(() => {
-      // LOCAL persona switcher — works with zero GitHub. Lists personas saved on this device
+      // LOCAL persona switcher. Lists personas saved on this device
       // (excludes backup/aux keys, which carry a ':' in the slug). Loading navigates into that persona.
       const others = (typeof savedPersonas === 'function' ? savedPersonas() : []).filter(sl => sl && sl.indexOf(':') === -1);
       if (others.length <= 1 && others.includes(activeSlug())) return '';
@@ -934,7 +934,7 @@ function renderSettings() {
 }
 function bindSettings() {
   if (state.ui.screen !== 'settings') return;   // deferred bind fired after navigating away
-  // LOCAL persona switcher (no GitHub): load the chosen persona and navigate into it.
+  // LOCAL persona switcher: load the chosen persona and navigate into it.
   const personaSel = document.getElementById('s-persona-sel'), personaGo = document.getElementById('s-persona-go');
   if (personaSel && personaGo) personaGo.addEventListener('click', () => {
     const slug = personaSel.value;

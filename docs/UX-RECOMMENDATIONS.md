@@ -13,11 +13,11 @@ Two evidence reviews (multi-agent, cited). Items marked ✅ are already implemen
 2. **CRITICAL — Return trigger (opt-in).** No reminders/notifications at all. Add: a "when works best?" cue, an opt-in daily nudge (Notifications API), and an **.ics calendar export** (server-less, offline, sidesteps iOS-PWA push). Default OFF. (L)
 3. **CRITICAL — Accessibility floor.** No `:focus-visible`; focus destroyed on every `render()`; body-map injury picker is pointer-only (not keyboard/SR operable). Violates WCAG 2.4.7/2.4.3/2.1.1/4.1.2 on the core flow. (L)
 4. **HIGH — Protect destructive actions.** Reset / Pull-overwrite guarded only by `confirm()`; no backup-before-destroy, no undo; a corrupt blob silently falls through to onboarding (40 weeks vanish). Add safety snapshot + undo + recovery screen. (M)
-5. **HIGH — Persistent global sync status** with plain-language errors + in-place retry (sync pip only exists on Today). (M)
+5. **HIGH — Persistent global sync status** with plain-language errors + in-place retry (sync pip only exists on Today). (M) — **OBSOLETE: GitHub sync removed (2026-06-24); app is local-first, so there is no sync status to surface.**
 6. **HIGH — Settings/Log reachable from every tab** (holds the only data safety net). (S)
 7. **HIGH — Undo for daily check-in & mark-all.** (M)
 8. **HIGH — First-run orientation:** explain the four calls + phases *before* the user is scored by them. (M)
-9. **HIGH — Stop echoing the GitHub PAT into the DOM**; mask/scope it; make the daily CTA persistent. (M)
+9. **HIGH — Stop echoing the GitHub PAT into the DOM**; mask/scope it; make the daily CTA persistent. (M) — **RESOLVED: GitHub sync + PAT field removed (2026-06-24); app is local-first.**
 
 ## C. Quick wins
 - `role="status" aria-live="polite"` on #toast + .sync chip; aria-labels on icon-only buttons; `:focus-visible` rings.

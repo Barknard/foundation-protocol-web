@@ -61,13 +61,13 @@ css/
   screens.css     per-screen styles (today/check/progress), interaction feedback, no-scroll rules
 js/
   sprite.js       injects the SVG <symbol> sheet (UI icons + color-blind glyphs) into the DOM
-  config.js       constants (APP_VERSION, storage keys, DATA_KEYS)
+  config.js       constants (APP_VERSION, storage keys)
   state.js        the single `state` object + load/init
   program.js      PHASES, EXERCISES, BLOCKS, + layoff/deload/injury helpers
   figure.js       parametric skeleton figure engine: FK joints, side/front poses (FIG_POSES),
                   continuous rAF animator, procedural walk/run gait, solid floor/wall, prop helpers
   engine.js       decide(), applyCheck(), advancePointer(), OUTCOMES, injury outcomes
-  storage.js      localStorage (per-persona) + GitHub Contents-API sync + backup/restore
+  storage.js      localStorage (per-persona) + Export/Import backup/restore
   util.js         isoToday, escHtml, svgUse, animatedFigure, msUntilTomorrow, fmtCountdown
   ui.js           router: navigate(), render(), appHeader/appFooter (app shell), bindEvents()
   screens.js      every screen's render* + bind* (today/check/library/progress/phase/settings/log/result/onboarding)
@@ -75,8 +75,8 @@ js/
 sw.js             offline app shell; network-first no-store; cache key fp-shell-vX.Y.Z
 manifest.json     PWA manifest (name "The Hard Part")
 docs/             deeper docs (see §12)
-data/users/<slug>/  per-persona JSON when GitHub sync is used (untouched by code updates)
 ```
+Per-persona data lives in the browser's localStorage (see §10), not in repo files.
 
 ## 5. THE FORMULA (the heart of the app) — `js/engine.js`
 Load follows **readiness, not the calendar.** You earn the next session by doing the work
@@ -188,19 +188,17 @@ gait), any `hasFigurePose(ex.key)` → `skeletonFigure`, else the legacy symbol 
   + goal states `ic-goal-{partial,missed}` so red/green never carry meaning alone; the
   palette is also separated by lightness (§8 / `base.css`).
 
-## 10. Data, persistence, sync
+## 10. Data & persistence
 - localStorage keys (**do not rename — preserves existing data**):
   `foundation-protocol-state-v2:<slug>`, `foundation-protocol-active-user`,
   `foundation-protocol-settings-v2`.
-- **Personas:** each profile = its own files `data/users/<slug>/{profile,phase,checks}.json`.
-- **GitHub sync (optional, per persona):** Contents API; token is a **user-pasted
-  fine-grained PAT** (Contents R/W) stored only in the browser. **HARD RULE: never embed a
-  token/secret in the repo.** Push on check-in, pull on a fresh device.
-- **Data safety (no GitHub needed):** lossless **Export / Import / Restore-last-auto-backup**
+- **Personas:** each profile is its own localStorage entry
+  (`foundation-protocol-state-v2:<slug>`) holding that persona's profile/phase/checks; no
+  per-persona files are written to the repo.
+- **Data safety (local-first):** lossless **Export / Import / Restore-last-auto-backup**
   in `storage.js` (`fullBackup`/`downloadBackup`/`applyBackup`/`snapshotBeforeDestroy`/
-  `restoreBackup`); Reset snapshots + downloads a backup first.
-- **Known gap:** injury/log/session are not yet GitHub-synced (only profile/phase/checks);
-  profile/phase push is last-writer-wins.
+  `restoreBackup`); Reset snapshots + downloads a backup first. Opt-in persistent-storage
+  request guards against the browser evicting localStorage.
 
 ## 11. Testing approach (what "verified" means here)
 Logic is validated by **in-browser harnesses** (run via the DevTools/Playwright MCP
@@ -224,6 +222,6 @@ placeholder stubs — build until it works; parallelize independent work via age
 
 ## 13. Working agreements (carry these forward)
 - Push/commit only when Eddie asks (he does ask often — then commit + push to `main`).
-- Keep it **GitHub-only / free** — no paid or third-party services (OAuth was removed).
+- Keep it **free** — no paid or third-party services (OAuth was removed).
 - Bump `sw.js` `CACHE` on meaningful changes; verify with a clean reload, not a warm one.
 - Match the existing modular style; keep `index.html` a thin spine; zero build step.

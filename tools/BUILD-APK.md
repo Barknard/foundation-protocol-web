@@ -17,7 +17,7 @@ Build OUTSIDE this repo (keeps the static repo clean). Convention: `C:\Users\<yo
 
 ```bash
 # 1. Scaffold + copy the web app into www/
-BUILD="$HOME/hardpart-apk"; REPO="$HOME/foundation-protocol-web"
+BUILD="$HOME/hardpart-apk"; REPO="$HOME/the-hard-part"
 rm -rf "$BUILD" && mkdir -p "$BUILD/www" && cd "$BUILD"
 cp "$REPO"/index.html "$REPO"/manifest.json "$REPO"/sw.js "$REPO"/.nojekyll \
    "$REPO"/logo.png "$REPO"/icon.png "$REPO"/icon-192.png "$REPO"/icon-512.png "$REPO"/icon-maskable-512.png www/

@@ -2,7 +2,6 @@
    The app is a slim index.html spine + css/*.css + js/*.js modules; cache them
    all (plus icons + self-hosted fonts) so it opens with no network on a first-ever
    offline launch.
-   GitHub API (data sync) is NEVER cached — it always goes to the network.
 
    NO-SERVER UPDATE RITUAL (installed local-first copy):
    The fetch handler is network-first, so an installed copy only picks up new code when
