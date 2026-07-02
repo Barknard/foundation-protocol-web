@@ -1,7 +1,7 @@
-/* Foundation Protocol service worker — offline app shell.
-   The app is a slim index.html spine + css/*.css + js/*.js modules; cache them
-   all (plus icons + self-hosted fonts) so it opens with no network on a first-ever
-   offline launch.
+/* The Hard Part service worker — offline app shell.
+   The app is a slim index.html spine + css/*.css + js/*.js modules, fully local-first
+   (no accounts, no cloud, no telemetry): cache the whole shell — icons and self-hosted
+   fonts included — so it opens with no network on a first-ever offline launch.
 
    NO-SERVER UPDATE RITUAL (installed local-first copy):
    The fetch handler is network-first, so an installed copy only picks up new code when
@@ -11,8 +11,9 @@
         because CACHE was bumped below, the new service worker installs and activates
         (old caches are deleted in 'activate').
      3. Go back offline — the freshly-cached new shell now serves.
-   If you change ANY shell asset, bump CACHE (vX.Y.Z) so the activate step purges the old cache. */
-const CACHE = 'fp-shell-v3.17.0';
+   If you change ANY shell asset, bump CACHE — keep the version in sync with APP_VERSION
+   in js/config.js (one app, one version). */
+const CACHE = 'thp-shell-v2.2.0';
 const SHELL = [
   './', './index.html', './manifest.json',
   './icon.png', './logo.png',
@@ -47,32 +48,26 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;   // the app makes no cross-origin requests — let the browser handle strays
 
-  // Same-origin app shell: network-first with cache bypass so a freshly-deployed
-  // version always wins online (GitHub Pages sets a 10-min Cache-Control we must skip);
-  // fall back to the cached shell only when offline.
-  if (url.origin === self.location.origin) {
-    e.respondWith(
-      fetch(req, { cache: 'no-store' })
-        .then((resp) => {
+  // Same-origin app shell: network-first with cache bypass so a freshly-deployed version always
+  // wins online; fall back to the cached shell when offline. Only cache GOOD responses — a 404/500
+  // served mid-deploy must never overwrite a working cached file (it would poison the offline shell).
+  e.respondWith(
+    fetch(req, { cache: 'no-store' })
+      .then((resp) => {
+        if (resp && resp.ok) {
           const copy = resp.clone();
           caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          return resp;
-        })
-        .catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
-    );
-    return;
-  }
-
-  // Cross-origin: cache-first, fall back to network. Fonts are now self-hosted (same-origin),
-  // so this path is only a safety net for any incidental cross-origin GET.
-  e.respondWith(
-    caches.match(req).then((r) =>
-      r || fetch(req).then((resp) => {
-        const copy = resp.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        }
         return resp;
-      }).catch(() => r)
-    )
+      })
+      .catch(() => caches.match(req).then((r) => {
+        if (r) return r;
+        // Only a NAVIGATION falls back to the app spine; a missing js/css/font must fail
+        // honestly rather than execute an HTML page as a subresource.
+        if (req.mode === 'navigate') return caches.match('./index.html');
+        return Response.error();
+      }))
   );
 });

@@ -10,7 +10,9 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
-const read = f => fs.readFileSync(path.join(ROOT, 'js', f), 'utf8');
+// Works from both layouts: the web repo (js/ at the root) and the Capacitor copy (www/js).
+const JSDIR = fs.existsSync(path.join(ROOT, 'www', 'js')) ? path.join(ROOT, 'www', 'js') : path.join(ROOT, 'js');
+const read = f => fs.readFileSync(path.join(JSDIR, f), 'utf8');
 
 // ---- Controllable clock ----
 // clock.iso = local calendar date string "YYYY-MM-DD"
@@ -132,6 +134,9 @@ function resetPersona(startingPhase = 0) {
   sandbox.state.checks = [];
   sandbox.state.injury = null;
   sandbox.state.returnRamp = null;
+  sandbox.state.targetReachedAt = null;
+  sandbox.state.celebrationSeen = false;
+  sandbox.state.layoffDismissedOn = null;
   sandbox.state.lifts = {};
   sandbox.state.log = [];
   sandbox.state.session = null;

@@ -12,7 +12,11 @@
 .ex-card { display: grid; grid-template-columns: 76px 1fr 32px; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 10px; }
 .ex-card.done { opacity: 0.5; }
 .ex-card .fig { width: 76px; height: 76px; background: var(--surface-1); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ex-check { width: 30px; height: 30px; min-width: 0; padding: 0; border-radius: 50%; border: 2px solid var(--rule); background: var(--surface-1); color: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; align-self: center; }
+/* Drawn as a 30px circle but tappable at 48px (::after hit pad): the mark-done check is the single
+   most-repeated mid-workout tap, and the card around it NAVIGATES — a near-miss must not yank the
+   user to the detail screen. */
+.ex-check { width: 30px; height: 30px; min-width: 0; padding: 0; border-radius: 50%; border: 2px solid var(--rule); background: var(--surface-1); color: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; align-self: center; position: relative; }
+.ex-check::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; }
 .ex-check svg { width: 16px; height: 16px; }
 .ex-card.done .ex-check { background: var(--mobility); border-color: var(--mobility); color: var(--ink); }
 .ex-done-label { display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mobility); margin: 12px 0 6px; }
@@ -61,15 +65,12 @@
 /* inline redundant-encoding glyphs sit on the text baseline */
 .chip svg, .row.between .body-dim svg { vertical-align: -2px; }
 .chip svg { margin-right: 2px; }
-.bm-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.bm-chip { height: 38px; padding: 0 14px; min-width: 0; width: auto; border-radius: 20px; border: 1px solid var(--rule); background: var(--surface-1); color: var(--paper-dim); font-size: 14px; font-weight: 500; }
-.bm-chip.sel { background: var(--strength); border-color: var(--strength); color: var(--paper); }
 /* activity log */
 .logrow { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
 .logtime { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--paper-low); }
 .logbody { font-size: 14px; color: var(--paper); line-height: 1.45; }
 .logtype { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; border-radius: 6px; margin-right: 8px; background: var(--surface-2); color: var(--paper-dim); }
-.logtype.progress { color: var(--mobility); } .logtype.injury { color: var(--red-text); } .logtype.layoff { color: var(--milestone); } .logtype.sync, .logtype.persona { color: var(--cardio); } .logtype.profile { color: var(--milestone); }
+.logtype.progress { color: var(--mobility); } .logtype.injury { color: var(--red-text); } .logtype.layoff { color: var(--milestone); } .logtype.persona { color: var(--cardio); } .logtype.profile { color: var(--milestone); }
 .ex-card .meta .name { font-size: 17px; font-weight: 600; color: var(--paper); }
 .ex-card .meta .rx { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); margin-top: 2px; }
 .ex-card .meta .cue { font-size: 14px; color: var(--paper-dim); margin-top: 6px; line-height: 1.4; }
@@ -99,24 +100,6 @@
 .chart .bottom { display: flex; justify-content: space-between; margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--paper-dim); }
 .chart .empty { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--paper-low); font-size: 16px; }
 
-/* status pip */
-.sync {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
-  color: var(--paper-low); letter-spacing: 0.08em; text-transform: uppercase;
-}
-.sync::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--paper-low);
-}
-.sync.online::before { background: var(--mobility); }
-.sync.offline::before { background: var(--milestone); }
-.sync.error::before { background: var(--strength); }
-.sync.syncing::before {
-  background: var(--cardio);
-  animation: pulse 1.4s infinite;
-}
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
 /* ---------- SCREEN MOTION ---------- */
 .screen { animation: fade-in 180ms ease; }
 @keyframes fade-in {
@@ -135,13 +118,12 @@
 }
 
 /* ---------- TOUCH / MOBILE ---------- */
-button, .btn, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .icon, .switch {
-  touch-action: manipulation;          /* no 300ms tap delay, no double-tap zoom */
-  -webkit-user-select: none; user-select: none;
-  -webkit-touch-callout: none;
+/* Selection/drag/callout are globally off in base.css; here just kill tap delay + double-tap zoom
+   on everything interactive (including the SVG body-map regions and exercise cards). */
+button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .icon, .bm-seg, .ex-card {
+  touch-action: manipulation;
 }
-.brand-logo { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
-html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in the PWA */
+html, body { overscroll-behavior-y: none; }   /* no pull-to-refresh, no rubber-band glow */
 @media (max-width: 380px) {
   :root { --pad: 18px; }
 }
@@ -161,14 +143,14 @@ html, body { overscroll-behavior-y: contain; }   /* no pull-to-refresh bounce in
 .why-btn-row { width: auto; background: none; border: 1px solid var(--rule); border-radius: 12px; color: var(--paper-dim); display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 14px; }
 
 /* ---------- INTERACTION FEEDBACK: hover (pointer) + press (all) ---------- */
-button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .bm-chip, .ex-check, .hd-journey, .hd-gear, .hd-back {
+button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .ex-check, .hd-journey, .hd-gear, .hd-back {
   transition: transform 90ms ease, filter 140ms ease, background 140ms ease, border-color 140ms ease;
 }
 @media (hover: hover) {
-  button:hover, .chip:hover, .feel:hover, .lib-row:hover, .today-block:hover, .radio-card:hover, .seg button:hover, .more:hover, .hurt-toggle:hover, .nav .tab:hover, .bm-chip:hover, .ex-check:hover, .hd-journey:hover, .hd-gear:hover, .hd-back:hover { filter: brightness(1.14); cursor: pointer; }
+  button:hover, .chip:hover, .feel:hover, .lib-row:hover, .today-block:hover, .radio-card:hover, .seg button:hover, .more:hover, .hurt-toggle:hover, .nav .tab:hover, .ex-check:hover, .hd-journey:hover, .hd-gear:hover, .hd-back:hover { filter: brightness(1.14); cursor: pointer; }
   .bm-seg:hover { fill-opacity: 0.82; cursor: pointer; }
 }
-button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active, .radio-card:active, .seg button:active, .more:active, .hurt-toggle:active, .nav .tab:active, .bm-chip:active, .ex-check:active { transform: scale(0.97); filter: brightness(0.93); }
+button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active, .radio-card:active, .seg button:active, .more:active, .hurt-toggle:active, .nav .tab:active, .ex-check:active { transform: scale(0.97); filter: brightness(0.93); }
 .bm-seg:active { fill-opacity: 0.65; }
 /* Whole exercise card is tappable → full steps (the check button stops propagation). */
 .ex-card { cursor: pointer; transition: filter 140ms ease, transform 90ms ease; }
@@ -199,6 +181,3 @@ button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active,
 .cap-confetti span:nth-child(6){animation-delay:.60s} .cap-confetti span:nth-child(7){animation-delay:.72s}
 .cap-confetti span:nth-child(8){animation-delay:.84s}
 @keyframes cap-pop { 0%,100% { transform: translateY(0); opacity: .45; } 50% { transform: translateY(-7px); opacity: 1; } }
-
-/* ---------- SETUP: never scroll when the content fits ---------- */
-html:has(.app-main.onb-main), body:has(.app-main.onb-main) { overflow: hidden; }

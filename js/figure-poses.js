@@ -1,57 +1,5 @@
 'use strict';
 const FIG_POSES = {
-  "standing": {
-    "f1": {
-      "pelvis": [
-        25,
-        34
-      ],
-      "torso": 270,
-      "nearArm": [
-        90,
-        90
-      ],
-      "farArm": [
-        92,
-        92
-      ],
-      "nearLeg": [
-        90,
-        90,
-        0
-      ],
-      "farLeg": [
-        88,
-        90,
-        0
-      ]
-    },
-    "f2": {
-      "pelvis": [
-        25,
-        34
-      ],
-      "torso": 270,
-      "nearArm": [
-        92,
-        92
-      ],
-      "farArm": [
-        90,
-        90
-      ],
-      "nearLeg": [
-        88,
-        90,
-        0
-      ],
-      "farLeg": [
-        90,
-        90,
-        0
-      ]
-    }
-  },
   "calf_raise": {
     "f1": {
       "pelvis": [
@@ -1263,7 +1211,6 @@ const GAIT_PARAMS = {
     "footAngle": -78
   },
   "carry": {
-    "dur": 1050,
     "nearHand": [
       84,
       88

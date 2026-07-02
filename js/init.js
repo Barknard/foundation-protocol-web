@@ -12,7 +12,7 @@ async function init() {
   }
   // Storage-pressure warning: if the device is nearly full, a save can silently fail — warn early.
   if (typeof storagePressure === 'function') {
-    try { const pct = await storagePressure(); if (pct != null && pct > 0.8) toast('Phone storage is almost full — export a backup soon to avoid losing data.', 'error'); } catch (_) {}
+    try { const est = await storagePressure(); if (est && est.pct > 0.8) toast('Phone storage is almost full — export a backup soon to avoid losing data.', 'error'); } catch (_) {}
   }
   navigate(state.profile ? 'today' : 'onboarding');
 }
@@ -20,6 +20,22 @@ async function init() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
 }
+// ANDROID BACK (APK): without this listener Capacitor's default finishes the Activity — the standard
+// back-swipe closed the whole app from every screen. Mirror the in-app back arrow instead: sub-screens
+// go back, non-Today tabs go to Today, and only the roots (Today / welcome / loading) exit the app.
+(() => {
+  try {
+    const Cap = window.Capacitor;
+    if (!(Cap && Cap.isNativePlatform && Cap.isNativePlatform() && Cap.Plugins && Cap.Plugins.App)) return;
+    Cap.Plugins.App.addListener('backButton', () => {
+      const s = state.ui.screen;
+      if (s === 'onboarding' && state._onb && (state._onb.step || 1) > 1) { state._onb.step -= 1; render(); return; }
+      if (s === 'today' || s === 'onboarding' || s === 'loading') { Cap.Plugins.App.exitApp(); return; }
+      if (TAB_SCREENS.includes(s) || s === 'capstone') { navigate('today'); return; }   // capstone: never back onto the spent check-in form
+      goBack('today');
+    });
+  } catch (_) { /* browser PWA / plugin missing — the in-app back arrow still covers navigation */ }
+})();
 // Keep the day-gate countdown ("next session opens in …") fresh without a full re-render,
 // AND drive the day boundary: when the local day flips (e.g. an installed PWA left open past
 // midnight), rerenderIfNewDay() re-renders Today so the check-in button comes back.

@@ -73,7 +73,7 @@ function advancePointer() {
   if (dayInWeek > pd.week.length) {
     dayInWeek = 1; week += 1;
     if (week > pd.totalWeeks) {
-      if (lastPhase) { week = pd.totalWeeks; dayInWeek = pd.week.length; state.capstoneReached = true; }   // TERMINAL: clamp, never wrap Target back to week 1
+      if (lastPhase) { week = pd.totalWeeks; dayInWeek = pd.week.length; }   // TERMINAL: clamp, never wrap Target back to week 1
       else { week = 1; phase = phase + 1; if (phase === PHASES.length - 1 && !state.targetReachedAt) state.targetReachedAt = Date.now(); }   // first arrival at the Target phase → celebrate
     }
   }
@@ -106,7 +106,10 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   }
   // --- Ease back: no load jump on the first day back from a layoff (gap measured to the last DIFFERENT day, so a
   //     same-day edit can't collapse it to 0), anywhere inside the injury window, or while under-recovered. ---
-  const priorGap = daysSinceLastCheck(true);
+  // "I didn't take time off" is honored via effectiveLayoffGap: the dismissal date caps every gap
+  // measurement across it (no ramp / forced Repeat / stage regression for the dismissed absence),
+  // while absence AFTER the dismissal counts in full — daysim-fixes "dismissal" scenarios.
+  const priorGap = (typeof effectiveLayoffGap === 'function') ? effectiveLayoffGap(true) : daysSinceLastCheck(true);
   const lay = layoffTier(priorGap);
   if (lay) {   // arm a graded return ramp once, on the real return day — it lightens the prescription over the tier's window
     const rampDays = lay.level === 1 ? 7 : lay.level === 2 ? 21 : 42;
@@ -117,37 +120,44 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   // today's row) and only ever moves the pointer to an EARLIER phase. The return day is still held to Repeat
   // below (the `lay` deload-gate), so this SETS the stage without advancing — and re-progression from here is
   // fast (muscle memory). It never counts forward a day you didn't complete.
-  const regressTo = (typeof layoffRegressPhase === 'function') ? layoffRegressPhase(priorGap) : null;
+  const regressTo = (lay && typeof layoffRegressPhase === 'function') ? layoffRegressPhase(priorGap) : null;   // gated on `lay` so a dismissed gap can't regress
   const isReturnDay = !state.checks.some(c => c && c.date === today);
   if (regressTo != null && isReturnDay && (cur.phase ?? 0) > regressTo) {
     state.phase = { phase: regressTo, week: 1, dayInWeek: 1, sessionsCleared: cur.sessionsCleared ?? 0, lastDecision: cur.lastDecision ?? null };
     cur = state.phase;
     logEvent('layoff', `${priorGap} days off — detraining reset to ${(typeof PHASES !== 'undefined' && PHASES[regressTo]) ? PHASES[regressTo].name : 'an earlier phase'}; re-progression is faster the second time.`);
   }
-  // Hold the pointer on a scheduled/under-recovery deload day too: a Progress becomes Repeat so the documented
-  // "lighter week every ~5 weeks" actually paces recovery instead of only lightening the prescription text.
-  // deloadActive() self-suppresses during an active injury, and the deload is ~1 week in 5, so progression
-  // can't deadlock — clean non-deload weeks still advance normally.
-  if (!hurt && outcome.key === 'progress' && (lay || wasInjury || underRecoveryTrend() || (typeof deloadActive === 'function' && deloadActive()))) outcome = OUTCOMES.repeat;
+  // Hold the pointer on a genuine return day (lay), inside an injury window, or on an under-recovery trend —
+  // all of these self-expire (the gap collapses tomorrow, the injury window ends, the trend clears as feels
+  // improve). A SCHEDULED deload week deliberately does NOT hold the pointer: isDeloadWeek() is derived from
+  // the pointer itself and only a Progress can move the pointer, so "hold during deload" could never end —
+  // it froze every user at loaded week 5 forever (daysim "deload deadlock", 33 frozen days). The deload week
+  // still has teeth: loadReduction() lightens every session in it, and it exits after its own 7 sessions.
+  if (!hurt && outcome.key === 'progress' && (lay || wasInjury || underRecoveryTrend())) outcome = OUTCOMES.repeat;
   // --- Day-gate (monotonic, clock-tamper hardened) ---
   // Normal path: a row already stamped with today's date is a same-day re-edit (replace, never a second advance).
-  // Hardened path: even if the local date moved BACKWARD (NTP fix, manual change, eastward travel) so isoToday()
-  // returns an earlier date with no matching row, treat this as a same-day re-edit when EITHER an existing check
-  // has date >= today (string compare — a future-dated row proves we already logged "ahead" of now) OR the most
-  // recent check's real-time ts is within ~12h of Date.now() (we logged moments ago in real time). In those cases
-  // we point existingIdx at that most-recent row so it is REPLACED (no row growth) and prevWasProgress is read
-  // from it (no double advance). Only a genuinely new local day — no future-dated row AND no recent ts — advances.
+  // Backward clock (NTP fix, manual change, eastward travel): isoToday() returns an EARLIER date than an
+  // existing row — that future-dated row proves we already logged "ahead" of now, so this is the same real
+  // day → point existingIdx at the newest row so it is REPLACED (no row growth, no double advance).
   let existingIdx = state.checks.findIndex(c => c.date === today);
   if (existingIdx < 0 && state.checks.length) {
-    const newestIdx = state.checks.length - 1;          // checks are appended in real-time order; last is most recent
-    const newest = state.checks[newestIdx];
     const hasFutureDated = state.checks.some(c => c && c.date && c.date >= today);   // a row at/after today's date
-    const recentTs = newest && typeof newest.ts === 'number' && (Date.now() - newest.ts) <= 12 * 3600000 && (Date.now() - newest.ts) >= -12 * 3600000;
-    if (hasFutureDated || recentTs) existingIdx = newestIdx;   // same real day despite a backward clock → re-edit
-    // NOTE: the recentTs (<=12h real-elapsed) window is INTENTIONAL anti-tamper / anti-timezone design — a
-    // check <12h after the last one is the same TRAINING day even across a calendar midnight (verified by
-    // tools/_daysim.js "timezone shift" + "TAMPER" scenarios). Do not gate this on date alone; doing so makes
-    // a date-line hop advance a phantom session. (A code audit flagged this as a bug; the sim proved otherwise.)
+    if (hasFutureDated) existingIdx = state.checks.length - 1;   // backward clock / date-line hop → re-edit newest
+  }
+  // "One full night of recovery" gate: <12h of real time since the newest check from a DIFFERENT day
+  // (skipping the row being re-edited) holds a Progress to Repeat. Today still gets its OWN history row —
+  // erasing yesterday's record would break the data covenant (daysim-fixes "evening→morning keeps history")
+  // — and the gate covers same-day RE-EDITS of that morning check too, so a pencil edit can't unlock what
+  // the original check correctly held (daysim-fixes "tooSoon re-edit"). It expires naturally: by the
+  // evening, >12h have passed and a re-edit may Progress.
+  let tooSoon = false;
+  for (let i = state.checks.length - 1; i >= 0; i--) {
+    if (i === existingIdx) continue;
+    const c = state.checks[i];
+    if (c && typeof c.ts === 'number' && c.date !== today) { tooSoon = Math.abs(Date.now() - c.ts) <= 12 * 3600000; break; }
+  }
+  if (tooSoon && !hurt && outcome.key === 'progress') {
+    outcome = { ...OUTCOMES.repeat, why: 'Your last check-in was under 12 hours ago — one full night of recovery has not happened yet, so today holds instead of stepping up. ' + OUTCOMES.repeat.why };
   }
   const alreadyCheckedToday = existingIdx >= 0;
   const prevEntry = alreadyCheckedToday ? state.checks[existingIdx] : null;
@@ -196,7 +206,7 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   if (willAdvance) logEvent('progress', `Advanced → Phase ${state.phase.phase} · Wk ${state.phase.week} · Session ${state.phase.dayInWeek}`);
   if (hurt) logEvent('injury', `Injury logged${pl}${redFlag ? ' — routed to clinician' : ''} · protect through ${fmtDate(state.injury.riceUntil)}, re-check by ${fmtDate(state.injury.easeUntil)}${state.injury.extended ? ` (extended ×${state.injury.extended})` : ''}`);
   else if (lay) logEvent('layoff', `${lay.gap} days off — eased back in (no load jump)`);
-  markDirty('checks', 'phase');
+  saveLocal();
   return outcome;
 }
 

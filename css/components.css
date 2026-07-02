@@ -1,5 +1,5 @@
 /* ---------- BUTTONS / CHIPS ---------- */
-button, .btn {
+button {
   font-family: inherit;
   font-size: 18px;
   font-weight: 600;
@@ -88,13 +88,6 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   cursor: pointer;
   transition: all 120ms ease;
 }
-.hurt-toggle.on {
-  background: color-mix(in srgb, var(--strength) 16%, transparent);
-  border-color: var(--strength);
-  color: var(--strength);
-  font-weight: 600;
-}
-
 /* ---------- CARDS ---------- */
 .card {
   background: var(--surface);
@@ -116,21 +109,6 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .card-block.milestone .label  { color: var(--milestone); }
 .card-block.rest      .label  { color: var(--paper-low); }
 
-.zone {
-  display: grid; grid-template-columns: 88px 1fr; gap: 16px;
-  padding: 18px 18px; border-radius: 14px; border: 1.5px solid;
-  align-items: center;
-}
-.zone .score { font-family: 'Fraunces', serif; font-weight: 900; font-size: 38px; line-height: 1; }
-.zone .label-line { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; }
-.zone.green  { border-color: var(--mobility);  background: color-mix(in srgb, var(--mobility) 12%, transparent); }
-.zone.green  .score, .zone.green  .label-line { color: var(--mobility); }
-.zone.yellow { border-color: var(--milestone); background: color-mix(in srgb, var(--milestone) 12%, transparent); }
-.zone.yellow .score, .zone.yellow .label-line { color: var(--milestone); }
-.zone.red    { border-color: var(--strength);  background: color-mix(in srgb, var(--strength) 12%, transparent); }
-.zone.red    .score { color: var(--strength); }   /* 38px display = large text, 3:1 ok */
-.zone.red    .label-line { color: var(--red-text); }   /* small label needs 4.5:1 */
-
 /* ---------- INPUTS ---------- */
 .field {
   width: 100%;
@@ -138,8 +116,8 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   margin-bottom: 8px;
 }
 .field label { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
-.field input[type=text], .field input[type=number], .field input[type=password], .field textarea {
-  font-family: inherit; font-size: 19px;
+.field input[type=text], .field input[type=number], .field input[type=search] {
+  font-family: inherit; font-size: 19px;   /* >=16px also prevents iOS zoom-on-focus */
   background: var(--surface-1);
   color: var(--paper);
   border: 1px solid var(--rule);
@@ -150,9 +128,9 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
   -webkit-appearance: none;
   appearance: none;
 }
-.field input:focus, .field textarea:focus { border-color: var(--milestone); }
-.field textarea { resize: vertical; min-height: 80px; }
-.field .help { font-size: 14px; color: var(--paper-low); }
+.field input:focus { border-color: var(--milestone); }
+.field input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; }
+.help { font-size: 14px; color: var(--paper-low); }   /* also used bare (resume card, settings notes) */
 
 /* onboarding wizard progress */
 .wiz-head { display: flex; flex-direction: column; gap: 8px; }
@@ -160,8 +138,6 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .wiz-seg { flex: 1; height: 6px; border-radius: 999px; background: var(--rule); transition: background 260ms ease; }
 .wiz-seg.on { background: var(--milestone); }
 .wiz-step { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-dim); }
-.adv { margin-top: 2px; }
-.adv summary { cursor: pointer; color: var(--paper-dim); font-size: 14px; font-family: 'IBM Plex Mono', monospace; }
 .plan-preview { background: color-mix(in srgb, var(--mobility) 12%, transparent); border: 1px solid var(--mobility); border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
 /* compact onboarding (.onb) so setup fits without scrolling */
 .onb h1 { margin: 0; }
@@ -192,14 +168,14 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .brand { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .brand-logo { width: auto; height: 172px; max-width: 88%; object-fit: contain; margin: 0 auto 4px; display: block; }
 /* Welcome branding: the full uncropped logo WITH its baked-in "HARD PART" text (no separate wordmark). */
-.brand-full { width: auto; max-width: 88%; height: clamp(120px, 34vw, 168px); object-fit: contain; display: block; margin: 0 auto 4px; -webkit-user-drag: none; user-select: none; }
+.brand-full { width: auto; max-width: 88%; height: clamp(120px, 34vw, 168px); object-fit: contain; display: block; margin: 0 auto 4px; }
 /* When the "Welcome back · Continue" card is present, compact the welcome so the whole
    step (logo, quote, resume card, username, age) fits above the fixed footer — no scroll/clip. */
 .onb.onb-resume .brand-full { height: clamp(76px, 20vw, 110px); margin-bottom: 2px; }
 .onb.onb-resume .hp-quote { margin-top: 8px; font-size: 13px; }
 .onb.onb-resume .sp-16 { height: 8px; }
 /* Minis (header/capstone) stay cropped to the emblem (top ~83%) — no "HARD PART" text. */
-.brand-emblem { width: clamp(120px, 40vw, 168px); height: clamp(108px, 36vw, 151px); object-fit: cover; object-position: top center; display: block; margin: 0 auto; -webkit-user-drag: none; user-select: none; }
+.brand-emblem { width: clamp(120px, 40vw, 168px); height: clamp(108px, 36vw, 151px); object-fit: cover; object-position: top center; display: block; margin: 0 auto; }
 
 /* unit toggle + auto-conversion */
 .unit-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
@@ -229,63 +205,6 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 .radio-card.selected .dot { border-color: var(--milestone); }
 .radio-card.selected .dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--milestone); }
 
-/* slider */
-.slider-row { padding: 10px 0; }
-.slider-row .top { display: flex; align-items: center; justify-content: space-between; }
-.slider-row .top .name { font-weight: 600; font-size: 19px; }
-.slider-row .top .val  { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; color: var(--milestone); }
-.slider-row input[type=range] {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; height: 48px;
-  background: transparent; outline: none; cursor: pointer;
-}
-.slider-row input[type=range]::-webkit-slider-runnable-track {
-  height: 4px; background: var(--rule); border-radius: 4px;
-}
-.slider-row input[type=range]::-moz-range-track {
-  height: 4px; background: var(--rule); border-radius: 4px;
-}
-.slider-row input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--milestone);
-  margin-top: -12px;
-  cursor: pointer;
-  border: 4px solid var(--ink);
-}
-.slider-row input[type=range]::-moz-range-thumb {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--milestone);
-  cursor: pointer;
-  border: 4px solid var(--ink);
-}
-.slider-row .anchors { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: var(--paper-low); text-transform: uppercase; margin-top: -8px; }
-
-/* switch */
-.switch-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 0;
-}
-.switch-row .info .name { font-weight: 600; font-size: 19px; }
-.switch-row .info .help { font-size: 16px; color: var(--paper-dim); margin-top: 2px; }
-.switch {
-  --w: 52px;
-  --h: 30px;
-  position: relative; display: inline-block; width: var(--w); height: var(--h);
-  flex-shrink: 0;
-}
-.switch input { opacity: 0; width: 0; height: 0; }
-.switch .slider {
-  position: absolute; inset: 0; cursor: pointer; background: var(--surface-1);
-  border: 1px solid var(--rule); border-radius: 999px; transition: 0.2s;
-}
-.switch .slider::before {
-  position: absolute; content: ''; width: 22px; height: 22px; left: 3px; bottom: 3px;
-  background: var(--paper-dim); border-radius: 50%; transition: 0.2s;
-}
-.switch input:checked + .slider { background: var(--mobility); border-color: var(--mobility); }
-.switch input:checked + .slider::before { transform: translateX(22px); background: var(--ink); }
-
 /* ---------- BOTTOM NAV ---------- */
 .nav {
   position: fixed; bottom: 0; left: 0; right: 0;
@@ -304,13 +223,6 @@ button.icon { width: 48px; height: 48px; padding: 0; background: transparent; co
 }
 .nav .tab.active { color: var(--milestone); }
 .nav .tab svg { width: clamp(24px, calc(14px + 3.4vw), 34px); height: clamp(24px, calc(14px + 3.4vw), 34px); }
-
-/* ---------- HEADER ---------- */
-.screen-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.screen-head .crumb { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-dim); }
-.back-row { display: flex; align-items: center; gap: 8px; margin-left: -8px; margin-bottom: 12px; }
-.back-row button { background: transparent; color: var(--paper-dim); height: 40px; width: auto; padding: 0 8px; font-size: 17px; gap: 4px; }
-.back-row button:hover { color: var(--paper); }
 
 /* ---------- TOAST ---------- */
 .toast {

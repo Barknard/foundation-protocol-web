@@ -57,6 +57,11 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
+/* Nothing in this UI is prose to copy — a long-press must never pop selection handles over a control.
+   Selection is opt-in: only real text entry keeps it. Images never ghost-drag. */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; }
 html { background: var(--ink); }
 /* Accessibility: a clear keyboard focus ring (WCAG 2.4.7) on every interactive element. */
 :focus-visible { outline: 3px solid var(--milestone); outline-offset: 2px; border-radius: 6px; }
@@ -121,7 +126,6 @@ body {
 .hd-gear { flex: 0 0 auto; }
 /* Gear goes gold when you're on the Settings screen — the "you are in this tab" cue. */
 .hd-gear.active { color: var(--milestone); }
-.app-header .sync { flex: 0 0 auto; }
 /* Brand emblem (logo with the "HARD PART" text cropped off) — a home/login button in the header. */
 .hd-home { flex: 0 0 auto; width: auto; background: none; border: none; padding: 0; display: flex; align-items: center; cursor: pointer; }
 .hd-emblem { width: 30px; height: 27px; object-fit: cover; object-position: top center; display: block; }
@@ -136,10 +140,11 @@ body {
 
 /* Screens are now plain padded containers inside the shell (the shell owns viewport height + chrome). */
 .screen { padding: 16px var(--pad) 8px; }
-.screen.no-nav { padding: 16px var(--pad) 8px; }
 
-/* Onboarding fills the space between the fixed header/footer and never scrolls (content fits). */
-.app-main.onb-main { min-height: 100svh; overflow: hidden; }
+/* Onboarding is DESIGNED to fit one screen — but fit comes from compact styles (.onb), never from
+   clipping: on short/landscape/large-font viewports it scrolls like every other screen (the scroll cue
+   covers it). overflow:hidden here once made the Age field unreachable on small phones. */
+.app-main.onb-main { min-height: 100svh; }
 .screen.onb { padding: 12px var(--pad) 8px; }
 .row { display: flex; align-items: center; }
 .row.between { justify-content: space-between; }

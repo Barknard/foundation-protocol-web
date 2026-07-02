@@ -53,30 +53,9 @@
 .ex-detail .divider { margin: 10px 0; }
 .ex-detail .sp-16 { height: 8px; }
 
-/* ---------- ANIMATED FIGURE ---------- */
+/* ---------- FIGURE CONTAINER ----------
+   The skeleton/gait engine (figure.js) animates by rewriting SVG geometry; the container just sizes.
+   (The old flip-book .anim/.anim3/.anim4 keyframes died with the sprite frames.) */
 .afig { position: relative; display: inline-block; color: var(--paper); line-height: 0; }
 .afig svg { display: block; }
-.afig svg.b, .afig svg.c, .afig svg.d { position: absolute; inset: 0; opacity: 0; }
-@media (prefers-reduced-motion: no-preference) {
-  .afig.anim svg.a { animation: afigA 1.9s ease-in-out infinite; }
-  .afig.anim svg.b { animation: afigB 1.9s ease-in-out infinite; }
-  /* 3-frame flip-book: plays a→b→c then reverses (shared passing frame = clean gait) */
-  .afig.anim3 svg.a { animation: afig3a 0.85s ease-in-out infinite alternate; }
-  .afig.anim3 svg.b { animation: afig3b 0.85s ease-in-out infinite alternate; }
-  .afig.anim3 svg.c { animation: afig3c 0.85s ease-in-out infinite alternate; }
-  /* 4-frame gait cycle (walk/run): crisp flip-book a→b→c→d looping (full stride) */
-  .afig.anim4 svg.a { animation: afig4a 0.72s steps(1,end) infinite; }
-  .afig.anim4 svg.b { animation: afig4b 0.72s steps(1,end) infinite; }
-  .afig.anim4 svg.c { animation: afig4c 0.72s steps(1,end) infinite; }
-  .afig.anim4 svg.d { animation: afig4d 0.72s steps(1,end) infinite; }
-}
-@keyframes afigA { 0%,28% { opacity: 1; } 50%,78% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes afigB { 0%,28% { opacity: 0; } 50%,78% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes afig3a { 0% { opacity: 1; } 50%,100% { opacity: 0; } }
-@keyframes afig3b { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
-@keyframes afig3c { 0%,50% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes afig4a { 0% { opacity: 1; } 25% { opacity: 0; } }
-@keyframes afig4b { 0% { opacity: 0; } 25% { opacity: 1; } 50% { opacity: 0; } }
-@keyframes afig4c { 0% { opacity: 0; } 50% { opacity: 1; } 75% { opacity: 0; } }
-@keyframes afig4d { 0% { opacity: 0; } 75% { opacity: 1; } }
 

@@ -14,7 +14,7 @@ const state = {
   returnRamp: null,       // post-injury return-to-load ramp state (set by engine.js)
   targetReachedAt: null,  // ts the user first reached their target (set by engine.js)
   celebrationSeen: false, // has the target-reached celebration been shown (set by ui.js)
-  capstoneReached: false, // has the capstone milestone been reached (set by engine.js)
+  layoffDismissedOn: null, // "I didn't take time off": local date the user asserted they were active (caps gap math in effectiveLayoffGap)
   settings: { units: 'imperial', storagePersisted: false, lastBackupAt: null },
   ui: { screen: 'loading', params: {}, openBlocks: {} },
   _saveError: false,      // set true by saveLocal() when localStorage quota is exceeded

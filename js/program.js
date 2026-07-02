@@ -75,67 +75,67 @@ const PHASES = [
 ];
 
 const EXERCISES = [
-  { key:'sl_stance', name:'Single-Leg Stance', rx:'3 × 45 sec each', icon:'ic-sl-stance', cat:'Neuromuscular',
+  { key:'sl_stance', name:'Single-Leg Stance', rx:'3 × 45 sec each', cat:'Neuromuscular',
     steps:['Stand tall on one foot, knee lifted to hip height.','Fix gaze on a point ahead at eye level.','Hips level, ribs stacked, ankle relaxed.','Progress to eyes closed at week 3, then to a folded towel.'],
     cue:'If you are rock-solid, eyes closed or step onto a folded towel.' },
-  { key:'sl_squat', name:'Single-Leg Mini-Squat', rx:'3 × 10 each', icon:'ic-sl-squat', cat:'Neuromuscular',
+  { key:'sl_squat', name:'Single-Leg Mini-Squat', rx:'3 × 10 each', cat:'Neuromuscular',
     steps:['Start from single-leg stance.','Bend the standing knee to about 30 degrees.','Knee tracks over middle toe.','Stop the set when the knee caves inward.'],
     cue:'When the knee caves inward, the hip is fatigued.' },
-  { key:'sl_hop', name:'Single-Leg Hop', rx:'3 × 6 each', icon:'ic-sl-hop', cat:'Neuromuscular',
+  { key:'sl_hop', name:'Single-Leg Hop', rx:'3 × 6 each', cat:'Neuromuscular',
     steps:['Phase 1 onward only.','Hop forward 30 – 60 cm, land on the same leg.','Stick the landing for 2 full seconds.','Reset to upright before the next rep.'],
     cue:'Quality landing beats height or distance.' },
-  { key:'hip_abd', name:'Side-Lying Hip Abduction', rx:'3 × 12 each', icon:'ic-hip-abd', cat:'Hip',
+  { key:'hip_abd', name:'Side-Lying Hip Abduction', rx:'3 × 12 each', cat:'Hip',
     steps:['Lie on side, top leg straight and stacked.','Lift the top leg toward the ceiling, toes forward.','Pause at the top, lower over 2 – 3 seconds.','Pelvis stays still — do not roll back.'],
     cue:'Smaller range, cleaner reps.' },
-  { key:'glute_bridge', name:'Glute Bridge', rx:'3 × 12', icon:'ic-glute-bridge', cat:'Hip',
+  { key:'glute_bridge', name:'Glute Bridge', rx:'3 × 12', cat:'Hip',
     steps:['Lie on back, knees bent, feet flat hip-width.','Drive through heels, lift hips, squeeze glutes.','Body forms one line knees-hips-shoulders.','Phase 1: progress to single-leg by extending one leg.'],
     cue:'Feel it in the glutes, not the lower back.' },
-  { key:'band_walk', name:'Lateral Band Walk', rx:'3 × 10 each', icon:'ic-band-walk', cat:'Hip',
+  { key:'band_walk', name:'Lateral Band Walk', rx:'3 × 10 each', cat:'Hip',
     steps:['Band around knees or ankles, athletic stance.','Step sideways, knees pushed out against band.','Maintain band tension throughout.','10 steps one direction then reverse.'],
     cue:'If knees buckle inward, the band is too heavy.' },
-  { key:'calf_raise', name:'Calf Raise', rx:'3 × 15', icon:'ic-calf-raise', cat:'Shin',
+  { key:'calf_raise', name:'Calf Raise', rx:'3 × 15', cat:'Shin',
     steps:['Stand on flat floor or stair edge.','Rise high on toes.','Hold 1 second at top.','Lower over 3 full seconds.'],
     cue:'The slow descent is the point. Do not rush.' },
-  { key:'sl_calf_raise', name:'Single-Leg Calf Raise', rx:'3 × 10 each', icon:'ic-sl-calf-raise', cat:'Shin',
+  { key:'sl_calf_raise', name:'Single-Leg Calf Raise', rx:'3 × 10 each', cat:'Shin',
     steps:['Phase 2 progression only.','One leg, hand on wall for balance.','Rise high on working foot, pause 1 sec.','Lower over 3 seconds.'],
     cue:'Running is single-leg impacts. Train single-leg.' },
-  { key:'calf_stretch', name:'Calf Stretch', rx:'2 × 30 sec each', icon:'ic-calf-stretch', cat:'Shin',
+  { key:'calf_stretch', name:'Calf Stretch', rx:'2 × 30 sec each', cat:'Shin',
     steps:["Arm's length from wall, hands flat at shoulder height.",'Step one leg back about 60 cm.','Lean forward, back knee straight.','Hold 30 sec. Bend back knee for second set (soleus).'],
     cue:'Tight calves transmit impact straight to the shin.' },
-  { key:'goblet_sq', name:'Goblet Squat', rx:'3 × 8 – 12', icon:'ic-goblet-sq', cat:'Day A',
+  { key:'goblet_sq', name:'Goblet Squat', rx:'3 × 8 – 12', cat:'Day A',
     steps:['Hold dumbbell vertically at chest.','Feet shoulder-width, toes slightly out.','Sit down and back, knees track middle toes.','Drive up through heels, torso upright.'],
     cue:'If heels lift, improve ankle mobility separately.' },
-  { key:'pushup', name:'Pushup', rx:'3 × 6 – 12', icon:'ic-pushup', cat:'Day A',
+  { key:'pushup', name:'Pushup', rx:'3 × 6 – 12', cat:'Day A',
     steps:['Start at incline if needed: counter, bench, box.','Hands slightly wider than shoulders.','Lower chest to within an inch of surface.','Elbows back at ~45 degrees, not flared.'],
     cue:'Sagging hips means abs disengaged. Squeeze glutes.' },
-  { key:'db_row', name:'Single-Arm DB Row', rx:'3 × 10 each', icon:'ic-db-row', cat:'Day A',
+  { key:'db_row', name:'Single-Arm DB Row', rx:'3 × 10 each', cat:'Day A',
     steps:['One knee and same-side hand on bench.','Other foot flat, dumbbell hangs straight.','Pull elbow back toward hip, squeeze shoulder blade.','Lower with control over 2 – 3 seconds.'],
     cue:'Pull with the back, not the arm.' },
-  { key:'plank', name:'Plank Hold', rx:'3 × 30 – 60 sec', icon:'ic-plank', cat:'Day A',
+  { key:'plank', name:'Plank Hold', rx:'3 × 30 – 60 sec', cat:'Day A',
     steps:['Forearms under shoulders, elbows aligned.','Hips in line with shoulders and ankles.','Squeeze glutes, ribs stacked over hips.','Hold for time, stop when form drops.'],
     cue:'30 seconds perfect beats 90 seconds leaky.' },
-  { key:'rdl', name:'Romanian Deadlift, DB', rx:'3 × 8 – 12', icon:'ic-rdl', cat:'Day B',
+  { key:'rdl', name:'Romanian Deadlift, DB', rx:'3 × 8 – 12', cat:'Day B',
     steps:['Stand hip-width, dumbbells in front of thighs.','Hinge from hips, push them backward.','Dumbbells travel close to legs.','Drive hips forward to stand, squeeze glutes at top.'],
     cue:'If you feel it in the lower back, you are bending the spine.' },
-  { key:'oh_press', name:'Overhead Press, DB', rx:'3 × 8 – 10', icon:'ic-oh-press', cat:'Day B',
+  { key:'oh_press', name:'Overhead Press, DB', rx:'3 × 8 – 10', cat:'Day B',
     steps:['Stand tall, dumbbells at shoulder height.','Brace core, ribs down, glutes squeezed.','Press straight up overhead.','Biceps align with ears at top.'],
     cue:'If you cannot press without leaning back, drop the weight.' },
-  { key:'split_sq', name:'Bulgarian Split Squat', rx:'3 × 8 each', icon:'ic-split-sq', cat:'Day B',
+  { key:'split_sq', name:'Bulgarian Split Squat', rx:'3 × 8 each', cat:'Day B',
     steps:['Rear foot on bench, laces down.','Front foot far enough forward to track over mid-foot.','~70 percent of bodyweight on front leg.','Drive through front heel to stand.'],
     cue:'Start bodyweight. Add DBs only after 8 clean per leg.' },
-  { key:'dead_bug', name:'Dead Bug', rx:'2 × 6 each, slow', icon:'ic-dead-bug', cat:'Mobility',
+  { key:'dead_bug', name:'Dead Bug', rx:'2 × 6 each, slow', cat:'Mobility',
     steps:['On back, arms up over shoulders, knees over hips.','Press lower back gently flat against the floor.','Slowly reach opposite arm and leg away, breathing out.','Return with control. Easy and slow — a mobilizer, not a grind.'],
     cue:'A gentle spine mobilizer. Keep it slow and pain-free.' },
-  { key:'walk', name:'Easy Walk', rx:'30 – 60 min', icon:'ic-walking', cat:'Cardio',
+  { key:'walk', name:'Easy Walk', rx:'30 – 60 min', cat:'Cardio',
     steps:['Conversational pace. Full sentences while moving.','Talk test is the only intensity gauge needed.','Mixed terrain when ready.'],
     cue:'If you cannot finish a sentence, you are over pace.' },
-  { key:'run', name:'Easy Run', rx:'30 – 60 min', icon:'ic-running', cat:'Cardio',
+  { key:'run', name:'Easy Run', rx:'30 – 60 min', cat:'Cardio',
     steps:['Easy, conversational pace — you can talk in full sentences.','Let heart rate, not pace, set the effort.','+10% rule: never more than 110% of 30-day longest.'],
     cue:'Easy runs feel suspiciously slow. That is the point.' },
-  { key:'kb_swing', name:'Kettlebell Swing', rx:'3 × 12 – 15', icon:'ic-kb-swing', cat:'Kettlebell',
+  { key:'kb_swing', name:'Kettlebell Swing', rx:'3 × 12 – 15', cat:'Kettlebell',
     steps:['Hinge at the hips (not a squat) — push hips back, soft knees.','Hike the bell back between your legs, then snap hips forward to float it to chest height.','Arms stay relaxed — hips do the work, not shoulders.','Start ~15 lb; go up (20, 25) as it feels easy. Stop if your low back rounds.'],
     cue:'It is a hip snap, not a lift. Glutes finish the swing.' },
-  { key:'kb_carry', name:'Farmer Carry', rx:'3 × 30 – 40 sec', icon:'ic-kb-carry', cat:'Kettlebell',
+  { key:'kb_carry', name:'Farmer Carry', rx:'3 × 30 – 40 sec', cat:'Kettlebell',
     steps:['A kettlebell in each hand, arms straight, shoulders down and back.','Stand tall, ribs down, brace, and walk slow and even.','Start ~20 – 25 lb per hand; lighter if grip or posture slips.','Builds grip, core, and tall posture — straight carryover to running.'],
     cue:'Walk like a book is balanced on your head — tall and steady.' },
 ];
@@ -272,8 +272,11 @@ function lastCheckDate(excludeToday) { const t = excludeToday ? isoToday() : nul
 // and don't shift on DST or evening logging — the same calendar-day model the day-gate uses.
 function localMidnight(ms) { const d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
 function localDayDiff(fromMs, toMs) { return Math.round((localMidnight(toMs) - localMidnight(fromMs)) / 86400000); }
-// The most-recent stored check's real-time ts (newest row, regardless of date) — a tamper anchor for clock checks.
-function lastCheckTs() { for (let i = state.checks.length - 1; i >= 0; i--) { const c = state.checks[i]; if (c && typeof c.ts === 'number') return c.ts; } return null; }
+// The most-recent stored check's real-time ts — a tamper anchor for clock checks. excludeToday mirrors
+// lastCheckDate: skip rows stamped today, so a same-day re-edit compares the SAME two events as the calendar
+// gap. (Without this, a re-edit of the return-day check saw calGap=20 vs tsGap=0, the clamp "distrusted the
+// calendar", collapsed the gap to 0, and un-held the layoff gate — daysim "return-day edit keeps hold".)
+function lastCheckTs(excludeToday) { const t = excludeToday ? isoToday() : null; for (let i = state.checks.length - 1; i >= 0; i--) { const c = state.checks[i]; if (c && typeof c.ts === 'number' && (!t || c.date !== t)) return c.ts; } return null; }
 // Whole-calendar-day math (midnight-to-midnight) so the 15/29/57-day tier boundaries don't jitter with time-of-day or DST.
 // Sanity-clamp against the stored ts of the last check: if the calendar gap and the real-time ts gap disagree by more
 // than ~1.5 days, the device clock was moved — DISTRUST the calendar and fall back to the smaller (ts-based) value, so
@@ -282,12 +285,24 @@ function daysSinceLastCheck(excludeToday) {
   const d = lastCheckDate(excludeToday); if (!d) return 0;
   const a = new Date(d + 'T00:00:00').getTime(), b = new Date(isoToday() + 'T00:00:00').getTime();
   const calGap = Math.max(0, Math.round((b - a) / 86400000));
-  const ts = lastCheckTs();
+  const ts = lastCheckTs(excludeToday);
   if (ts != null) {
     const tsGap = Math.max(0, localDayDiff(ts, Date.now()));   // real-time gap in local days
     if (Math.abs(calGap - tsGap) > 1.5) return Math.min(calGap, tsGap);   // clock disagreement → trust the smaller gap
   }
   return calGap;
+}
+// Effective days-off for ALL layoff logic (tier, ramp, stage regression, banner): the raw gap,
+// capped by "I didn't take time off". state.layoffDismissedOn records the local date the user
+// asserted they were active, so no gap can ever be measured ACROSS that day — while absence
+// AFTER it still counts in full (a real 30-day break after a bogus dismissed 60-day gap must
+// still ease them back). The anchor ages out naturally; nothing ever needs clearing.
+function effectiveLayoffGap(excludeToday) {
+  const g = daysSinceLastCheck(excludeToday);
+  const d = state.layoffDismissedOn;
+  if (!d) return g;
+  const since = Math.max(0, Math.round((new Date(isoToday() + 'T00:00:00') - new Date(d + 'T00:00:00')) / 86400000));
+  return Math.min(g, since);
 }
 function layoffTier(gap) {
   const g = (gap == null) ? daysSinceLastCheck() : gap;
@@ -404,55 +419,7 @@ function fmtDate(ts) {
   try { return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
   catch (_) { return ''; }
 }
-// Animation frames per exercise (frame A = base icon, frame B = authored complementary pose)
-const FRAMES = {
-  'ic-sl-stance': ['ic-sl-stance','ic-sl-stance-2'],
-  'ic-sl-squat': ['ic-sl-squat','ic-sl-squat-2'],
-  'ic-sl-hop': ['ic-sl-hop','ic-sl-hop-2'],
-  'ic-hip-abd': ['ic-hip-abd','ic-hip-abd-2'],
-  'ic-glute-bridge': ['ic-glute-bridge','ic-glute-bridge-2'],
-  'ic-band-walk': ['ic-band-walk','ic-band-walk-2'],
-  'ic-calf-raise': ['ic-calf-raise','ic-calf-raise-2'],
-  'ic-sl-calf-raise': ['ic-sl-calf-raise','ic-sl-calf-raise-2'],
-  'ic-calf-stretch': ['ic-calf-stretch','ic-calf-stretch-2'],
-  'ic-goblet-sq': ['ic-goblet-sq','ic-goblet-sq-2'],
-  'ic-pushup': ['ic-pushup','ic-pushup-2'],
-  'ic-db-row': ['ic-db-row','ic-db-row-2'],
-  'ic-plank': ['ic-plank','ic-plank-2'],
-  'ic-rdl': ['ic-rdl','ic-rdl-2'],
-  'ic-oh-press': ['ic-oh-press','ic-oh-press-2'],
-  'ic-split-sq': ['ic-split-sq','ic-split-sq-2'],
-  'ic-dead-bug': ['ic-dead-bug','ic-dead-bug-2'],
-  'ic-walking': ['ic-walking-1','ic-walking-2','ic-walking-3','ic-walking-4'],
-  'ic-running': ['ic-running-1','ic-running-2','ic-running-3','ic-running-4'],
-  'ic-kb-swing': ['ic-kb-swing','ic-kb-swing-2'],
-  'ic-kb-carry': ['ic-kb-carry','ic-kb-carry-2'],
-};
-EXERCISES.forEach(e => { e.frames = FRAMES[e.icon] || [e.icon]; });
-
-// ----------------------------------------------------------------------
-// RIR double-progression sanity harness (dev only, like __figPreview) —
-// simulates strength-Progress sessions on Day A and shows reps climbing,
-// then load bumping after 2 at-top sessions. Not shipped UI; returns a log.
-// Run in the page console: __rirTest()
-//   Expected for goblet_sq (range 8-12, step 2.5, load set to 20):
-//   8→9→10→11→12 (reps climb), then 12(streak1)→12(streak2 → load 22.5, reps 8),
-//   i.e. one variable per session, load gated by 2 consecutive at-top sessions.
-// ----------------------------------------------------------------------
-function __rirTest() {
-  const dayA = { blocks: [{ kind:'strength', key:'strA' }] };   // goblet_sq, pushup, db_row, plank
-  state.lifts = {};
-  setLiftLoad('goblet_sq', 20);   // user sets a starting weight (no black box)
-  const log = [];
-  const snapshot = () => dayLiftKeys(dayA).map(k => { const l = getLift(k); return `${k}:${l.reps}${l.kind==='loaded'?`@${l.load}`:''}${l.kind==='bodyweight'&&l.variation?`/${l.variation}`:''}`; }).join('  ');
-  log.push('seed     ' + snapshot());
-  for (let i = 1; i <= 8; i++) { advanceDayLifts(dayA); log.push('prog ' + String(i).padStart(2) + '  ' + snapshot()); }
-  // rollback check: advance once, capture snap, roll back → identical to pre-advance
-  const before = snapshot();
-  const snap = advanceDayLifts(dayA);
-  const after = snapshot();
-  rollbackDayLifts(snap);
-  log.push('rollback before=' + before + ' | after=' + after + ' | restored=' + snapshot() + ' | OK=' + (before === snapshot()));
-  return log.join('\n');
-}
+// Every exercise renders through the parametric figure engine (gait for walk/run/carry, a FIG_POSES
+// skeleton for everything else — see util.js animatedFigure). The old two-frame flip-book sprite
+// system it replaced has been fully removed.
 

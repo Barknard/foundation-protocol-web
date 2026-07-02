@@ -3,7 +3,7 @@
 // SCREENS
 // ============================================================
 function renderLoading() {
-  return `<div class="screen no-nav"><div class="sp-48"></div><div class="sp-48"></div>
+  return `<div class="screen"><div class="sp-48"></div><div class="sp-48"></div>
     <div style="text-align:center;"><img class="brand-logo" src="logo.png" alt="The Hard Part" style="max-width:220px;"></div></div>`;
 }
 
@@ -50,7 +50,7 @@ function renderOnboarding() {
   // Returning users (saved personas → the "Welcome back · Continue" card) get a compacted
   // step 1 so the extra card never pushes the age field behind the fixed footer.
   const hasResume = (r === 1) && savedPersonas().length > 0;
-  return `<div class="screen no-nav onb${hasResume ? ' onb-resume' : ''}">${body}</div>`;
+  return `<div class="screen onb${hasResume ? ' onb-resume' : ''}">${body}</div>`;
 }
 // Onboarding's frozen header (progress crumb) + frozen footer (Back/Next) — placed by the app shell.
 function onbCrumb() {
@@ -133,7 +133,7 @@ function bindOnboarding() {
     state.lifts = {}; state.returnRamp = null;
     state.profile = { username: o.username.trim().slice(0,40), usernameSlug: slug, weightKg: Math.round(w*10)/10, maxPushup:pu, longestWalkMin:wk, age:ag, startingPhase:o.phase, createdAt:Date.now() };
     state.phase = { phase:o.phase, week:1, dayInWeek:1, sessionsCleared:0, lastDecision:null };
-    markDirty('profile','phase');
+    saveLocal();
     logEvent('profile', `Created persona "${state.profile.username}" · starting ${PHASES[o.phase].name}`);
     // A real user gesture maximizes the chance the browser grants persistent storage.
     if (typeof ensurePersistentStorage === 'function' && !state.settings.storagePersisted) { try { ensurePersistentStorage(); } catch (_) {} }
@@ -214,25 +214,15 @@ function renderToday() {
   ensureSession();
   pruneInjury();
   setTimeout(bindToday, 0);
-  const phaseIdx = state.phase?.phase ?? 0;
-  const pd = PHASES[phaseIdx];
-  const dayInWeek = state.phase?.dayInWeek ?? 1;
   const dayPlan = currentDayPlan();
-  const who = state.profile?.username ? `${state.profile.username} · ` : '';
-  const crumb = `${who}Phase ${phaseIdx} · Wk ${state.phase?.week ?? 1} · Session ${dayInWeek}/${pd.week.length}`;
   const todayChecks = state.checks.filter(c => c.date === isoToday());
   const lastToday = todayChecks[todayChecks.length - 1];
   const why = dayWhy();
   const whyOpen = !!state.ui.whyOpen;
-  const layoff = layoffTier();
+  // Banner and engine share the SAME dismissal-aware gap (a dismissed bogus gap shows no banner;
+  // real absence after the dismissal still does).
+  const layoff = layoffTier((typeof effectiveLayoffGap === 'function') ? effectiveLayoffGap() : undefined);
   const counts = sessionCounts();
-  const recent = state.checks.slice(-14);
-  let trend = '';
-  if (recent.length >= 2) {
-    const avg = recent.reduce((s,c)=>s+(c.feel||0),0)/recent.length;
-    const adh = Math.round(recent.filter(c=>c.goalMet==='done').length/recent.length*100);
-    trend = `Readiness ~${avg.toFixed(1)}/5 over your last ${recent.length} check-ins · ${adh}% sessions completed · ${state.phase?.sessionsCleared ?? 0} progressions so far.`;
-  }
   const focus = dayPlan.blocks.map(b=>escHtml(b.title.split(' —')[0])).join(' + ') || 'Recovery';
   const PENCIL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   // "Why" card lives at the BOTTOM (action-first layout): the call/session leads, rationale is opt-in below.
@@ -240,6 +230,8 @@ function renderToday() {
   const whyPanel = `<div class="ex-panel${whyOpen?' open':''}" id="why-panel"><div class="card" style="padding:14px 16px;border:1px solid var(--rule);margin-top:10px;">
       <div class="body" style="margin-bottom:8px;">${escHtml(why.line)}</div>
       ${why.points.map(p=>`<p class="body-dim" style="margin:6px 0;">•  ${escHtml(p)}</p>`).join('')}
+      <div class="divider"></div><p class="label">The formula</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.formula)}</p>
+      <div class="divider"></div><p class="label">Where this leads</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.lead)}</p>
       ${why.trend?`<div class="divider"></div><p class="label">Your trend</p><div class="sp-4"></div><p class="body-dim">${escHtml(why.trend)}</p>`:''}
     </div></div>`;
   // BACKUP NUDGE: the only off-device copy is a manual export. If it's been >7 days (or never),
@@ -262,9 +254,8 @@ function renderToday() {
     const sc = standingCall();
     if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
     // DISMISSIBLE LAYOFF BANNER: a forward clock jump (or a clock fix) can manufacture a bogus "time off".
-    // "I didn't take time off" clears the return-ramp and records the dismissed gap so the same gap
-    // (or smaller) can't re-arm the banner on the next render.
-    if (layoff && state._layoffDismissedGap != null && layoff.gap <= state._layoffDismissedGap) return '';
+    // "I didn't take time off" records today as an active day (layoffDismissedOn), which zeroes the
+    // effective gap above — so the banner disappears without a separate suppression check here.
     if (layoff) return `<div class="card-block milestone" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><div class="rx-head"><span class="label" style="color:var(--milestone);">${escHtml(layoff.title)} · ${layoff.gap} days off</span><button class="icon" id="layoff-dismiss" aria-label="Dismiss — I didn't take time off" style="background:none;border:none;color:var(--paper-dim);font-size:18px;line-height:1;">×</button></div><div class="sp-4"></div><div class="body-dim">${escHtml(layoff.msg)} <button class="more" id="layoff-not-off">I didn't take time off</button></div></div></div>`;
     if (deloadActive()) return `<div class="card-block cardio" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label" style="color:var(--cardio);">Lighter week</span><div class="sp-4"></div><div class="body-dim">Back off ~40% today — fewer sets, one notch easier. We cut the load, not stop, to let hidden fitness surface.</div></div></div>`;
     return '';
@@ -339,17 +330,16 @@ function bindToday() {
   const dismiss = document.getElementById('backup-dismiss');
   if (dismiss) dismiss.addEventListener('click', () => { state._backupNudgeDismissed = true; render(); });
   const backupNow = document.getElementById('backup-now');
-  if (backupNow) backupNow.addEventListener('click', () => {
+  if (backupNow) backupNow.addEventListener('click', async () => {
     let ok = false;
-    try { ok = downloadBackup(); } catch (_) { ok = false; }
+    try { ok = await downloadBackup(); } catch (_) { ok = false; }
     if (ok) { state._backupNudgeDismissed = true; toast('Backup saved', 'success'); render(); }
-    else toast('Backup may not have downloaded — try again from Settings.', 'error');
+    else toast('Backup not saved — try again from Settings.', 'error');
   });
   const layoffOff = document.getElementById('layoff-not-off');
   const clearLayoff = () => {
-    const lt = (typeof layoffTier === 'function') ? layoffTier() : null;
-    state._layoffDismissedGap = lt ? lt.gap : 0;   // suppress re-arm from this gap (or smaller)
-    state.returnRamp = null;                        // drop the bogus return-ramp load reduction
+    state.layoffDismissedOn = isoToday();   // persisted assertion "I was active today" — caps all gap math across this date
+    state.returnRamp = null;                // drop the bogus return-ramp load reduction
     if (typeof logEvent === 'function') logEvent('layoff', 'Dismissed layoff banner — "I didn\'t take time off"');
     if (typeof saveLocal === 'function') saveLocal();
     render();
@@ -428,7 +418,7 @@ function renderCheck() {
   const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
   const reChk = injuryActive();
   const gl = { done:'Goal met', partial:'Partial goal', missed:'Goal missed' }[t.goalMet] || 'Goal not set';
-  return `<div class="screen no-nav">
+  return `<div class="screen">
     ${reChk ? `<p class="body-dim">Still sore, or good to ease back in?</p><div class="sp-20"></div>` : `<div class="sp-8"></div>`}
     ${t.hurt ? `
     <button class="chk-min" data-clearhurt aria-label="Change your goal or feeling answer">${gl} · Feel ${t.feel?`${t.feel}/5`:'—'} <span class="more">change</span></button>
@@ -454,7 +444,7 @@ function renderCheck() {
     })()}
     <div class="sp-20"></div>
     ${(t.feel && t.feel <= 2 && !t.painChecked) ? `
-      <div class="card-block strength pain-nudge"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
+      <div class="card-block strength"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
         <div class="title">Low days are normal — is something actually hurting?</div>
         <div class="body-dim" style="font-size:14px;margin-top:2px;">Tired or sore all over is fatigue, not injury. A joint, one spot, or sharp/new pain is different — soreness never lives inside a joint.</div>
         <div class="sp-12"></div>
@@ -579,10 +569,11 @@ function bindCheck() {
     // lane sets state._saveError on a failed write; surface it loudly with a one-tap export to recover.
     if (state._saveError) {
       toast('Could not save — phone storage is full. Export a backup now.', 'error');
-      try { downloadBackup(); } catch (_) {}
+      // Emergency export: don't block the result screen, but be honest if it didn't land.
+      try { downloadBackup().then(ok => { if (!ok) toast('Backup did not leave the device — export from Settings as soon as you can.', 'error'); }); } catch (_) {}
     } else if (typeof storagePressure === 'function') {
       // Pressure warning after a successful save, so the user backs up before the next one fails.
-      Promise.resolve().then(async () => { try { const pct = await storagePressure(); if (pct != null && pct > 0.8) toast('Phone storage is almost full — export a backup soon.', 'error'); } catch (_) {} });
+      Promise.resolve().then(async () => { try { const est = await storagePressure(); if (est && est.pct > 0.8) toast('Phone storage is almost full — export a backup soon.', 'error'); } catch (_) {} });
     }
     state.ui.resultOutcome = outcome;
     delete state._chk;
@@ -604,7 +595,7 @@ function renderResult(outcomeKey) {
         <div class="body-dim" style="margin-top:4px;">${escHtml(b.detail)}</div></div></div>`).join('')}`;
   }
   const advanced = o.key === 'progress';
-  return `<div class="screen no-nav result-screen">
+  return `<div class="screen result-screen">
     <div class="sp-24"></div>
     <p class="label">The call</p><div class="sp-8"></div>
     <div style="color:var(--${o.cls});display:flex;align-items:center;gap:10px;">${svgUse('ic-call-'+o.key,30)}<h1 class="display-l serif" style="color:var(--${o.cls});margin:0;">${escHtml(o.title)}</h1></div>
@@ -625,7 +616,7 @@ function renderResult(outcomeKey) {
 // ---------- CAPSTONE CELEBRATION (reaching the Target phase) ----------
 function renderCapstone() {
   const sc = state.phase?.sessionsCleared ?? 0;
-  return `<div class="screen no-nav cap-screen">
+  return `<div class="screen cap-screen">
     <div class="cap-confetti" aria-hidden="true"><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span><span>•</span></div>
     <div class="brand"><img class="brand-emblem" src="logo.png" alt=""></div>
     <p class="label" style="text-align:center;color:var(--milestone);">Phase 5 of 5 · The Target</p>
@@ -672,6 +663,7 @@ function bindLibrary() {
     let anyVisible = false;
     document.querySelectorAll('#lib-list .cat-group').forEach(g => { const vis = [...g.querySelectorAll('.lib-row')].some(r => r.style.display !== 'none'); g.style.display = vis ? '' : 'none'; if (vis) anyVisible = true; });
     const empty = document.getElementById('lib-empty'); if (empty) empty.style.display = anyVisible ? 'none' : '';
+    if (typeof updateScrollCue === 'function') updateScrollCue();   // filtering changes page height in place
   });
 }
 // RIR prescription block for a strength lift (loaded/bodyweight/time). Loaded lifts get a ± load
@@ -710,9 +702,9 @@ function bindExerciseDetail() {
 }
 function renderExerciseDetail(key) {
   const ex = EXERCISES.find(e => e.key === key);
-  if (!ex) return `<div class="screen no-nav"><p>Not found.</p></div>`;
+  if (!ex) return `<div class="screen"><p>Not found.</p></div>`;
   setTimeout(bindExerciseDetail, 0);
-  return `<div class="screen no-nav ex-detail">
+  return `<div class="screen ex-detail">
     <p class="mono" style="color:var(--milestone); font-size: 15px; letter-spacing:0.05em;">${escHtml(ex.cat)} · ${escHtml(ex.rx)}</p>
     <div class="fig-hero">${animatedFigure(ex,260)}</div>
     ${liftRxBlock(ex.key)}
@@ -748,7 +740,7 @@ function renderProgress() {
       <div class="body-dim" style="margin-top:4px;">Session ${state.phase?.dayInWeek ?? 1} of ${pd.week.length} · ${cleared} session${cleared===1?'':'s'} cleared total</div>
     </div>
     ${state.checks.length === 0 ? `<div class="card"><span class="label" style="color:var(--mobility);">Your picture starts with day one</span><div class="sp-4"></div><div class="body-dim">Check in each day — your readiness trend and the mix of calls will build here.</div></div>` : `
-    <div class="chart" data-chart="chart-readiness" data-color="cardio">
+    <div class="chart">
       <div class="top"><div class="title">Readiness</div><div class="label-sm">feel 1–5</div></div>
       <canvas id="chart-readiness" height="96"></canvas>
       <div class="bottom" id="chart-readiness-bottom"></div>
@@ -833,7 +825,7 @@ function renderPhaseList() {
 }
 function renderPhaseDetail(index) {
   const p = PHASES[Number(index)||0];
-  return `<div class="screen no-nav">
+  return `<div class="screen">
         <p class="label">Phase 0${p.index}</p><div class="sp-8"></div>
     <div class="sp-4"></div>
     <p class="label-sm" style="color:var(--milestone);">${escHtml(p.weeks)}</p><div class="sp-16"></div>
@@ -856,7 +848,7 @@ function renderPhaseDetail(index) {
 function renderLog() {
   setTimeout(bindLog, 0);
   const log = (state.log || []).slice().reverse();
-  return `<div class="screen no-nav">
+  return `<div class="screen">
         <div class="sp-4"></div>
     <p class="body-dim">A timestamped record of every check-in, call, progression, injury, and layoff for ${escHtml(state.profile?.username || 'this persona')}.</p>
     <div class="sp-16"></div>
@@ -871,7 +863,7 @@ function bindLog() {
   if (ex) ex.addEventListener('click', () => {
     const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), user: state.profile?.username, log: state.log || [] }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob); const a = document.createElement('a');
-    a.href = url; a.download = `foundation-log-${activeSlug()||'me'}-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
+    a.href = url; a.download = `the-hard-part-log-${activeSlug()||'me'}-${isoToday()}.json`; a.click(); URL.revokeObjectURL(url);
     toast('Log downloaded', 'success');
   });
 }
@@ -880,15 +872,14 @@ function bindLog() {
 function renderSettings() {
   const s = state.settings;
   setTimeout(bindSettings, 0);
-  return `<div class="screen no-nav">
+  return `<div class="screen">
         <div class="sp-8"></div>
     <p class="label">Persona</p><div class="sp-8"></div>
     <p class="body-dim" style="font-size: 16px;">Active profile: <strong style="color:var(--paper);">${escHtml(state.profile?.username || activeSlug() || '—')}</strong>. Each persona's data lives on this device.</p>
     <div class="sp-12"></div>
     ${(() => {
-      // LOCAL persona switcher. Lists personas saved on this device
-      // (excludes backup/aux keys, which carry a ':' in the slug). Loading navigates into that persona.
-      const others = (typeof savedPersonas === 'function' ? savedPersonas() : []).filter(sl => sl && sl.indexOf(':') === -1);
+      // LOCAL persona switcher. savedPersonas() itself excludes backup/aux keys (':' slugs).
+      const others = (typeof savedPersonas === 'function') ? savedPersonas() : [];
       if (others.length <= 1 && others.includes(activeSlug())) return '';
       if (!others.length) return '';
       return `<div class="field"><label for="s-persona-sel">Switch persona</label>
@@ -934,7 +925,7 @@ function renderSettings() {
 }
 function bindSettings() {
   if (state.ui.screen !== 'settings') return;   // deferred bind fired after navigating away
-  // LOCAL persona switcher: load the chosen persona and navigate into it.
+  // LOCAL persona switcher (no GitHub): load the chosen persona and navigate into it.
   const personaSel = document.getElementById('s-persona-sel'), personaGo = document.getElementById('s-persona-go');
   if (personaSel && personaGo) personaGo.addEventListener('click', () => {
     const slug = personaSel.value;
@@ -960,9 +951,9 @@ function bindSettings() {
     navigate('onboarding');
     toast('Logged out — your data is saved', 'success');
   });
-  document.getElementById('s-export').addEventListener('click', () => {
-    let ok = false; try { ok = downloadBackup(); } catch (_) { ok = false; }
-    toast(ok ? 'Backup saved' : 'Backup may not have downloaded — try again', ok ? 'success' : 'error');
+  document.getElementById('s-export').addEventListener('click', async () => {
+    let ok = false; try { ok = await downloadBackup(); } catch (_) { ok = false; }
+    toast(ok ? 'Backup saved' : 'Backup not saved — nothing left this device', ok ? 'success' : 'error');
   });
   const importBtn = document.getElementById('s-import'), importFile = document.getElementById('s-import-file');
   if (importBtn && importFile) {
@@ -974,10 +965,16 @@ function bindSettings() {
         let obj;
         try { obj = JSON.parse(reader.result); }
         catch (e) { toast('Not a valid Hard Part backup', 'error'); return; }
-        if (state.profile && !confirm('Replace this device\'s data with the imported backup?')) return;
-        // SAFETY: snapshot the current persona BEFORE applyBackup so a bad/wrong file is recoverable
-        // via "Restore last auto-backup". Only proceed if applyBackup confirms a valid backup.
-        try { snapshotBeforeDestroy(); } catch (_) {}
+        // Shape-check BEFORE confirm/snapshot so a rejected file can't overwrite the existing
+        // restore point (applyBackup revalidates authoritatively below).
+        if (!obj || typeof obj !== 'object' || !obj.profile || (obj.app && obj.app !== 'the-hard-part')) { toast('Not a valid Hard Part backup', 'error'); return; }
+        // SAFETY: snapshot + confirm against the persona the FILE targets (not whoever is active).
+        // Importing B's stale backup while A is active must snapshot B (the data about to be replaced)
+        // and must always ask when B already has saved data — even when nobody is logged in.
+        const targetSlug = (obj.profile.usernameSlug || slugify(obj.profile.username || '')) || obj.slug || '';
+        const targetHasData = targetSlug && !!localStorage.getItem(userStateKey(targetSlug));
+        if (targetHasData && !confirm(`Replace the data saved on this device for "${targetSlug}" with the imported backup?`)) return;
+        try { snapshotBeforeDestroy(targetSlug || undefined); } catch (_) {}
         // applyBackup signals invalid by returning false (storage-lane contract) or by throwing
         // (current behavior); anything else (true / undefined) is a success.
         let ok = true;
@@ -996,22 +993,23 @@ function bindSettings() {
     try { restoreBackup(); navigate(state.profile ? 'today' : 'onboarding'); toast('Restored from backup', 'success'); }
     catch (e) { toast(e.message, 'error'); }
   });
-  document.getElementById('s-reset').addEventListener('click', () => {
-    // HONEST RESET: snapshot first, attempt a download, then make the confirm reflect whether the
-    // backup actually downloaded — never claim "Backup saved" when the file may not have landed.
+  document.getElementById('s-reset').addEventListener('click', async () => {
+    // HONEST RESET: snapshot first, attempt an export, then make the confirm reflect whether the
+    // backup actually landed — never claim "Backup saved" when the file may not have left the device.
     snapshotBeforeDestroy();          // keep a local restore point
-    let ok = false; try { ok = downloadBackup(); } catch (_) { ok = false; }
+    let ok = false; try { ok = await downloadBackup(); } catch (_) { ok = false; }
     const msg = ok
       ? 'Backup saved to your device — delete local data? (A restore point is also kept on this device.)'
-      : 'Backup may not have downloaded — delete anyway? (A restore point is kept on this device.)';
+      : 'No backup left this device — delete anyway? (A restore point is kept on this device.)';
     if (!confirm(msg)) return;
     const slug = activeSlug();
     if (slug) localStorage.removeItem(userStateKey(slug));
     // Fully zero the in-memory persona (mirrors loadUserState('')) so nothing — log, injury, session,
-    // lifts, return-ramp, or the active-user pointer — bleeds into the next persona created from onboarding.
+    // lifts, ramps, celebration/target markers, or the active-user pointer — bleeds into the next persona.
     state.profile=null; state.phase=null; state.checks=[];
-    state.session=null; state.injury=null; state.log=[]; state._preDay=null;
-    state.lifts={}; state.returnRamp=null;
+    state.session=null; state.injury=null; state.log=[];
+    state.lifts={}; state.returnRamp=null; state.layoffDismissedOn=null;
+    state.targetReachedAt=null; state.celebrationSeen=false;
     state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}
     navigate('onboarding'); toast(ok ? 'Backup saved · local data cleared' : 'Local data cleared (verify your backup)', ok ? 'success' : 'error');
   });

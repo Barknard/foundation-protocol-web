@@ -11,17 +11,12 @@ function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height
 function animatedFigure(ex, size) {
   const s = size || 44;
   // Procedural gait for walk/run; farmer carry reuses the walk gait with a kettlebell in each
-  // hand; parametric skeleton pose for everything else with a pose.
+  // hand; parametric skeleton pose for everything else. Every EXERCISES key resolves to one of
+  // these (asserted by tools/_daysim-fixes.js "figure coverage") — the empty box is a safety net.
   if (ex && (ex.key === 'walk' || ex.key === 'run') && typeof gaitFigure === 'function') return gaitFigure(ex.key, s);
   if (ex && ex.key === 'kb_carry' && typeof gaitFigure === 'function') return gaitFigure('walk', s, true);
   if (ex && ex.key && typeof hasFigurePose === 'function' && hasFigurePose(ex.key)) return skeletonFigure(ex.key, s);
-  const frames = (ex && ex.frames && ex.frames.length) ? ex.frames : [ex.icon];
-  const svg = (cls, id) => `<svg class="${cls}" width="${s}" height="${s}" aria-hidden="true"><use href="#${escHtml(id)}"/></svg>`;
-  const box = (cls, inner) => `<span class="${cls}" style="width:${s}px;height:${s}px;">${inner}</span>`;
-  if (frames.length >= 4) return box('afig anim4', svg('a',frames[0]) + svg('b',frames[1]) + svg('c',frames[2]) + svg('d',frames[3]));
-  if (frames.length === 3) return box('afig anim3', svg('a',frames[0]) + svg('b',frames[1]) + svg('c',frames[2]));
-  if (frames.length === 2) return box('afig anim', svg('a',frames[0]) + svg('b',frames[1]));
-  return box('afig', svg('a', frames[0]));
+  return `<span class="afig" style="width:${s}px;height:${s}px;"></span>`;
 }
 function toast(message, kind) {
   const el = document.getElementById('toast');

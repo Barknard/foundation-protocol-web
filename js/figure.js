@@ -149,8 +149,6 @@ function propKettlebell(J, which) { return propKbAt((which === 'far' ? J.farArm 
 // Resolve a side-view band endpoint name ('nearKnee'|'farKnee') to its joint xy.
 function _bandPt(J, name) { return name === 'farKnee' ? (J.farLeg && J.farLeg.knee) : (J.nearLeg && J.nearLeg.knee); }
 function propBand(J, from, to) { const a = _bandPt(J, from == null ? 'nearKnee' : from), b = _bandPt(J, to == null ? 'farKnee' : to); if (!a || !b) return ''; return `<line x1="${_n(a[0])}" y1="${_n(a[1])}" x2="${_n(b[0])}" y2="${_n(b[1])}" stroke="#D9A24E" stroke-width="1.4" stroke-dasharray="2 1.5"/>`; }
-// point a fraction f along segment a→b (for placing intensity marks on a muscle)
-function _along(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; }
 
 // ---- FRONT (head-on) projection — for frontal-plane / symmetric moves (squat, band walk, hop) ----
 // Pose uses leftArm/rightArm/leftLeg/rightLeg + hipW/shoulderW instead of near/far.
@@ -205,8 +203,6 @@ function propGobletFront(J) {
 }
 function propBandFront(J) { if (!J.leftLeg || !J.rightLeg) return ''; const a = J.leftLeg.knee, b = J.rightLeg.knee; return `<line x1="${_n(a[0])}" y1="${_n(a[1])}" x2="${_n(b[0])}" y2="${_n(b[1])}" stroke="#D9A24E" stroke-width="1.4" stroke-dasharray="2 1.5"/>`; }
 
-// Public: build an <svg> for a pose with a class (a/b for cross-fade frames)
-function poseSVG(pose, size, cls) { return `<svg class="${cls}" viewBox="0 0 50 60" width="${size}" height="${size}" aria-hidden="true">${figureInner(pose)}</svg>`; }
 
 // ============================================================
 // CONTINUOUS ANIMATOR — smoothly interpolate f1 ↔ f2 (ease-loop) and pulse the
@@ -382,18 +378,3 @@ function gaitFigure(kind, size, carry) { const s = size || 44; return `<span cla
 // POSE REGISTRY (FIG_POSES) + GAIT_PARAMS now live as pure data in js/figure-poses.js
 // (loaded BEFORE this file — see index.html). They are referenced here as globals.
 
-// ----------------------------------------------------------------------
-// PREVIEW harness (dev only): __figPreview(['glute_bridge', ...]) injects a
-// labeled grid into #app so frames can be screenshotted & visually audited.
-// ----------------------------------------------------------------------
-function __figPreview(keys, frame) {
-  keys = keys || Object.keys(FIG_POSES);
-  const cell = (k) => {
-    const p = FIG_POSES[k]; if (!p) return `<div style="padding:8px;color:#E26B5F">${k}: MISSING</div>`;
-    const box = (inner, lbl) => `<div style="text-align:center"><div style="background:#211C19;border:1px solid #3A3431;border-radius:10px;display:inline-block">${inner}</div><div style="font-family:monospace;font-size:10px;color:#9A9282">${lbl}</div></div>`;
-    return `<div style="border:1px solid #3A3431;border-radius:12px;padding:8px;margin:4px"><div style="color:#E8E2D2;font-size:13px;margin-bottom:4px">${k}</div><div style="display:flex;gap:8px;justify-content:center;align-items:center">${box(skeletonFigure(k, 116), 'live')}${box(poseSVG(p.f1, 72, 'a'), 'f1')}${box(poseSVG(p.f2, 72, 'a'), 'f2')}</div></div>`;
-  };
-  const html = `<div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#1A1614">${keys.map(cell).join('')}</div>`;
-  document.getElementById('app').innerHTML = html;
-  return keys.length + ' figures previewed';
-}

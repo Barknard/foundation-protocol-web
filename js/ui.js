@@ -116,11 +116,14 @@ function render() {
   requestAnimationFrame(updateScrollCue);   // show/hide the "scroll for more" hint for this screen
 }
 // Show the bobbing "scroll" cue only when the page is scrollable AND not yet at the bottom; hide otherwise.
+// Height is max(html, body): body carries overflow-x:hidden (base.css), which makes it a scroll box whose
+// overflow doesn't reliably show up in scrollingElement.scrollHeight right after an in-place height change.
 function updateScrollCue() {
   const cue = document.getElementById('scroll-cue'); if (!cue) return;
   const se = document.scrollingElement || document.documentElement;
-  const remaining = se.scrollHeight - se.scrollTop - se.clientHeight;
-  const scrollable = se.scrollHeight > se.clientHeight + 8;
+  const height = Math.max(se.scrollHeight, document.body ? document.body.scrollHeight : 0);
+  const remaining = height - se.scrollTop - se.clientHeight;
+  const scrollable = height > se.clientHeight + 8;
   cue.classList.toggle('show', scrollable && remaining > 24);
 }
 if (typeof window !== 'undefined' && !window._scrollCueBound) {
@@ -137,7 +140,8 @@ function syncHeaderOffset() {
 if (typeof window !== 'undefined' && !window._hdOffsetBound) {
   window._hdOffsetBound = true;
   window.addEventListener('resize', syncHeaderOffset);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeaderOffset);
+  // Font swap can change the header height AND the page height — refresh the cue with the offset.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { syncHeaderOffset(); updateScrollCue(); });
 }
 function renderNav(active) {
   return `<nav class="nav">
@@ -171,6 +175,10 @@ function bindEvents() {
     state.celebrationSeen = true; if (typeof saveLocal === 'function') saveLocal();
     navigate('today');
   }));
+  // Expanding/collapsing changes page height WITHOUT a render — the scroll cue must be told, once now
+  // and once after the 340ms max-height transition settles (else a screen that just became scrollable
+  // shows no cue until the user happens to scroll — the one moment the cue exists for).
+  const cueAfterHeightChange = () => { updateScrollCue(); setTimeout(updateScrollCue, 380); };
   document.querySelectorAll('[data-exp]').forEach(el => el.addEventListener('click', () => {
     const i = el.getAttribute('data-exp');
     const panel = document.getElementById('ex-panel-' + i);
@@ -178,6 +186,7 @@ function bindEvents() {
     const open = panel.classList.toggle('open');
     el.setAttribute('aria-expanded', open ? 'true' : 'false');
     state.ui.openBlocks[i] = open;   // persist so it survives re-renders
+    cueAfterHeightChange();
   }));
   document.querySelectorAll('[data-exp-why]').forEach(el => el.addEventListener('click', () => {
     const panel = document.getElementById('why-panel');
@@ -185,6 +194,7 @@ function bindEvents() {
     const open = panel.classList.toggle('open');
     el.setAttribute('aria-expanded', open ? 'true' : 'false');
     state.ui.whyOpen = open;
+    cueAfterHeightChange();
   }));
   document.querySelectorAll('[data-toggle-ex]').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); toggleEx(el.getAttribute('data-toggle-ex')); render(); }));
   document.querySelectorAll('[data-markall]').forEach(el => el.addEventListener('click', () => { markBlockDone(el.getAttribute('data-markall')); render(); }));
