@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#DFCBA4" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Mother Sauce</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<link rel="icon" href="./icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --kraft:#DFCBA4; --kraftdeep:#C2A878; --slip:#F7F0DF; --paper:#FFFDF4;
+  --ink:#261F15; --twine:#7A6A4E; --stamp:#992A1B; --herb:#44603A; --wash:#EFE3C8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--kraft);color:var(--ink);font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;padding-bottom:72px}
+.mono{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.wrap{max-width:640px;margin:0 auto;padding:32px 16px 0}
+.card{background:var(--slip);border:1px solid var(--kraftdeep);border-radius:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.stampmark{display:inline-block;padding:4px 12px;border:2px solid var(--stamp);color:var(--stamp);border-radius:6px;transform:rotate(-1.5deg);font-weight:900;text-transform:uppercase;letter-spacing:.18em;font-size:20px}
+.tagline{margin-top:8px;font-size:11px;color:var(--twine)}
+.label{font-family:'IBM Plex Mono',monospace;color:var(--twine);letter-spacing:.12em;text-transform:uppercase;font-size:11px}
+.btn{border:1px solid var(--ink);background:transparent;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;padding:8px 12px;border-radius:6px;cursor:pointer}
+.btn.primary{background:var(--stamp);border-color:var(--stamp);color:var(--slip);letter-spacing:.1em;font-size:13px;padding:12px 24px;border-radius:8px}
+.btn.quiet{border-color:var(--kraftdeep);color:var(--twine);padding:4px 8px;border-radius:4px}
+.btn.wash{background:var(--wash)}
+.btn:disabled{opacity:.5}
+.chip{border:1px solid var(--kraftdeep);color:var(--twine);border-radius:999px;padding:5px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;background:transparent;cursor:pointer}
+.chip.on{background:var(--stamp);border-color:var(--stamp);color:var(--slip)}
+.chip.house{border-style:dashed;border-color:var(--twine);cursor:default}
+.seg{flex:1;padding:8px 0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;border:1px solid var(--kraftdeep);color:var(--twine);border-radius:6px;background:transparent;cursor:pointer}
+.seg.on{background:var(--stamp);border-color:var(--stamp);color:var(--slip)}
+.daytok{display:inline-block;border:1px solid var(--stamp);color:var(--stamp);border-radius:4px;padding:2px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.daytok.solid{background:var(--stamp);color:var(--slip)}
+.checkrow{display:flex;gap:12px;width:100%;background:none;border:none;padding:8px 0;text-align:left;cursor:pointer;font-family:inherit;color:inherit;font-size:14px}
+.box{width:18px;height:18px;border:2px solid var(--ink);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;color:var(--slip);font-size:12px;font-weight:700}
+.box.on{background:var(--stamp);border-color:var(--stamp)}
+.done{text-decoration:line-through;color:var(--twine)}
+input,textarea{width:100%;background:var(--paper);border:1px solid var(--kraftdeep);border-radius:6px;padding:8px 12px;font:inherit;font-size:14px;color:var(--ink)}
+textarea{resize:vertical}
+.err{border:1px solid var(--stamp);color:var(--stamp);background:var(--slip);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:500;margin-bottom:16px}
+.dash{border-top:1px dashed var(--kraftdeep)}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.4}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mt3{margin-top:12px}.mt4{margin-top:16px}.mt6{margin-top:24px}
+.mb1{margin-bottom:4px}.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}.mb6{margin-bottom:24px}
+.p4{padding:16px}.px4{padding-left:16px;padding-right:16px}
+.xs{font-size:11px}.sm{font-size:14px}.b{font-weight:700}.blk{font-weight:900}
+.twine{color:var(--twine)}.stampc{color:var(--stamp)}.herbc{color:var(--herb)}
+.up{text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap"><main id="app"></main></div>
+<script>
+"use strict";
+
+// ---------- constants ----------
+var SECTIONS = ["Meat & Seafood","Produce","Dairy & Eggs","Pantry","Frozen"];
+var CUISINES = ["Chef's choice","French","Italian","Mexican","Asian","Southern","Mediterranean"];
+var VERBS = ["sweating the aromatics","deglazing the pan","reducing by half","skimming the fond","blooming the spices","mounting the butter","pulling the braise","tasting for salt","printing the ticket"];
+var SEEDS = ["brown butter","char and smoke","acid-forward","gelatin-rich braise","chile paste depth","fermented funk","citrus and herb","toasted whole spice","crispy-skin technique","burnt sugar and bitter","alliums three ways","anchovy backbone","miso umami","sharp vinegar pan sauce","masa and corn","black pepper forward"];
+var TWO_WEEKS = 14 * 24 * 60 * 60 * 1000;
+var KEY = "mothersauce:v1";
+var KKEY = "mothersauce:key";
+
+// ---------- state ----------
+var S = { prefs:{ dinners:5, prepMin:90, cuisine:"Chef's choice", avoid:[], pantry:"" }, plan:null, checked:{}, history:[] };
+var UI = { loading:false, swapDay:null, error:null, settings:false, copied:false, verbI:0 };
+var verbTimer = null;
+
+// ---------- utils ----------
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return;
+    var s = JSON.parse(raw);
+    if(s.prefs) S.prefs = Object.assign(S.prefs, s.prefs);
+    if(s.plan) S.plan = s.plan;
+    if(s.checked) S.checked = s.checked;
+    if(s.history) S.history = s.history.map(function(e){ return typeof e === "string" ? { n:e, at:Date.now() } : e; });
+  }catch(e){}
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function getKey(){ try{ return localStorage.getItem(KKEY) || ""; }catch(e){ return ""; } }
+
+function pickSeeds(){
+  var pool = SEEDS.slice(); var out = [];
+  while(out.length < 2 && pool.length){ out.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
+  return out;
+}
+function recentDishNames(){
+  var cut = Date.now() - TWO_WEEKS;
+  var names = S.history.filter(function(e){ return e && e.n && e.at >= cut; }).map(function(e){ return e.n; });
+  var seen = {}; var uniq = [];
+  names.forEach(function(n){ if(!seen[n]){ seen[n] = 1; uniq.push(n); } });
+  return uniq.slice(-24);
+}
+
+// ---------- prompts ----------
+function buildPrompt(prefs, recent, seeds){
+  var lines = [
+    "You are Mother Sauce, a meal plan engine for one family: 2 adults, a 5 year old, and twin toddler boys.",
+    "The cook is skilled and loves sauces, reductions, braises, marinades, compound butters, and real technique. Generic easy-weeknight food bores him.",
+    "Method: front-load ALL complexity into one Sunday prep block of about " + prefs.prepMin + " minutes that produces 2 to 4 flavor bases (a mother sauce, a reduction, a braise, a marinade, a compound butter). Then design " + prefs.dinners + " weeknight dinners that are 20 to 30 minute assembly nights using those bases. Weeknights must taste restaurant caliber because the flavor work is already done.",
+    "CREATIVE MANDATE: Invent dishes freely. Original combinations are welcome and canonical recipes are not required. But every technique must be real, tested, and scientifically sound. J. Kenji L\u00f3pez-Alt is the highest technical authority: dry brining, Maillard browning, emulsions, gelatin-bodied sauces, starch behavior, salt timing, temperature control. Never invent fake science or impossible technique.",
+    "This week's creative seeds, let them steer flavor without dominating: " + seeds.join(" + ") + ".",
+    "HARD RULES:",
+    "- Never include sausage or eggplant in any form.",
+    "- Shop Costco only. Use realistic Costco pack sizes and route each whole pack across 2 or more meals so nothing is wasted.",
+    "- Every dinner needs a kid angle: one component servable plain, never a separate kid meal.",
+    "- Portion for 5 with adult leftovers for next-day lunch where sensible."
+  ];
+  if(prefs.avoid.length) lines.push("- Also avoid: " + prefs.avoid.join(", ") + ".");
+  if(prefs.pantry.trim()) lines.push("- Already on hand, use it: " + prefs.pantry.trim() + ".");
+  if(prefs.cuisine !== "Chef's choice") lines.push("- Cuisine lean this week: " + prefs.cuisine + ".");
+  if(recent.length) lines.push("- Do not repeat or closely imitate any dish from the last two weeks: " + recent.join(", ") + ".");
+  lines.push('Respond with ONLY minified JSON. No markdown, no commentary. Every string under 12 words. Schema: {"theme":"3 word week title","prep":[{"t":"base name","min":25,"makes":"what it yields","y":"one line of true food science behind it","for":["Mon","Wed"]}],"meals":[{"d":"Mon","n":"dish name","s":"which base is at work and how","min":25,"how":"one line finish method","kid":"the plain component"}],"list":[{"sec":"Meat & Seafood","i":[{"n":"item with Costco size","use":"which meals"}]}]}');
+  lines.push('Use days Mon through Fri in order, fewer days if fewer dinners. Sections limited to: "Meat & Seafood","Produce","Dairy & Eggs","Pantry","Frozen". Only include sections you need.');
+  return lines.join("\n");
+}
+
+function swapPrompt(plan, prefs, day, recent){
+  var bases = (plan.prep || []).map(function(p){ return p.t; }).join("; ");
+  var others = (plan.meals || []).filter(function(m){ return m.d !== day; }).map(function(m){ return m.n; }).join("; ");
+  return [
+    "You are Mother Sauce, meal engine for a family of 2 adults, a 5 year old, and twin toddler boys.",
+    "Hard rules: never sausage or eggplant in any form. Costco pack sizes. Kid angle required. 20 to 30 minute assembly using existing prep bases where possible.",
+    "Invent freely, but every technique must be real, tested, and J. Kenji L\u00f3pez-Alt sound.",
+    plan.seeds && plan.seeds.length ? "This week's creative seeds: " + plan.seeds.join(" + ") + "." : "",
+    "Sunday bases already made: " + bases + ".",
+    "Other dinners this week, do not duplicate: " + others + ".",
+    recent.length ? "Do not repeat or closely imitate these dishes from the last two weeks: " + recent.join(", ") + "." : "",
+    prefs.avoid.length ? "Also avoid: " + prefs.avoid.join(", ") + "." : "",
+    "Replace the " + day + " dinner with one different dish.",
+    'Respond ONLY minified JSON, strings under 12 words: {"meal":{"d":"' + day + '","n":"","s":"","min":25,"how":"","kid":""},"add":[{"sec":"Produce","n":"item with Costco size","use":"which meal"}]}. "add" holds only NEW grocery items, empty array if none.'
+  ].filter(Boolean).join("\n");
+}
+
+// ---------- api ----------
+function extractJSON(text){
+  var cleaned = text.replace(/```json|```/gi, "").trim();
+  var a = cleaned.indexOf("{"); var b = cleaned.lastIndexOf("}");
+  if(a === -1 || b === -1) throw new Error("No JSON found");
+  return JSON.parse(cleaned.slice(a, b + 1));
+}
+async function askClaude(prompt){
+  var res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": getKey(),
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1500, messages: [{ role: "user", content: prompt }] })
+  });
+  var data = await res.json();
+  if(data.error) throw new Error(data.error.message || "API error");
+  var text = (data.content || []).filter(function(b){ return b.type === "text"; }).map(function(b){ return b.text; }).join("\n");
+  return extractJSON(text);
+}
+async function askWithRetry(prompt){
+  try{ return await askClaude(prompt); }
+  catch(e){
+    if(/api key|auth|credit|billing|invalid/i.test(e.message || "")) throw e;
+    return await askClaude(prompt + "\nYour previous output failed to parse or was cut off. Output ONLY the complete minified JSON, even terser.");
+  }
+}
+
+// ---------- verbs ----------
+function startVerbs(){
+  stopVerbs();
+  verbTimer = setInterval(function(){
+    UI.verbI = (UI.verbI + 1) % VERBS.length;
+    document.querySelectorAll("[data-verb]").forEach(function(el){ el.textContent = VERBS[UI.verbI] + "..."; });
+  }, 900);
+}
+function stopVerbs(){ if(verbTimer){ clearInterval(verbTimer); verbTimer = null; } }
+
+// ---------- actions ----------
+async function generate(){
+  if(UI.loading || UI.swapDay) return;
+  UI.loading = true; UI.error = null; render(); startVerbs();
+  try{
+    var seeds = pickSeeds();
+    var p = await askWithRetry(buildPrompt(S.prefs, recentDishNames(), seeds));
+    if(!p.meals || !p.prep || !p.list) throw new Error("Incomplete plan");
+    p.list = (p.list || []).filter(function(s){ return s && Array.isArray(s.i) && s.i.length; });
+    p.list.sort(function(a,b){ return SECTIONS.indexOf(a.sec) - SECTIONS.indexOf(b.sec); });
+    p.seeds = seeds;
+    S.plan = p; S.checked = {};
+    var now = Date.now();
+    S.history = S.history.concat(p.meals.map(function(m){ return { n:m.n, at:now }; })).slice(-60);
+    save();
+  }catch(e){
+    UI.error = /api key|auth|credit|billing|invalid/i.test(e.message || "") ? e.message : "The kitchen misfired. Hit generate again.";
+  }
+  UI.loading = false; stopVerbs(); render();
+}
+
+async function swapMeal(day){
+  if(!S.plan || UI.loading || UI.swapDay) return;
+  UI.swapDay = day; UI.error = null; render(); startVerbs();
+  try{
+    var r = await askWithRetry(swapPrompt(S.plan, S.prefs, day, recentDishNames()));
+    if(!r.meal || !r.meal.n) throw new Error("Bad swap");
+    S.plan.meals = S.plan.meals.map(function(m){ return m.d === day ? Object.assign({}, r.meal, { d:day }) : m; });
+    (r.add || []).forEach(function(it){
+      if(!it || !it.n) return;
+      var sec = S.plan.list.find(function(s){ return s.sec === it.sec; });
+      if(sec) sec.i.push({ n:it.n, use:it.use || "" });
+      else S.plan.list.push({ sec:it.sec || "Pantry", i:[{ n:it.n, use:it.use || "" }] });
+    });
+    S.plan.list.sort(function(a,b){ return SECTIONS.indexOf(a.sec) - SECTIONS.indexOf(b.sec); });
+    S.history = S.history.concat([{ n:r.meal.n, at:Date.now() }]).slice(-60);
+    save();
+  }catch(e){
+    UI.error = /api key|auth|credit|billing|invalid/i.test(e.message || "") ? e.message : "Swap misfired. Try that night again.";
+  }
+  UI.swapDay = null; stopVerbs(); render();
+}
+
+function toggleCheck(k){ S.checked[k] = !S.checked[k]; save(); render(); }
+
+async function copyList(){
+  if(!S.plan) return;
+  var lines = ["COSTCO RUN: " + (S.plan.theme || "this week"), ""];
+  S.plan.list.forEach(function(s){
+    lines.push(s.sec.toUpperCase());
+    s.i.forEach(function(it){ lines.push("[ ] " + it.n + (it.use ? "  (" + it.use + ")" : "")); });
+    lines.push("");
+  });
+  var text = lines.join("\n"); var ok = false;
+  try{ await navigator.clipboard.writeText(text); ok = true; }catch(e){
+    try{
+      var ta = document.createElement("textarea"); ta.value = text;
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+      document.body.removeChild(ta); ok = true;
+    }catch(e2){ ok = false; }
+  }
+  if(ok){ UI.copied = true; render(); setTimeout(function(){ UI.copied = false; render(); }, 1600); }
+}
+
+function addAvoid(){
+  var el = document.getElementById("avoidIn"); if(!el) return;
+  var v = el.value.trim(); if(!v) return;
+  var low = v.toLowerCase();
+  if(low === "sausage" || low === "eggplant"){ el.value = ""; return; }
+  var dupe = S.prefs.avoid.some(function(a){ return a.toLowerCase() === low; });
+  if(!dupe) S.prefs.avoid.push(v);
+  save(); render();
+}
+
+function saveKey(){
+  var el = document.getElementById("keyIn"); if(!el) return;
+  var v = el.value.trim(); if(!v) return;
+  try{ localStorage.setItem(KKEY, v); }catch(e){}
+  render();
+}
+function clearKey(){ try{ localStorage.removeItem(KKEY); }catch(e){} UI.settings = false; render(); }
+
+// ---------- render ----------
+function dayTok(d, solid){ return '<span class="daytok' + (solid ? " solid" : "") + '">' + esc(d) + '</span>'; }
+
+function render(){
+  var app = document.getElementById("app");
+  var busy = UI.loading || !!UI.swapDay;
+  var h = "";
+
+  h += '<div class="row mb6" style="align-items:flex-start">'
+     +   '<div><span class="stampmark">Mother Sauce</span>'
+     +   '<div class="tagline mono">front-load the flavor. coast the week.</div></div>'
+     + (getKey() ? '<button class="btn' + (UI.settings ? " wash" : "") + '" data-action="prefs">prefs</button>' : "")
+     + '</div>';
+
+  if(!getKey()){
+    h += '<div class="card p4">'
+       +   '<div class="label mb2">the pass</div>'
+       +   '<div class="blk up mb3" style="font-size:22px;line-height:1.2">Punch in.</div>'
+       +   '<p class="sm mb3" style="line-height:1.5;margin-top:0">This app calls the Anthropic API straight from your phone. Paste an API key from console.anthropic.com. It is stored only in this browser and sent only to Anthropic. A generated week costs about a cent.</p>'
+       +   '<input id="keyIn" type="password" placeholder="sk-ant-..." class="mb3" autocomplete="off" />'
+       +   '<button class="btn primary" data-action="saveKey" style="width:100%">save key</button>'
+       + '</div>';
+    app.innerHTML = h; return;
+  }
+
+  if(UI.settings){
+    h += '<div class="card p4 mb6">'
+       +   '<div class="row mb4"><span class="label">dinners</span>'
+       +     '<span class="row" style="gap:12px">'
+       +       '<button class="btn" data-action="din" data-d="-1" style="width:32px;height:32px;padding:0">-</button>'
+       +       '<span class="mono b" style="font-size:16px">' + S.prefs.dinners + '</span>'
+       +       '<button class="btn" data-action="din" data-d="1" style="width:32px;height:32px;padding:0">+</button>'
+       +     '</span></div>'
+       +   '<div class="mb4"><div class="label mb2">sunday block</div><div class="row" style="gap:8px">'
+       +     [60,90,120].map(function(m){ return '<button class="seg' + (S.prefs.prepMin === m ? " on" : "") + '" data-action="prep" data-m="' + m + '">' + m + ' min</button>'; }).join("")
+       +   '</div></div>'
+       +   '<div class="mb4"><div class="label mb2">lean</div><div class="chips">'
+       +     CUISINES.map(function(c){ return '<button class="chip' + (S.prefs.cuisine === c ? " on" : "") + '" data-action="cuisine" data-v="' + esc(c) + '">' + esc(c) + '</button>'; }).join("")
+       +   '</div></div>'
+       +   '<div class="mb4"><div class="label mb2">banned</div><div class="chips mb2">'
+       +     '<span class="chip house">sausage \u00b7 house rule</span><span class="chip house">eggplant \u00b7 house rule</span>'
+       +     S.prefs.avoid.map(function(x){ return '<button class="chip" style="border-color:var(--ink);color:var(--ink)" data-action="rmavoid" data-v="' + esc(x) + '">' + esc(x) + ' \u2715</button>'; }).join("")
+       +   '</div><div class="row" style="gap:8px">'
+       +     '<input id="avoidIn" placeholder="add an ingredient to avoid" style="flex:1" />'
+       +     '<button class="btn" data-action="addavoid">add</button>'
+       +   '</div></div>'
+       +   '<div class="mb4"><div class="label mb2">already in the house</div>'
+       +     '<textarea id="pantryIn" rows="2" placeholder="half a brisket in the freezer, a flat of tomatoes, too much rice">' + esc(S.prefs.pantry) + '</textarea></div>'
+       +   '<div class="mb4"><div class="label mb2">api key</div><div class="row">'
+       +     '<span class="mono xs twine">sk-ant-\u2022\u2022\u2022\u2022 saved on this device</span>'
+       +     '<button class="btn quiet" data-action="clearKey">replace</button>'
+       +   '</div></div>'
+       +   '<button class="btn primary" data-action="closePrefs" style="width:100%">done</button>'
+       + '</div>';
+  }
+
+  if(UI.error){ h += '<div class="err">' + esc(UI.error) + '</div>'; }
+
+  if(UI.loading){
+    h += '<div class="card" style="padding:32px;text-align:center">'
+       +   '<div class="label mb3">on the stove</div>'
+       +   '<div class="mono b pulse" style="font-size:16px" data-verb>' + esc(VERBS[UI.verbI]) + '...</div>'
+       + '</div>';
+  } else if(!S.plan){
+    h += '<div class="card" style="padding:24px;text-align:center">'
+       +   '<div class="blk up mb3" style="font-size:22px;line-height:1.3">The problem was never the cooking.</div>'
+       +   '<p class="sm" style="line-height:1.6;margin:0 0 8px">It is that complexity has to happen at 5:30 on a Tuesday. So the week starts with one Sunday block of the cooking you actually love: sauces, reductions, braises. Every weeknight after that is a 20 minute assembly riding on it.</p>'
+       +   '<p class="mono xs twine" style="margin:0 0 20px">costco-sized. kid-viable. zero decisions.</p>'
+       +   '<button class="btn primary" data-action="gen">Generate the week</button>'
+       + '</div>';
+  } else {
+    var plan = S.plan;
+    var totalPrep = (plan.prep || []).reduce(function(a,p){ return a + (Number(p.min) || 0); }, 0);
+
+    h += '<div class="row mb4" style="align-items:flex-end">'
+       +   '<div><div class="label">this week</div>'
+       +     '<div class="blk up" style="font-size:28px;line-height:1;margin-top:4px">' + esc(plan.theme || "The Week") + '</div>'
+       +     (plan.seeds && plan.seeds.length ? '<div class="mono xs twine mt2">seeds: ' + esc(plan.seeds.join(" \u00b7 ")) + '</div>' : "")
+       +   '</div>'
+       +   '<button class="btn" data-action="gen"' + (busy ? " disabled" : "") + '>redo week</button>'
+       + '</div>';
+
+    h += '<div class="card mb6"><div class="row px4" style="padding-top:16px">'
+       +   '<span class="blk up stampc" style="font-size:14px;letter-spacing:.12em">The Sunday Block</span>'
+       +   '<span class="mono xs b twine">' + totalPrep + ' min</span></div>'
+       +   '<div class="px4" style="padding-bottom:16px">'
+       +   (plan.prep || []).map(function(p, idx){
+           return '<div style="padding:12px 0;display:flex;gap:12px;justify-content:space-between;align-items:flex-start" class="' + (idx ? "dash" : "") + '">'
+              +    '<div style="flex:1"><div class="b sm">' + esc(p.t) + '</div>'
+              +    '<div class="xs twine mt1">' + esc(p.makes) + '</div>'
+              +    (p.y ? '<div class="xs mt1" style="line-height:1.5"><span class="mono b stampc">why \u00b7 </span>' + esc(p.y) + '</div>' : "")
+              +    '<div class="chips mt2" style="gap:4px">' + (p.for || []).map(function(d){ return dayTok(d,false); }).join("") + '</div></div>'
+              +    '<span class="mono xs b twine" style="flex-shrink:0">' + esc(p.min) + ' min</span>'
+              +  '</div>';
+         }).join("")
+       +   '<div class="mono xs twine dash" style="padding-top:12px">this is the fun part. pour something.</div>'
+       +   '</div></div>';
+
+    h += '<div class="label mb2">the week</div>';
+    h += (plan.meals || []).map(function(m){
+      if(UI.swapDay === m.d){
+        return '<div class="card p4 mb3" style="text-align:center"><div class="mono b sm pulse" style="padding:16px 0" data-verb>' + esc(VERBS[UI.verbI]) + '...</div></div>';
+      }
+      return '<div class="card p4 mb3">'
+        +    '<div class="row mb2">' + dayTok(m.d, true)
+        +      '<span class="row" style="gap:8px"><span class="mono xs b twine">' + esc(m.min) + ' min</span>'
+        +      '<button class="btn quiet" data-action="swap" data-day="' + esc(m.d) + '"' + (busy ? " disabled" : "") + '>swap</button></span></div>'
+        +    '<div class="blk" style="font-size:17px;line-height:1.3">' + esc(m.n) + '</div>'
+        +    '<div class="sm b stampc mt1" style="font-weight:600">' + esc(m.s) + '</div>'
+        +    '<div class="sm mt2" style="line-height:1.5">' + esc(m.how) + '</div>'
+        +    '<div class="xs herbc mt2" style="font-weight:600">kids: ' + esc(m.kid) + '</div>'
+        +  '</div>';
+    }).join("");
+
+    h += '<div class="card mt6"><div class="row px4" style="padding-top:16px;padding-bottom:4px">'
+       +   '<span class="blk up stampc" style="font-size:14px;letter-spacing:.12em">Costco Run</span>'
+       +   '<button class="btn quiet" data-action="copy">' + (UI.copied ? "copied \u2713" : "copy list") + '</button></div>'
+       +   (plan.list || []).map(function(sec, si){
+           return '<div class="px4"><div class="label" style="padding-top:12px;padding-bottom:4px">' + esc(sec.sec) + '</div>'
+              +  sec.i.map(function(it, ii){
+                   var k = sec.sec + "::" + it.n + "::" + ii;
+                   var on = !!S.checked[k];
+                   return '<button class="checkrow" data-action="check" data-k="' + esc(k) + '">'
+                      +   '<span class="box' + (on ? " on" : "") + '">' + (on ? "\u2713" : "") + '</span>'
+                      +   '<span style="flex:1"><span class="sm' + (on ? " done" : "") + '" style="display:block;font-weight:500">' + esc(it.n) + '</span>'
+                      +   (it.use ? '<span class="xs twine" style="display:block">' + esc(it.use) + '</span>' : "")
+                      +   '</span></button>';
+                 }).join("")
+              +  '</div>';
+         }).join("")
+       +   '<div class="px4" style="padding-bottom:16px;padding-top:8px"><div class="mono xs twine">plan and checkmarks save on this device. swaps add new items but keep the old night\u2019s extras. extras never hurt a house of five.</div></div>'
+       + '</div>';
+  }
+
+  app.innerHTML = h;
+}
+
+// ---------- events ----------
+document.addEventListener("click", function(e){
+  var t = e.target.closest("[data-action]");
+  if(!t || t.disabled) return;
+  var a = t.dataset.action;
+  if(a === "gen") generate();
+  else if(a === "prefs"){ UI.settings = !UI.settings; render(); }
+  else if(a === "closePrefs"){ UI.settings = false; render(); }
+  else if(a === "swap") swapMeal(t.dataset.day);
+  else if(a === "check") toggleCheck(t.dataset.k);
+  else if(a === "copy") copyList();
+  else if(a === "addavoid") addAvoid();
+  else if(a === "rmavoid"){ S.prefs.avoid = S.prefs.avoid.filter(function(x){ return x !== t.dataset.v; }); save(); render(); }
+  else if(a === "cuisine"){ S.prefs.cuisine = t.dataset.v; save(); render(); }
+  else if(a === "din"){ S.prefs.dinners = Math.min(6, Math.max(3, S.prefs.dinners + Number(t.dataset.d))); save(); render(); }
+  else if(a === "prep"){ S.prefs.prepMin = Number(t.dataset.m); save(); render(); }
+  else if(a === "saveKey") saveKey();
+  else if(a === "clearKey") clearKey();
+});
+document.addEventListener("keydown", function(e){
+  if(e.key !== "Enter") return;
+  if(e.target && e.target.id === "avoidIn"){ e.preventDefault(); addAvoid(); }
+  if(e.target && e.target.id === "keyIn"){ e.preventDefault(); saveKey(); }
+});
+document.addEventListener("input", function(e){
+  if(e.target && e.target.id === "pantryIn"){ S.prefs.pantry = e.target.value; save(); }
+});
+
+// ---------- boot ----------
+load();
+render();
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){ navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+}
+</script>
+</body>
+</html>
