@@ -58,6 +58,18 @@ cd "$HOME\hardpart-apk\android"
 ## Gotchas (learned the hard way)
 - **`local.properties` must use forward slashes** (see step 3) — backslashes break the build.
 - **Run Gradle from PowerShell**, with `JAVA_HOME` pointing at Android Studio's `jbr`.
+- **"Unable to establish loopback connection" (daemon dies at boot, 2026-08-17):** modern
+  JDKs implement NIO `Selector`/`Pipe` with an **AF_UNIX socket in the temp dir**; when
+  `TEMP` resolves through an 8.3 short name (`C:\Users\EDDIET~1\...`, common when a tool
+  shell sets it) afunix rejects the path with `Invalid argument: connect` and every
+  `Selector.open()` in every Gradle JVM dies. The fix must reach the JVMs **at boot** —
+  Gradle strips unrecognized `-D` flags from the daemon's launch args (`org.gradle.jvmargs`
+  and command-line `-D` both arrive too late), so set the env var instead, before step 5:
+  ```powershell
+  $env:JAVA_TOOL_OPTIONS = "-Djdk.net.unixdomain.tmpdir=C:/t"   # C:\t must exist
+  ```
+  Diagnose with a 10-line `Selector.open()` test file run directly under the JBR — if that
+  throws `sun.nio.ch.UnixDomainSockets.connect0 ... Invalid argument`, this is your problem.
 - The APK is **debug-signed** — fine for personal sideloading; Play Protect will warn "unsafe app"
   (it just means not Google-signed). A Play release would need a real signing key.
 - `server.androidScheme` defaults to `https` (Capacitor 3+), so the WebView origin is
