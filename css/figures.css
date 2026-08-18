@@ -59,3 +59,17 @@
 .afig { position: relative; display: inline-block; color: var(--paper); line-height: 0; }
 .afig svg { display: block; }
 
+/* ---------- FOOT CLOSE-UP FIGURES (pf_stretch / foot_intrinsic — js/foot.js's footCloseupFigure) ----------
+   Hand-authored 2-frame SVGs (no gait, no skeleton pose — they need visible toes, spec §7.3). Each returns
+   markup with <g class="f1">/<g class="f2">; cross-fade them with a small CSS keyframe (no rAF hook needed,
+   unlike the continuous skeleton animator above) — this is the "tiny CSS keyframe added by Lane C" the plan
+   calls for. Targets any <g class="f1"/"f2"> rather than requiring a specific wrapper class, since those
+   names are only ever produced by footCloseupFigure. */
+g.f1 { animation: footcu-cross 2.6s ease-in-out infinite; }
+g.f2 { opacity: 0; animation: footcu-cross 2.6s ease-in-out infinite reverse; }
+@keyframes footcu-cross { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  g.f1 { animation: none; opacity: 1; }
+  g.f2 { animation: none; opacity: 0; }
+}
+

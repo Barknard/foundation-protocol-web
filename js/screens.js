@@ -168,8 +168,25 @@ function dayWhy() {
     ? `Your readiness has averaged ~${avg.toFixed(1)}/5 over your last ${recent.length} check-in${recent.length===1?'':'s'}${age?`, paced for age ${age}`:''} — that average is what tunes how fast you move.`
     : (age ? `Paced for age ${age}: more recovery and a gentler ramp than a 25-year-old's program.` : '');
 
+  // FOOT REHAB / TAIL — takes priority over the phase-based reasoning below (spec §3.4: dayWhy() gets a
+  // new top branch while a foot-rehab injury or its relapse-prevention tail is active). Read `kind`/`FOOT_CONDITION_NAMES`
+  // from js/foot.js's pinned contract so the copy can't drift from what the engine is actually doing.
+  const footKindActive = injuryActive() && state.injury && footRehabKind(state.injury.kind) ? state.injury.kind : null;
+  const footTailActive = !footKindActive && !injuryActive() && state.rehabTail ? state.rehabTail.kind : null;
+
   let line, points;
-  if (ph === 0) { line = "Build the slowest tissue first — tendons and bone lag your heart and muscles."; points = [
+  if (footKindActive) {
+    const name = FOOT_CONDITION_NAMES[footKindActive] || 'this';
+    line = `Loading beats rest for ${name} — the plan keeps you moving, not sidelined.`;
+    points = [
+      "Gentle, progressive loading rebuilds the tissue under strain; total rest doesn't — the same PEACE & LOVE principle behind every injury here, applied to the foot specifically.",
+      "You clear this when three things are true: pain-free daily walking, morning pain gone or minimal, and the key exercise done clean — not by a date on the calendar.",
+      "Evidence behind the specific exercises: Settings → Evidence base." ];
+  }
+  else if (footTailActive) { line = "Relapse-prevention upkeep — a light dose twice a week to keep it from creeping back."; points = [
+    "Tissue that just recovered is still adapting — dropping the exercise the moment pain disappears risks a relapse.",
+    "This tapers off on its own in a few weeks; nothing else about your plan changes." ]; }
+  else if (ph === 0) { line = "Build the slowest tissue first — tendons and bone lag your heart and muscles."; points = [
     "Phase 0 is deliberately low-impact: daily walking, 10-min PT (balance, hips, calves), and protein — no loaded lifting or running yet.",
     "Connective tissue and bone adapt over months while muscle and cardio adapt in weeks, so we prep the structure before the stress (Bohm & Arampatzis, Sports Med 2015).",
     "Single-leg balance and hip work is the base that keeps knees and shins healthy once running starts." ]; }
@@ -196,6 +213,17 @@ function dayWhy() {
   return { line, points, formula, lead, trend };
 }
 
+// §3.5 "day >=14 with no improvement trend -> clinician nudge": appended to the standing-call banner's
+// action line. Reads the injury log itself (never a private flag) — a failed gate attempt logged after
+// day 14 of THIS injury is the "not improving" signal.
+function footClinicianNudgeText() {
+  if (!injuryActive() || !state.injury || !footRehabKind(state.injury.kind)) return '';
+  if (injuryElapsedDays(state.injury) < 14) return '';
+  const since = state.injury.since || 0;
+  const hadFailedGate = (state.log || []).some(e => e && e.type === 'injury' && /Gate not yet met/.test(e.text) && e.ts >= since);
+  return hadFailedGate ? ' Two weeks in without a cleared gate — worth getting this looked at by a clinician.' : '';
+}
+
 // A quiet engraved-stone / Sisyphus-spirit line for the post-check "done" card — keeps the brand's
 // voice alive on a screen people see daily. Deterministic: advances one line per completed check-in.
 const STONE_LINES = [
@@ -209,6 +237,15 @@ const STONE_LINES = [
   'It gets easier — because of days exactly like this one.',
 ];
 function stoneLine() { return STONE_LINES[(state.checks ? state.checks.length : 0) % STONE_LINES.length]; }
+
+// `pf_stretch` / `foot_intrinsic` have no gait and no skeleton pose — they need visible toes, which the
+// skeleton can't draw (spec §7.3), so js/foot.js hand-authors a 2-frame close-up for those two keys only.
+// Try it first everywhere a figure is drawn from an EXERCISES entry; every other key falls through to the
+// normal gait/skeleton/legacy routing in animatedFigure() unchanged (footCloseupFigure returns null for them).
+function figureFor(ex, size) {
+  const cu = ex && ex.key && footCloseupFigure(ex.key, size);
+  return cu || animatedFigure(ex, size);
+}
 
 function renderToday() {
   ensureSession();
@@ -252,7 +289,7 @@ function renderToday() {
   // One coaching banner max (research: a banner is a thin frame, not a hero) — priority injury > layoff > deload.
   const banners = (() => {
     const sc = standingCall();
-    if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
+    if (sc) return `<div class="card-block ${sc.cls}" style="margin-bottom:12px;"><div class="stripe"></div><div class="card" style="padding:14px 16px;"><span class="label">${escHtml(sc.label)}</span><div class="sp-4"></div><div class="headline serif">${escHtml(sc.title)}</div><div class="sp-4"></div><div class="body-dim">${sc.action}${escHtml(footClinicianNudgeText())} <button class="more" data-go="check">Re-check pain &rarr;</button></div></div></div>`;
     // DISMISSIBLE LAYOFF BANNER: a forward clock jump (or a clock fix) can manufacture a bogus "time off".
     // "I didn't take time off" records today as an active day (layoffDismissedOn), which zeroes the
     // effective gap above — so the banner disappears without a separate suppression check here.
@@ -302,7 +339,7 @@ function renderToday() {
         </div><div class="col" style="align-items:flex-end;gap:6px;">${exs.length?`<span class="rx-count">${bdone}/${exs.length}</span><div class="rx-chev">${svgUse('ic-chev-right',20)}</div>`:'<span></span>'}</div></div></div></div>`;
       if (!exs.length) return `<div style="margin-bottom:12px;">${head}</div>`;
       const open = !!state.ui.openBlocks[i];
-      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" role="button" tabindex="0" aria-label="${escHtml(ex.name)} — full steps"><div class="fig">${animatedFigure(ex,72)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><span class="more">Full steps &rarr;</span></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
+      const card = (ex)=>{ const dn=exDone(ex.key); return `<div class="ex-card${dn?' done':''}" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" role="button" tabindex="0" aria-label="${escHtml(ex.name)} — full steps"><div class="fig">${figureFor(ex,72)}</div><div class="meta"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div><div class="cue">${escHtml(ex.cue)}</div><span class="more">Full steps &rarr;</span></div><button class="ex-check" data-toggle-ex="${escHtml(ex.key)}" aria-pressed="${dn?'true':'false'}" aria-label="Mark ${escHtml(ex.name)} ${dn?'not done':'done'}" title="Mark done">${svgUse('ic-check',16)}</button></div>`; };
       const todo = exs.filter(e=>!exDone(e.key));
       const done = exs.filter(e=>exDone(e.key));
       // RIR: on a strength block, a compact one-line prescription per progressed lift (load/reps live).
@@ -381,11 +418,66 @@ function bmPickText(parts) {
   if (!parts || !parts.length) return 'Tap the figure to mark where it hurts.';
   return 'Hurting: ' + parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' · ');
 }
+
+// ---------- FOOT DRILL-DOWN (spec §3.1; consumes js/foot.js's pinned contract: FOOT_ZONES, footMapSvg,
+// FOOT_GATES — names are law, called exactly). The foot close-up REPLACES the body map in the same
+// fitBodyMap-sized container (never appended below it) — one active step's UI at a time, matching the
+// existing low-feel pain-discriminator card's "replace, don't stack" pattern (:474-484 below).
+const FOOT_ZONE_LABELS = { heel: 'Heel', arch: 'Arch', ball: 'Ball', toes: 'Toes', top: 'Top of foot' };
+function footSideLabel(side) { return side === 'left' ? 'Left foot' : side === 'right' ? 'Right foot' : ''; }
+// Shared reset for every "start over" exit (hurt toggled off, "Nothing hurts", side switched) — one
+// place that knows the full set of foot-draft fields so none of them can be left stale by a partial clear.
+function resetFootDraft(t) {
+  t.parts = []; t.redFlag = false;
+  t._footSide = null; t._footView = false; t.footZone = null; t.footNeural = null;
+  t._screened = false; t._footFlags = [];
+}
+function footBreadcrumb(t) {
+  const zone = t.footZone ? FOOT_ZONE_LABELS[t.footZone] : '';
+  return 'Hurting: ' + footSideLabel(t._footSide) + (zone ? ' · ' + zone : '');
+}
+// The 4-chip red-flag screener content (spec §3.1.5 / EVIDENCE-FOOT.md §5) — any chip selected sets redFlag.
+const FOOT_SCREEN_FLAGS = [
+  ['bone', 'Pinpoint sore spot on one bone'],
+  ['rest', 'Pain at rest or at night'],
+  ['pop',  "Started with a pop, or can't bear weight"],
+  ['hot',  'Red-hot / swollen, or fever'],
+];
+// Renders whichever foot-drill-down sub-step is next: the ball-only neural question, then the red-flag
+// screener (both zones), then the (confirmed) foot map — mutually exclusive so nothing stacks below the map.
+function renderFootStep(t) {
+  if (t.footZone === 'ball' && t.footNeural == null) {
+    return `<p class="bm-pick" aria-live="polite">${escHtml(footBreadcrumb(t))}</p>
+      <div class="card-block cardio"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
+        <div class="title">Any burning, numbness, tingling, or a pebble-in-sock feeling between two toes?</div>
+        <div class="sp-12"></div>
+        <div class="chip-row" data-q="neural" role="radiogroup" aria-label="Burning, numbness, tingling, or pebble feeling between toes?">
+          <button class="chip yes" data-val="yes" role="radio" aria-checked="false" tabindex="0">Yes</button>
+          <button class="chip no" data-val="no" role="radio" aria-checked="false" tabindex="-1">No</button>
+        </div>
+      </div></div>`;
+  }
+  if (t.footZone && !t._screened) {
+    const flags = t._footFlags || (t._footFlags = []);
+    return `<p class="bm-pick" aria-live="polite">${escHtml(footBreadcrumb(t))}</p>
+      <div class="card-block strength"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
+        <div class="title">Quick safety check — tap anything that's true right now</div>
+        <div class="sp-12"></div>
+        <div class="chip-row" role="group" aria-label="Red-flag screener">${FOOT_SCREEN_FLAGS.map(([k,label]) => {
+          const on = flags.includes(k);
+          return `<button class="chip screen-chip${on?' active':''}" data-flag="${k}" aria-pressed="${on?'true':'false'}">${escHtml(label)}</button>`;
+        }).join('')}</div>
+        <div class="sp-16"></div>
+        <button id="foot-screen-go">${flags.length ? 'Continue' : 'None of these — continue'}</button>
+      </div></div>`;
+  }
+  return `<p class="bm-pick" id="bm-pick" aria-live="polite">${escHtml(footBreadcrumb(t))}</p>${footMapSvg(t.footZone)}`;
+}
 // Size the body figure to fill exactly the space left between the prompt above and the "Nothing hurts"
 // button + fixed footer below, so the whole hurt screen fits one phone viewport with NO scroll on any
 // device. Regions then render as large as that space allows (~48px on a 390x844 phone).
 function fitBodyMap() {
-  const svg = document.querySelector('svg.bodymap');
+  const svg = document.querySelector('svg.bodymap, svg.footmap');   // footMapSvg (js/foot.js) reuses/extends the same sizing
   if (!svg) return;
   // top is fixed by the prompt/breadcrumb above (independent of the figure's own height), so no reset needed.
   const top = svg.getBoundingClientRect().top;
@@ -395,6 +487,25 @@ function fitBodyMap() {
   // Floor kept low (180) so short/landscape viewports stay within `avail` (no scroll under the fixed footer);
   // `avail` already subtracts the footer reservation, so we never force the figure taller than fits.
   svg.style.height = Math.max(180, Math.min(avail, 540)) + 'px';
+}
+// §3.5 recovery re-check gate: for an active foot-rehab injury, a pain-free (non-hurt) submit must answer
+// FOOT_GATES[kind]'s three yes/no questions before "See the call" enables (chkReady). Re-flagging ("still
+// hurts") takes the drill-down path instead, so this only ever renders on the plain goal/feel branch.
+function footGateChipsHtml(t) {
+  if (t.hurt || !injuryActive() || !state.injury || !footRehabKind(state.injury.kind)) return '';
+  const gate = FOOT_GATES[state.injury.kind] || [];
+  if (!gate.length) return '';
+  const g = t._gate || (t._gate = {});
+  return `<div class="sp-20"></div>
+    <div class="card-block milestone"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
+      <div class="title">Recovery check</div>
+      <div class="body-dim" style="font-size:14px;margin-top:2px;">Answer all three to see the call.</div>
+      ${gate.map(q => `<div class="sp-12"></div><p class="label" style="margin:0 0 6px;">${escHtml(q.q)}</p>
+        <div class="chip-row" data-q="gate-${escHtml(q.key)}" role="radiogroup" aria-label="${escHtml(q.q)}">
+          <button class="chip yes ${g[q.key]===true?'active':''}" data-val="yes" role="radio" aria-checked="${g[q.key]===true?'true':'false'}" tabindex="0">Yes</button>
+          <button class="chip no ${g[q.key]===false?'active':''}" data-val="no" role="radio" aria-checked="${g[q.key]===false?'true':'false'}" tabindex="-1">No</button>
+        </div>`).join('')}
+    </div></div>`;
 }
 function renderCheck() {
   ensureSession();
@@ -414,19 +525,25 @@ function renderCheck() {
   if (!state._chk.parts) state._chk.parts = [];
   setTimeout(bindCheck, 0);
   const t = state._chk;
-  const ready = t.goalMet && t.feel;
+  const ready = chkReady(t);
   const faces = { 5:'😀', 4:'🙂', 3:'😐', 2:'😕', 1:'😵' };
   const reChk = injuryActive();
   const gl = { done:'Goal met', partial:'Partial goal', missed:'Goal missed' }[t.goalMet] || 'Goal not set';
   return `<div class="screen">
     ${reChk ? `<p class="body-dim">Still sore, or good to ease back in?</p><div class="sp-20"></div>` : `<div class="sp-8"></div>`}
-    ${t.hurt ? `
+    ${t.hurt ? (t._footView ? `
+    <button class="chk-min" data-clearhurt aria-label="Change your goal or feeling answer">${gl} · Feel ${t.feel?`${t.feel}/5`:'—'} <span class="more">change</span></button>
+    <div class="sp-8"></div>
+    <button class="foot-back" id="foot-whole-body" aria-label="Back to the whole-body map">&larr; whole body</button>
+    <div class="sp-8"></div>
+    ${renderFootStep(t)}
+    ` : `
     <button class="chk-min" data-clearhurt aria-label="Change your goal or feeling answer">${gl} · Feel ${t.feel?`${t.feel}/5`:'—'} <span class="more">change</span></button>
     <div class="sp-8"></div>
     <p class="label bm-prompt">Where does it hurt? Tap all that apply.</p>
     <p class="bm-pick" id="bm-pick" aria-live="polite">${escHtml(bmPickText(t.parts))}</p>
     ${bodyMap(t.parts)}
-    ` : `
+    `) : `
     <p class="label">Did you meet today's goal?</p>${allEx ? `<div class="sp-4"></div><p class="body-dim" style="color:var(--mobility);font-size:14px;">${svgUse('ic-check',13)} All ${total} exercises checked off — marked Done automatically.</p>` : ''}<div class="sp-8"></div>
     ${(() => {
       const opts = [['done','yes',`${svgUse('ic-check',13)} Done`],['partial','',`${svgUse('ic-goal-partial',13)} Partial`],['missed','no',`${svgUse('ic-goal-missed',13)} Missed`]];
@@ -442,6 +559,7 @@ function renderCheck() {
       const tab = selIdx >= 0 ? selIdx : 0;
       return `<div class="feel-grid" data-q="feel" role="radiogroup" aria-label="How do you feel?">${order.map((v,i) => { const on = t.feel===v; return `<button class="feel ${on?'active':''} feel-${v}" data-val="${v}" role="radio" aria-checked="${on?'true':'false'}" aria-label="${escHtml(FEEL_LABELS[v])}" tabindex="${i===tab?'0':'-1'}"><span class="feel-face" aria-hidden="true">${faces[v]}</span><span class="feel-label">${FEEL_LABELS[v]}</span></button>`; }).join('')}</div>`;
     })()}
+    ${footGateChipsHtml(t)}
     <div class="sp-20"></div>
     ${(t.feel && t.feel <= 2 && !t.painChecked) ? `
       <div class="card-block strength"><div class="stripe"></div><div class="card" style="padding:14px 16px;">
@@ -458,7 +576,7 @@ function renderCheck() {
     <div class="sp-16"></div>
     <p class="body-dim" style="font-size: 14px;">How you feel drives the call — flag pain or feel rough and it eases you back, keeping pain low and gone by morning.</p>
     ${(!state.checks || state.checks.length === 0) ? `<div class="sp-8"></div><p class="body-dim" style="font-size:14px;">Your two answers become your call for today — the app's read on whether to push, hold, ease off, or rest.</p>` : ''}
-    <p class="gate-hint" id="chk-gate" aria-live="polite">${ready ? '' : 'Pick a goal and how you feel to see your call.'}</p>
+    <p class="gate-hint" id="chk-gate" aria-live="polite">${ready ? '' : ((t.goalMet && t.feel) ? 'Answer the recovery check above to see your call.' : 'Pick a goal and how you feel to see your call.')}</p>
     `}
   </div>`;
 }
@@ -466,8 +584,42 @@ function renderCheck() {
 // the answer (the hurt path drives a Rest/injury call regardless of goal/feel), so >=1 selected part enables it.
 function chkReady(t) {
   if (!t) return false;
-  if (t.hurt) return !!(t.parts && t.parts.length);   // hurt mode: must mark WHERE it hurts (re-check pre-seeds the prior spot)
-  return !!(t.goalMet && t.feel);
+  if (t.hurt) {
+    if (!(t.parts && t.parts.length)) return false;   // hurt mode: must mark WHERE it hurts (re-check pre-seeds the prior spot)
+    // A foot part additionally needs the drill-down finished: zone, (ball only) neural, and the screener —
+    // checked regardless of which view is showing, so backing out via "whole body" can't skip the screener.
+    const footPart = t.parts.includes('left foot') ? true : t.parts.includes('right foot');
+    if (footPart) {
+      if (!t.footZone) return false;
+      if (t.footZone === 'ball' && t.footNeural == null) return false;
+      if (!t._screened) return false;
+    }
+    return true;
+  }
+  if (!(t.goalMet && t.feel)) return false;
+  // Pain-free re-check on an active foot-rehab injury needs all three recovery-gate questions answered
+  // (any yes/no, per §3.5 — a "no" still lets you see the call, it just keeps you in rehab).
+  if (injuryActive() && state.injury && footRehabKind(state.injury.kind)) {
+    const gate = FOOT_GATES[state.injury.kind] || [];
+    const g = t._gate || {};
+    if (gate.length && !gate.every(q => g[q.key] === true || g[q.key] === false)) return false;
+  }
+  return true;
+}
+// Builds the pinned `foot` param for applyCheck(..., foot) — null unless this submit actually concerns
+// a foot: either a fresh/re- flag with a completed drill-down, or a pain-free re-check on an active
+// foot-rehab injury (carries the just-answered gate). Neither path is reachable unless chkReady(t) already
+// passed, so the zone/neural/screener/gate fields it reads are guaranteed complete.
+function footParamForSubmit(t) {
+  if (t.hurt) {
+    const footPart = t.parts.includes('left foot') || t.parts.includes('right foot');
+    if (!footPart || !t.footZone) return null;
+    return { zone: t.footZone, neural: t.footZone === 'ball' ? !!t.footNeural : null, gate: null };
+  }
+  if (injuryActive() && state.injury && state.injury.foot && footRehabKind(state.injury.kind)) {
+    return { zone: state.injury.foot.zone, neural: state.injury.foot.neural, gate: t._gate || null };
+  }
+  return null;
 }
 // Check-in's frozen footer action (placed by the app shell).
 function checkFooter() {
@@ -519,7 +671,7 @@ function bindCheck() {
   const hurt = document.getElementById('chk-hurt');
   if (hurt) hurt.addEventListener('click', () => {
     state._chk.hurt = !state._chk.hurt;
-    if (!state._chk.hurt) { state._chk.parts = []; state._chk.redFlag = false; }
+    if (!state._chk.hurt) resetFootDraft(state._chk);
     state._focusAfter = state._chk.hurt ? '.bm-seg[data-part]' : '#chk-hurt';
     render();
   });
@@ -531,12 +683,94 @@ function bindCheck() {
   const psharp = document.getElementById('chk-pain-sharp');
   if (psharp) psharp.addEventListener('click', () => { state._chk.hurt = true; state._chk.painChecked = true; state._focusAfter = '.bm-seg[data-part]'; render(); });
   // Clear / "nothing hurts" / "change" → back to the goal+feel questions.
-  document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; state._chk.parts = []; state._chk.redFlag = false; state._chk.painChecked = false; state._focusAfter = '#chk-hurt'; render(); }));
+  document.querySelectorAll('[data-clearhurt]').forEach(el => el.addEventListener('click', () => { state._chk.hurt = false; resetFootDraft(state._chk); state._chk.painChecked = false; state._focusAfter = '#chk-hurt'; render(); }));
+  // "◀ whole body" — returns to the body map WITHOUT losing the drill-down answers (spec §3.1.2).
+  const footWholeBody = document.getElementById('foot-whole-body');
+  if (footWholeBody) footWholeBody.addEventListener('click', () => {
+    state._chk._footView = false;
+    state._focusAfter = `.bm-seg[data-part="${state._chk._footSide === 'right' ? 'right foot' : 'left foot'}"]`;
+    render();
+  });
+  // Foot zone buttons (js/foot.js's footMapSvg — data-zone, role=button, aria-pressed; single-select like the
+  // body-map's own toggle below, but mutually exclusive across zones rather than multi-select).
+  document.querySelectorAll('[data-zone]').forEach(el => {
+    const pick = () => {
+      const z = el.getAttribute('data-zone');
+      if (state._chk.footZone !== z) { state._chk.footZone = z; state._chk.footNeural = null; state._chk._screened = false; state._chk._footFlags = []; state._chk.redFlag = false; }
+      state._focusAfter = (z === 'ball') ? '[data-q="neural"] [role="radio"]' : '.screen-chip';
+      render();
+    };
+    el.addEventListener('click', pick);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+  // Ball-only neural question — Yes/No radiogroup, matching the goal chip-row pattern (:620-630 above).
+  const neural = document.querySelector('[data-q="neural"]');
+  if (neural) {
+    const radios = [...neural.querySelectorAll('[role=radio]')];
+    const selectNeural = (btn) => {
+      state._chk.footNeural = btn.getAttribute('data-val') === 'yes';
+      state._chk._screened = false; state._chk._footFlags = []; state._chk.redFlag = false;   // screener still runs fresh
+      state._focusAfter = '.screen-chip';
+      render();
+    };
+    radios.forEach((btn, idx) => { btn.addEventListener('click', () => selectNeural(btn)); wireArrows(radios, idx, selectNeural); });
+  }
+  // Red-flag screener — multi-toggle chips (any selected = redFlag) + an explicit "Continue" so _screened
+  // only ever becomes true from a deliberate action, never a default.
+  document.querySelectorAll('.screen-chip').forEach(el => {
+    const toggleFlag = () => {
+      const k = el.getAttribute('data-flag');
+      const flags = state._chk._footFlags || (state._chk._footFlags = []);
+      const i = flags.indexOf(k);
+      if (i < 0) flags.push(k); else flags.splice(i, 1);
+      el.classList.toggle('active', i < 0);
+      el.setAttribute('aria-pressed', i < 0 ? 'true' : 'false');
+      const goBtn = document.getElementById('foot-screen-go');
+      if (goBtn) goBtn.textContent = flags.length ? 'Continue' : 'None of these — continue';
+    };
+    el.addEventListener('click', toggleFlag);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFlag(); } });
+  });
+  const screenGo = document.getElementById('foot-screen-go');
+  if (screenGo) screenGo.addEventListener('click', () => {
+    state._chk.redFlag = !!(state._chk._footFlags && state._chk._footFlags.length);
+    state._chk._screened = true;
+    state._focusAfter = '.foot-back';
+    render();
+  });
+  // Recovery-gate chips (§3.5) — in-place update like the goal radiogroup, one Yes/No pair per gate key.
+  document.querySelectorAll('[data-q^="gate-"]').forEach(group => {
+    const key = group.getAttribute('data-q').slice(5);
+    const radios = [...group.querySelectorAll('[role=radio]')];
+    const selectGate = (btn) => {
+      state._chk._gate = state._chk._gate || {};
+      state._chk._gate[key] = btn.getAttribute('data-val') === 'yes';
+      radios.forEach(b => { const on = b === btn; b.classList.toggle('active', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+      btn.focus(); refreshGo(); updateGate();
+    };
+    radios.forEach((btn, idx) => { btn.addEventListener('click', () => selectGate(btn)); wireArrows(radios, idx, selectGate); });
+  });
   // Body-map regions are SVG shapes with role=button (multi-select, aria-pressed). Toggle in place
   // (no re-render → keeps scroll position and focus). SVG isn't a native button, so wire Enter/Space.
   document.querySelectorAll('[data-part]').forEach(el => {
     const toggle = () => {
-      const p = el.getAttribute('data-part'); const i = state._chk.parts.indexOf(p);
+      const p = el.getAttribute('data-part');
+      // Left/right foot drill down instead of the plain multi-select toggle (spec §3.1.2/3.1.3): single-select
+      // per foot, and re-tapping an already-selected foot re-opens the close-up rather than deselecting it.
+      if (p === 'left foot' || p === 'right foot') {
+        const side = p === 'left foot' ? 'left' : 'right';
+        const other = side === 'left' ? 'right foot' : 'left foot';
+        const oi = state._chk.parts.indexOf(other);
+        if (oi >= 0) state._chk.parts.splice(oi, 1);
+        if (state._chk.parts.indexOf(p) < 0) state._chk.parts.push(p);
+        if (state._chk._footSide !== side) { state._chk.footZone = null; state._chk.footNeural = null; state._chk._screened = false; state._chk._footFlags = []; state._chk.redFlag = false; }
+        state._chk._footSide = side;
+        state._chk._footView = true;
+        state._focusAfter = '.foot-back';
+        render();
+        return;
+      }
+      const i = state._chk.parts.indexOf(p);
       const on = i < 0;
       if (on) state._chk.parts.push(p); else state._chk.parts.splice(i, 1);
       el.classList.toggle('sel', on);
@@ -554,7 +788,10 @@ function bindCheck() {
     if (!window._bmFitBound) { window._bmFitBound = true; window.addEventListener('resize', () => { try { fitBodyMap(); } catch (_) {} }); }
   }
   function refreshGo() { const g = document.getElementById('chk-go'); if (g) g.disabled = !chkReady(state._chk); }
-  function updateGate() { const el = document.getElementById('chk-gate'); if (el) el.textContent = (state._chk.goalMet && state._chk.feel) ? '' : 'Pick a goal and how you feel to see your call.'; }
+  function updateGate() {
+    const el = document.getElementById('chk-gate'); if (!el) return;
+    el.textContent = chkReady(state._chk) ? '' : ((state._chk.goalMet && state._chk.feel) ? 'Answer the recovery check above to see your call.' : 'Pick a goal and how you feel to see your call.');
+  }
   const go = document.getElementById('chk-go');
   if (go) go.addEventListener('click', () => {
     const t = state._chk;
@@ -562,7 +799,12 @@ function bindCheck() {
     // Hurt path: marking where it hurts is the answer; backfill neutral goal/feel so the stored record and
     // readiness trend stay valid (the call is Rest/injury regardless of these values).
     if (t.hurt) { if (!t.goalMet) t.goalMet = 'partial'; if (!t.feel) t.feel = 2; }
-    const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag);
+    const foot = footParamForSubmit(t);
+    const outcome = applyCheck(t.goalMet, t.feel, t.hurt, t.parts, t.redFlag, foot);
+    // Stashed for renderResult (spec §3.2/§3.5) — same convention as resultOutcome below: state._chk is
+    // deleted right after this, so anything the result screen needs must be captured here first.
+    state.ui.resultFoot = foot;
+    state.ui.resultFootHurt = !!t.hurt;
     // A check-in is a user gesture — a good moment to lock in persistent storage.
     if (typeof ensurePersistentStorage === 'function' && !state.settings.storagePersisted) { try { ensurePersistentStorage(); } catch (_) {} }
     // QUOTA FAILURE VISIBLE: applyCheck's save can silently fail when the phone is full. The storage
@@ -584,6 +826,62 @@ function bindCheck() {
 }
 
 // ---------- RESULT ----------
+// ---------- FOOT RESULT BLOCKS (spec §3.2/§3.5) — reads BLOCK_EX/EXERCISES/FOOT_GATES so this copy can't
+// drift from what the engine actually swapped in; consumes state.ui.resultFoot/resultFootHurt, stashed by
+// bindCheck's submit handler right before it deletes state._chk. ----------
+function footProtocolBlockHtml(kind) {
+  const name = FOOT_CONDITION_NAMES[kind] || 'this';
+  const blockKey = kind === 'foot-pf' ? 'footRehabPF' : 'footRehabMeta';
+  const exs = (BLOCK_EX[blockKey] || []).map(k => EXERCISES.find(e => e.key === k)).filter(Boolean);
+  const timeCourse = kind === 'foot-pf'
+    ? "Most people feel real change in 2–6 weeks; full recovery often takes months — the plan adapts until your foot passes the gate, not until a date."
+    : "Most people feel real change within a few weeks — the plan adapts until your foot passes the gate, not until a date.";
+  const cite = kind === 'foot-pf' ? 'Rathleff 2015 (heel raise) · DiGiovanni 2003/2006 (stretch).' : 'Calf stretch: DiGiovanni CW 2002. Intrinsic foot work: evidence still thin.';
+  return `<div class="sp-24"></div><p class="label">Your plan for ${escHtml(name)}</p><div class="sp-8"></div>
+    ${exs.map(ex => `<div class="card-block mobility" style="margin-bottom:8px;"><div class="stripe"></div><div class="card" style="padding:12px 14px;">
+      <div class="title">${escHtml(ex.name)}</div><div class="body-dim" style="margin-top:2px;font-family:'IBM Plex Mono',monospace;font-size:13px;">${escHtml(ex.rx)}</div>
+    </div></div>`).join('')}
+    <p class="body-dim" style="font-size:14px;">Some pain is OK — up to ~3/10, settling by next morning; climbing pain means back off.</p>
+    <div class="sp-8"></div>
+    <p class="body-dim" style="font-size:14px;">${escHtml(timeCourse)}</p>
+    <div class="sp-8"></div>
+    <p class="body-dim" style="font-size:14px;">Starting tomorrow, this rehab work replaces your usual mobility block and impact cardio eases back while you're in the early window.</p>
+    <div class="sp-8"></div>
+    <p class="body-dim" style="font-size:13px;">${escHtml(cite)}</p>`;
+}
+function footGuideBlockHtml(kind, neural) {
+  const g = footGuideFor(kind, neural);
+  if (!g) return '';
+  return `<div class="sp-24"></div><p class="label">${escHtml(g.title)}</p><div class="sp-8"></div>
+    <p class="body">${escHtml(g.what)}</p>
+    ${(g.doNow && g.doNow.length) ? `<div class="sp-12"></div><p class="label" style="color:var(--mobility);">Do now</p><div class="sp-4"></div>${g.doNow.map(x=>`<p class="body-dim" style="margin:3px 0;">•  ${escHtml(x)}</p>`).join('')}` : ''}
+    ${(g.seeSomeone && g.seeSomeone.length) ? `<div class="sp-12"></div><p class="label" style="color:var(--red-text);">See someone if</p><div class="sp-4"></div>${g.seeSomeone.map(x=>`<p class="body-dim" style="margin:3px 0;">•  ${escHtml(x)}</p>`).join('')}` : ''}
+    ${g.cite ? `<div class="sp-12"></div><p class="body-dim" style="font-size:13px;">${escHtml(g.cite)}</p>` : ''}`;
+}
+function footTailStartedBlockHtml(kind) {
+  const name = FOOT_CONDITION_NAMES[kind] || 'your foot';
+  return `<div class="sp-24"></div><p class="label" style="color:var(--mobility);">Recovery gate passed</p><div class="sp-8"></div>
+    <p class="body">${escHtml(name.charAt(0).toUpperCase() + name.slice(1))} cleared its recovery gate. For the next 5 weeks you'll get a light upkeep set twice a week while impact returns through the normal graded ramp — that's what keeps it from creeping back.</p>`;
+}
+function footGateFailedBlockHtml(kind, gate) {
+  const failed = (FOOT_GATES[kind] || []).filter(q => !(gate && gate[q.key] === true));
+  return `<div class="sp-24"></div><p class="label" style="color:var(--red-text);">Not cleared yet</p><div class="sp-8"></div>
+    <p class="body">Still working through it — the plan keeps going.</p>
+    ${failed.length ? `<div class="sp-8"></div>${failed.map(q=>`<p class="body-dim" style="margin:3px 0;">•  ${escHtml(q.q)}</p>`).join('')}` : ''}`;
+}
+function footResultBlockHtml() {
+  const rf = state.ui.resultFoot;
+  if (!rf) return '';
+  if (state.ui.resultFootHurt) {
+    const kind = state.injury && state.injury.kind;
+    if (!kind) return '';
+    if (footRehabKind(kind)) return footProtocolBlockHtml(kind);
+    return footGuideBlockHtml(kind, rf.neural);
+  }
+  if (!injuryActive() && state.rehabTail) return footTailStartedBlockHtml(state.rehabTail.kind);
+  if (state.injury && footRehabKind(state.injury.kind)) return footGateFailedBlockHtml(state.injury.kind, rf.gate);
+  return '';
+}
 function renderResult(outcomeKey) {
   const o = (state.ui.resultOutcome && state.ui.resultOutcome.key === outcomeKey) ? state.ui.resultOutcome : (OUTCOMES[outcomeKey] || OUTCOMES.repeat);
   let modifyHtml = '';
@@ -606,6 +904,7 @@ function renderResult(outcomeKey) {
     <div class="sp-24"></div>
     <p class="label">Why</p><div class="sp-8"></div>
     <p class="body">${escHtml(o.why)}</p>
+    ${footResultBlockHtml()}
     <div class="sp-48"></div>
     <button data-go="today">${advanced ? 'Start next session' : 'Got it'}</button>
     <div class="sp-12"></div>
@@ -640,14 +939,14 @@ function renderCapstone() {
 // ---------- LIBRARY ----------
 function renderLibrary() {
   setTimeout(bindLibrary, 0);
-  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Kettlebell','Mobility','Cardio'];
+  const cats = ['Neuromuscular','Hip','Shin','Day A','Day B','Kettlebell','Mobility','Cardio','Foot'];
   return `<div class="screen">
     <div class="field" style="margin-bottom:14px;"><input type="search" id="lib-search" placeholder="Search exercises…" autocapitalize="none" autocorrect="off" aria-label="Search exercises"></div>
     <div id="lib-list">
     ${cats.map(cat=>{ const list=EXERCISES.filter(e=>e.cat===cat); if(!list.length) return '';
       return `<div class="cat-group"><div class="cat-header">${escHtml(cat)}</div>
         ${list.map(ex=>`<button class="lib-row" data-go="exerciseDetail" data-p-key="${escHtml(ex.key)}" data-search="${escHtml((ex.name+' '+(ex.cue||'')+' '+ex.cat).toLowerCase())}">
-          <div class="fig">${animatedFigure(ex,84)}</div>
+          <div class="fig">${figureFor(ex,84)}</div>
           <div class="text"><div class="name">${escHtml(ex.name)}</div><div class="rx">${escHtml(ex.rx)}</div></div>
           <div class="chev">${svgUse('ic-chev-right',16)}</div></button>`).join('')}</div>`; }).join('')}
     </div>
@@ -706,7 +1005,7 @@ function renderExerciseDetail(key) {
   setTimeout(bindExerciseDetail, 0);
   return `<div class="screen ex-detail">
     <p class="mono" style="color:var(--milestone); font-size: 15px; letter-spacing:0.05em;">${escHtml(ex.cat)} · ${escHtml(ex.rx)}</p>
-    <div class="fig-hero">${animatedFigure(ex,260)}</div>
+    <div class="fig-hero">${figureFor(ex,260)}</div>
     ${liftRxBlock(ex.key)}
     <p class="label">Steps</p><div class="sp-8"></div>
     <div class="step-list">${ex.steps.map((s,i)=>`<div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${escHtml(s)}</div>`).join('')}</div>
@@ -918,7 +1217,10 @@ function renderSettings() {
        'Lally P et al. How are habits formed: modelling habit formation in the real world. Eur J Soc Psychol 2010;40(6):998–1009.',
        'Kokkinos P et al. J Am Coll Cardiol 2022;80(6):598–609.',
        'Kokura Y et al. Clin Nutr ESPEN 2024;63:417–426.',
-       'Nielsen Norman Group. Dark Mode: How Users Think About It. 2023.'
+       'Nielsen Norman Group. Dark Mode: How Users Think About It. 2023.',
+       'Rathleff MS et al. High-load strength training for plantar fasciitis. Scand J Med Sci Sports 2015;25(3):e292–e300.',
+       'DiGiovanni BF et al. Plantar fascia-specific stretching for chronic heel pain. J Bone Joint Surg Am 2003;85(7):1270–1277; 2-year follow-up 2006;88(8):1775–1781.',
+       'Foot pain — full evidence review, incl. metatarsalgia and red-flag screening: docs/EVIDENCE-FOOT.md.'
       ].map(c=>`<p class="body-dim" style="font-size: 14px; margin:4px 0;">${escHtml(c)}</p>`).join('')}
     <div class="sp-32"></div>
   </div>`;
@@ -1009,6 +1311,7 @@ function bindSettings() {
     state.profile=null; state.phase=null; state.checks=[];
     state.session=null; state.injury=null; state.log=[];
     state.lifts={}; state.returnRamp=null; state.layoffDismissedOn=null;
+    state.rehabTail=null;   // closes Lane B's flagged gap: the reset nulls belong here, not just logout()
     state.targetReachedAt=null; state.celebrationSeen=false;
     state.activeUser=null; try { localStorage.removeItem(ACTIVE_KEY); } catch(_){}
     navigate('onboarding'); toast(ok ? 'Backup saved · local data cleared' : 'Local data cleared (verify your backup)', ok ? 'success' : 'error');
