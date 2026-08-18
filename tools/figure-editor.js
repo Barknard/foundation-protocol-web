@@ -25,7 +25,7 @@ const GAIT_KEYS = ['walk', 'run', 'kb_carry'];   // kb_carry == farmer carry (pr
 
 // ---- editor state ----
 const ED = {
-  move: 'standing',     // selected move key (a FIG_POSES key or a gait key)
+  move: '',             // selected move key (a FIG_POSES key or a gait key); set at boot
   frame: 'f1',          // active frame
   scrub: 0,             // scrub t (0..1)
   playing: false,
@@ -41,6 +41,8 @@ const ED = {
 
 const $ = (id) => document.getElementById(id);
 const isGait = (k) => GAIT_KEYS.indexOf(k) >= 0;
+// default selection = first registered pose (no key is guaranteed to exist by name)
+const defaultMove = () => Object.keys(FIG_POSES)[0];
 const round2 = (v) => Math.round(v * 100) / 100;
 const lockKey = (field) => ED.move + '|' + ED.frame + '|' + field;
 
@@ -61,7 +63,7 @@ function boot() {
   wirePlayBar();
   wireVersions();
   wireCanvasPointer();
-  selectMove('standing');
+  selectMove(defaultMove());
   initSession();   // GET current + write a session-start snapshot
 }
 
@@ -70,9 +72,7 @@ function boot() {
 // ============================================================
 function buildMoveList() {
   const ul = $('moveList'); ul.innerHTML = '';
-  const poseKeys = Object.keys(FIG_POSES);
-  // standing first (sanity), then the rest in registry order
-  poseKeys.sort((a, b) => (a === 'standing' ? -1 : b === 'standing' ? 1 : 0));
+  const poseKeys = Object.keys(FIG_POSES);   // registry order
   poseKeys.forEach(k => ul.appendChild(moveLi(k, 'pose')));
   GAIT_KEYS.forEach(k => ul.appendChild(moveLi(k, 'gait')));
 }
@@ -662,7 +662,7 @@ async function initSession() {
       // in that case the <script>-loaded globals ARE the on-disk truth and must NOT be wiped.
       if (cur && cur.poses && Object.keys(cur.poses).length) { Object.keys(FIG_POSES).forEach(k => delete FIG_POSES[k]); Object.assign(FIG_POSES, cur.poses); }
       if (cur && cur.gait && Object.keys(cur.gait).length) Object.assign(GAIT_PARAMS, cur.gait);
-      buildMoveList(); selectMove(ED.move in FIG_POSES || isGait(ED.move) ? ED.move : 'standing');
+      buildMoveList(); selectMove(ED.move in FIG_POSES || isGait(ED.move) ? ED.move : defaultMove());
     }
     // write the session-start snapshot (restore-to-start safety net)
     await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ session: ED.sessionId, sessionStart: true }, payload())) });
@@ -729,7 +729,7 @@ async function revertTo(ts) {
     const data = await r.json();   // { poses, gait } payload of that snapshot
     if (data && data.poses) { Object.keys(FIG_POSES).forEach(k => delete FIG_POSES[k]); Object.assign(FIG_POSES, data.poses); }
     if (data && data.gait) Object.assign(GAIT_PARAMS, data.gait);
-    buildMoveList(); selectMove(ED.move in FIG_POSES || isGait(ED.move) ? ED.move : 'standing');
+    buildMoveList(); selectMove(ED.move in FIG_POSES || isGait(ED.move) ? ED.move : defaultMove());
     // reverting also becomes the new current + a fresh snapshot (server writes it on revert)
     setStatus('ok', 'reverted to ' + fmtTs(ts));
     loadVersions();
