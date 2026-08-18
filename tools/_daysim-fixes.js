@@ -26,7 +26,11 @@ const vm = require('vm');
 const JS = fs.existsSync(path.join(__dirname, '..', 'www', 'js'))
   ? path.join(__dirname, '..', 'www', 'js')
   : path.join(__dirname, '..', 'js');
-const FILES = ['config.js', 'state.js', 'util.js', 'storage.js', 'program.js', 'engine.js'];
+// foot.js added 2026-08-17 (foot-pain-rehab plan, Task E) — sits after program.js, before engine.js
+// (engine.js reads foot.js's footKind/footWindow/footGatePassed/footRehabKind/REHAB_TAIL_DAYS/
+// FOOT_GATES/FOOT_CONDITION_NAMES helpers; this harness doesn't load figure.js separately at this
+// point, so foot.js goes directly before engine.js, matching index.html's relative order).
+const FILES = ['config.js', 'state.js', 'util.js', 'storage.js', 'program.js', 'foot.js', 'engine.js'];
 
 // ---------- browser stubs ----------
 const store = new Map();
@@ -202,14 +206,110 @@ scenario('S6 backward clock re-edits', () => {
   return { pass: ok, detail: `rows=${state.checks.length} cleared=${state.phase.sessionsCleared}` };
 });
 
-// ---------- S10: every exercise resolves to a live figure (gait or FIG_POSES skeleton) ----------
+// ---------- S10: every exercise resolves to a live figure (gait, FIG_POSES skeleton, or a hand- ----------
+// ---------- authored foot close-up — spec §7.3 adds a THIRD branch: gait -> skeleton -> foot close-up) ----
 scenario('S10 figure coverage', () => {
   const poses = fs.readFileSync(path.join(JS, 'figure-poses.js'), 'utf8');
   vm.runInThisContext(poses, { filename: 'figure-poses.js' });
-  /* global FIG_POSES, EXERCISES */
+  /* global FIG_POSES, EXERCISES, footCloseupFigure */
   const GAIT = ['walk', 'run', 'kb_carry'];
-  const missing = EXERCISES.filter((e) => !GAIT.includes(e.key) && !FIG_POSES[e.key]).map((e) => e.key);
-  return { pass: missing.length === 0, detail: missing.length ? `no figure for: ${missing.join(', ')}` : `${EXERCISES.length} exercises covered` };
+  // footCloseupFigure is a foot.js markup BUILDER (pf_stretch/foot_intrinsic only) — resolves an
+  // exercise key only if it actually returns markup (null for every other key), same as
+  // util.js's animatedFigure() routing (gait -> skeleton pose -> foot close-up -> legacy, §7.3).
+  const hasFootCloseup = (key) => (typeof footCloseupFigure === 'function') && !!footCloseupFigure(key, 44);
+  const missing = EXERCISES.filter((e) => !GAIT.includes(e.key) && !FIG_POSES[e.key] && !hasFootCloseup(e.key)).map((e) => e.key);
+  return { pass: missing.length === 0, detail: missing.length ? `no figure for: ${missing.join(', ')}` : `${EXERCISES.length} exercises covered (gait/pose/foot-closeup)` };
+});
+
+// ---------- S11: ball zone + neural=yes routes to foot-refer (neuroma pattern) with generic windows ----------
+// (spec §3.3 row 3: "ball, neural=yes -> clinician (neuroma copy) -> injury.kind foot-refer -> generic
+// injury window", contract footKind: neural-yes on a ball zone wins over the meta routing).
+scenario('S11 ball + neural=yes routes to foot-refer + generic windows', () => {
+  resetPersona(1);
+  setNow(at('2026-01-05T08:00:00'));
+  applyCheck('done', 3, true, ['foot'], false, { zone: 'ball', neural: true, gate: null });
+  const inj = state.injury;
+  const kindOk = !!inj && inj.kind === 'foot-refer';
+  const rice = inj ? Math.round((inj.riceUntil - inj.since) / DAY) : null;
+  const ease = inj ? Math.round((inj.easeUntil - inj.since) / DAY) : null;
+  const windowsOk = rice === 3 && ease === 10;
+  return { pass: kindOk && windowsOk, detail: `kind=${inj && inj.kind} rice=${rice} ease=${ease}` };
+});
+
+// ---------- S12: a red flag (any zone) routes to the INJURY_FLAG clinician outcome + foot-refer ----------
+// (spec §3.3 last row: "any zone, red flag -> clinician (INJURY_FLAG) -> injury.kind foot-refer".
+// INJURY_FLAG and INJURY_REST share outcome.key:'rest' — the distinguishing, UI-visible field is the
+// title/action copy, so that's what this reads, matching "every assertion reads what the UI reads.")
+scenario('S12 red flag routes to the clinician outcome + foot-refer', () => {
+  resetPersona(1);
+  setNow(at('2026-01-05T08:00:00'));
+  const out = applyCheck('done', 3, true, ['foot'], true, { zone: 'heel', neural: null, gate: null });
+  const inj = state.injury;
+  const outcomeOk = !!out && out.title === 'See a clinician first';
+  const kindOk = !!inj && inj.kind === 'foot-refer';
+  return { pass: outcomeOk && kindOk, detail: `outcomeTitle="${out && out.title}" kind=${inj && inj.kind}` };
+});
+
+// ---------- S13: toes/top zones get the generic 3d/10d windows and NO rehab swap-in ----------
+// (spec §3.3 rows 4-5: "toes -> guidance card -> foot-toes -> generic injury window"; "top -> guidance
+// card -> foot-top -> generic injury window". §3.3 footnote: "foot-refer/foot-toes/foot-top reuse
+// today's generic 3d/10d windows and load reduction — no new engine mechanics".)
+scenario('S13 toes/top zones: generic windows, no rehab swap', () => {
+  resetPersona(2);
+  state.phase.dayInWeek = 2;   // a day with both a mobility slot and an impact-cardio slot present
+  setNow(at('2026-01-05T08:00:00'));
+  applyCheck('done', 3, true, ['foot'], false, { zone: 'toes', neural: null, gate: null });
+  const inj1 = state.injury;
+  const kind1Ok = !!inj1 && inj1.kind === 'foot-toes';
+  const win1Ok = !!inj1 && Math.round((inj1.riceUntil - inj1.since) / DAY) === 3 && Math.round((inj1.easeUntil - inj1.since) / DAY) === 10;
+  const plan1Keys = currentDayPlan().blocks.map((b) => b.key);
+  const noSwap1 = !plan1Keys.some((k) => ['footRehabPF', 'footRehabMeta', 'lowImpactSub'].includes(k));
+
+  resetPersona(2);
+  state.phase.dayInWeek = 2;
+  setNow(at('2026-02-05T08:00:00'));
+  applyCheck('done', 3, true, ['foot'], false, { zone: 'top', neural: null, gate: null });
+  const inj2 = state.injury;
+  const kind2Ok = !!inj2 && inj2.kind === 'foot-top';
+  const win2Ok = !!inj2 && Math.round((inj2.riceUntil - inj2.since) / DAY) === 3 && Math.round((inj2.easeUntil - inj2.since) / DAY) === 10;
+  const plan2Keys = currentDayPlan().blocks.map((b) => b.key);
+  const noSwap2 = !plan2Keys.some((k) => ['footRehabPF', 'footRehabMeta', 'lowImpactSub'].includes(k));
+
+  const pass = kind1Ok && win1Ok && noSwap1 && kind2Ok && win2Ok && noSwap2;
+  return { pass, detail: `toes: kind=${inj1 && inj1.kind} rice/ease ok=${win1Ok} swap=${!noSwap1} plan=${JSON.stringify(plan1Keys)} | top: kind=${inj2 && inj2.kind} rice/ease ok=${win2Ok} swap=${!noSwap2} plan=${JSON.stringify(plan2Keys)}` };
+});
+
+// ---------- S14: the recovery gate with ANY "no" cannot clear a foot-pf injury ----------
+// (spec §3.5: "Any no => stays in rehab; the 'no' is logged; copy: which criterion isn't met".
+// All-false is the strongest form of "any no".)
+scenario('S14 gate all-no cannot clear a foot-pf injury', () => {
+  resetPersona(1);
+  setNow(at('2026-01-05T08:00:00'));
+  applyCheck('done', 3, true, ['foot'], false, { zone: 'heel', neural: null, gate: null });
+  setNow(at('2026-01-08T08:00:00'));   // still well inside the 84d ease window
+  const out = applyCheck('done', 4, false, [], false, { zone: 'heel', neural: null, gate: { walk: false, morning: false, raises: false } });
+  const stillInjured = !!state.injury && state.injury.kind === 'foot-pf';
+  const noTail = !state.rehabTail;
+  return { pass: stillInjured && noTail, detail: `injury=${!!state.injury} kind=${state.injury && state.injury.kind} outcomeTitle="${out && out.title}" tail=${!!state.rehabTail}` };
+});
+
+// ---------- S15: rehabTail survives a fullBackup() -> applyBackup() round-trip ----------
+// (spec §4: "rehabTail must be added to all five persistence points ... Old backups import cleanly".
+// This is the export/import point specifically — S15's job is proving the JSON round-trip, not just
+// that the five call sites reference the field.)
+scenario('S15 rehabTail survives backup export -> import round-trip', () => {
+  resetPersona(1);
+  setNow(at('2026-01-05T08:00:00'));
+  applyCheck('done', 3, true, ['foot'], false, { zone: 'heel', neural: null, gate: null });
+  setNow(at('2026-01-29T08:00:00'));   // ~24d later: all-true gate clears + arms the relapse tail
+  applyCheck('done', 4, false, [], false, { zone: 'heel', neural: null, gate: { walk: true, morning: true, raises: true } });
+  const tailBefore = state.rehabTail;
+  const backup = fullBackup();
+  resetPersona(0);   // simulate importing into a freshly-reset slot
+  const ok = applyBackup(backup);
+  const tailAfter = state.rehabTail;
+  const roundTripOk = ok && !!tailBefore && !!tailAfter && tailAfter.kind === tailBefore.kind && tailAfter.until === tailBefore.until;
+  return { pass: !!roundTripOk, detail: `applyOk=${ok} before=${JSON.stringify(tailBefore)} after=${JSON.stringify(tailAfter)}` };
 });
 
 // ---------- report ----------
