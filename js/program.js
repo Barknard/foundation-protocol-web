@@ -23,8 +23,19 @@ const BLOCKS = {
   loaded:   { kind: 'strength',  label: 'Loaded • 45',       title: 'Barbell / DB progression', detail: 'Switch from bodyweight stim' },
   longRun10k:{ kind: 'cardio',   label: 'Long run • 60+',    title: 'Building to 10K',      detail: 'Cap vs 30-day longest' },
   hooper:   { kind: 'milestone', label: 'Check-in',          title: 'Weekly review',        detail: 'Reflect on the week' },
+  // --- Foot rehab (2026-08-17 foot-pain-rehab plan, Task B) — swapped into the day plan by currentDayPlan()
+  //     (engine.js) only while a foot-pf/foot-meta injury or its relapse-prevention tail is active. Names are
+  //     the ones pinned in the plan; do not rename. ---
+  footRehabPF:   { kind: 'mobility', label: 'Foot rehab • 12 min', title: 'Plantar Heel Rehab',       detail: 'Heel raise • Fascia stretch • Calf • Foot core' },
+  footRehabMeta: { kind: 'mobility', label: 'Foot rehab • 8 min',  title: 'Forefoot Rehab',           detail: 'Calf • Foot core' },
+  footRehabTail: { kind: 'mobility', label: 'Foot upkeep • 6 min', title: 'Foot Relapse-Prevention',  detail: 'Key exercise • Calf' },
+  lowImpactSub:  { kind: 'cardio',   label: 'Low-impact • 25 min', title: 'Low-Impact Cardio',        detail: 'Brisk walk (bike/swim if you have them)' },
 };
 function day(name, blocks) { return { day: name, blocks: blocks.map(k => ({ ...BLOCKS[k], key: k })) }; }
+// Impact-cardio block keys (running) — enumerated explicitly so currentDayPlan()'s foot-rehab swap-in can match
+// on the key list rather than sniffing block.title/label text (plan Task B). Walking cardio (walk30/40/45/60)
+// and lowImpactSub itself are deliberately excluded — they are already low/no-impact.
+const RUN_BLOCK_KEYS = ['rw1', 'rw2', 'rw3', 'easyRun', 'longRun', 'tempo', 'longRun10k'];
 
 const PHASES = [
   {
@@ -138,6 +149,16 @@ const EXERCISES = [
   { key:'kb_carry', name:'Farmer Carry', rx:'3 × 30 – 40 sec', cat:'Kettlebell',
     steps:['A kettlebell in each hand, arms straight, shoulders down and back.','Stand tall, ribs down, brace, and walk slow and even.','Start ~20 – 25 lb per hand; lighter if grip or posture slips.','Builds grip, core, and tall posture — straight carryover to running.'],
     cue:'Walk like a book is balanced on your head — tall and steady.' },
+  // --- Foot rehab exercises (2026-08-17 foot-pain-rehab plan §6.1 — evidence: docs/EVIDENCE-FOOT.md) ---
+  { key:'pf_heel_raise', name:'Towel Heel Raise', rx:'every other day · 3×12, building to 5×8 heavier', cat:'Foot',
+    steps:['Roll a towel and place it under your toes on a step edge.','Rise on one leg over 3 seconds.','Hold 2 seconds at the top.','Lower over 3 seconds.','Rest between sets.','When 12 feel easy, add a loaded backpack and drop the reps.'],
+    cue:'The towel is the point — it tensions the arch so the raise trains the fascia, not just the calf. The rest day is part of the dose.' },
+  { key:'pf_stretch', name:'Plantar Fascia Stretch', rx:'10 sec × 10, three times a day', cat:'Foot',
+    steps:['Sit and cross the sore foot over the other knee.','Grip the base of the toes.','Pull the toes back toward the shin until the arch band tightens.','Hold 10 seconds.'],
+    cue:'Do the first set before your feet touch the floor in the morning.' },
+  { key:'foot_intrinsic', name:'Foot Core', rx:'daily · 5×5-sec arch holds + 2×15 towel curls', cat:'Foot',
+    steps:['Bare foot flat on the ground.','Draw the ball of the foot toward the heel to dome the arch WITHOUT curling the toes — hold 5 seconds.','Then scrunch a towel toward you with the toes.'],
+    cue:"Commonly recommended and safe — the evidence here is still thin, and that's the honest truth." },
 ];
 
 // Maps each session block to the library exercises it contains (Today tap-to-reveal)
@@ -152,6 +173,14 @@ const BLOCK_EX = {
   opmAm:   ['pushup','goblet_sq','kb_swing'], opmCore: ['plank','kb_carry'],
   loaded:  ['goblet_sq','rdl','oh_press'],
   rest:    [], hooper: [],
+  // Foot rehab (plan Task B §6.2). footRehabTailMeta is a lookup-only alias for the tail block when the cleared
+  // kind was foot-meta — currentDayPlan() (engine.js) picks it via key so foot_intrinsic replaces pf_heel_raise
+  // as the tail's key exercise; the visible block stays the single BLOCKS.footRehabTail entry either way.
+  footRehabPF:       ['pf_heel_raise','pf_stretch','calf_stretch','foot_intrinsic'],
+  footRehabMeta:     ['calf_stretch','foot_intrinsic'],
+  footRehabTail:     ['pf_heel_raise','calf_stretch'],
+  footRehabTailMeta: ['foot_intrinsic','calf_stretch'],
+  lowImpactSub:      ['walk'],
 };
 function exercisesForBlock(key) { return (BLOCK_EX[key] || []).map(k => EXERCISES.find(e => e.key === k)).filter(Boolean); }
 
@@ -358,6 +387,9 @@ function injuryElapsedDays(inj) { return inj ? Math.max(0, localDayDiff(inj.sinc
 function injuryActive() { return !!(state.injury && !state.injury.clearedAt && injuryElapsedDays(state.injury) < injuryEaseDays(state.injury)); }   // expires on a clean morning boundary
 function injuryInRice() { return injuryActive() && injuryElapsedDays(state.injury) < injuryRiceDays(state.injury); }
 function clearInjury() { if (state.injury) { state.injury.clearedAt = Date.now(); } state.injury = null; saveLocal(); }
+// Relapse-prevention tail after a gated foot-rehab clear (spec §5.4) — active until `until` (a localMidnight-
+// aligned boundary set at clear time, see engine.js applyCheck) has passed.
+function rehabTailActive() { return !!(state.rehabTail && Date.now() < state.rehabTail.until); }
 // Auto-expire a stale injury whose recovery window has fully elapsed (out of range → exclude it).
 function pruneInjury() {
   // Use the same local-day window as injuryActive() so prune and active-state agree on the morning boundary.
@@ -365,6 +397,9 @@ function pruneInjury() {
     logEvent('injury', `Recovery window ended (${fmtDate(state.injury.since)}–${fmtDate(injuryEnd(state.injury))}) — back to normal training`);
     clearInjury();
   }
+  // Foot relapse-prevention tail: expiry is silent (no log line, unlike an injury window ending) — pruned
+  // wherever pruneInjury() is called (screens.js, init.js) so it never needs its own call site (spec §5.4).
+  if (state.rehabTail && !rehabTailActive()) { state.rehabTail = null; saveLocal(); }
 }
 // A call that persists across the days it covers, bounded by explicit start/end dates.
 function standingCall() {
@@ -374,7 +409,10 @@ function standingCall() {
   // advances on each morning and the protect length stays ~3 days regardless of time-of-day or DST.
   const days = injuryRiceDays(inj);
   const dayNum = Math.min(days, injuryElapsedDays(inj) + 1);
-  const parts = (inj.parts || []).join(', ') || 'injury';
+  // Plain-language condition name for foot kinds (spec §3.4); every other kind falls back to the body-part
+  // join, byte-identical to today's copy (FOOT_CONDITION_NAMES/foot.js may not be loaded yet, hence the guard).
+  const parts = (typeof FOOT_CONDITION_NAMES !== 'undefined' && inj.kind && FOOT_CONDITION_NAMES[inj.kind])
+    || (inj.parts || []).join(', ') || 'injury';
   const ext = inj.extended ? ' · extended' : '';
   // Keep it tight — the "day N of M" label already conveys the protect window, so don't repeat the end date.
   if (injuryInRice()) return { cls: 'strength', label: `Recovering · ${parts} · day ${dayNum} of ${days}${ext}`, title: 'Rest and protect', action: `Keep moving everything that doesn't hurt — gentle, pain-free motion heals faster than total rest.` };
@@ -394,9 +432,15 @@ function returnRampActive() {
 }
 // The single source of truth for "should today's prescription be lighter, and why" — injury > layoff-ramp > deload.
 function loadReduction() {
-  if (injuryActive()) return injuryInRice()
-    ? { reason: 'injury', pct: 0,  note: 'Protect — offload the painful movement; keep pain-free movement going (PEACE & LOVE)' }
-    : { reason: 'injury', pct: 50, note: 'Pain-monitored ease-back — keep pain ≤ ~3–5/10 and gone by next morning' };
+  if (injuryActive()) {
+    if (injuryInRice()) return { reason: 'injury', pct: 0, note: 'Protect — offload the painful movement; keep pain-free movement going (PEACE & LOVE)' };
+    // Foot-pf/foot-meta rehab carries its own ease-back copy (spec §5.5 pain rule); every other kind (incl.
+    // every non-foot injury) keeps today's exact note (footRehabKind/foot.js may not be loaded yet — guarded).
+    const isFootRehab = state.injury && typeof footRehabKind === 'function' && footRehabKind(state.injury.kind);
+    return { reason: 'injury', pct: 50, note: isFootRehab
+      ? 'Pain-monitored ease-back — up to ~3/10 that settles by morning is OK; climbing pain means back off.'
+      : 'Pain-monitored ease-back — keep pain ≤ ~3–5/10 and gone by next morning' };
+  }
   if (returnRampActive()) { const r = state.returnRamp, start = (r.startedAt != null) ? r.startedAt : r.until, left = Math.max(1, returnRampDays(r) - localDayDiff(start, Date.now())); return { reason: 'layoff', pct: r.pct, note: `Easing back from time off — about ${r.pct}% of normal load, rebuild over ~${left} more day${left > 1 ? 's' : ''}` }; }
   if (deloadActive()) return { reason: 'deload', pct: 60, note: 'Lighter week — about 2 working sets, ~40% less volume; keep cardio easy' };
   return null;
