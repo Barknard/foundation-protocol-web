@@ -33,6 +33,16 @@
 .bm-seg { fill: var(--surface-1); stroke: var(--paper-dim); stroke-width: 1; cursor: pointer; transition: fill 120ms ease; }
 .bm-seg:hover { fill: var(--surface-2); }
 .bm-seg.sel { fill: var(--strength); stroke: var(--paper); stroke-width: 2.5; }   /* red fill + bright white outline = non-colour cue (CVD) */
+/* Foot close-up map (js/foot.js's footMapSvg) — same height-bound sizing as .bodymap so it fills the exact
+   same fitBodyMap()-measured space when it replaces the body map in place (spec §3.1.2, zero-scroll). Zone
+   buttons carry .bm-seg-compatible classes per the pinned contract, so the rules above already apply to them. */
+.footmap { width: auto; height: clamp(360px, 56vh, 482px); max-width: 100%; display: block; margin: 2px auto 6px; }
+/* "◀ whole body" ghost — a compact, always-≥48px back-nav that sits above the foot map (never inside the
+   fixed footer, which already carries "Nothing hurts" + "See the call"). */
+.foot-back { width: auto; height: 48px; padding: 0 16px; background: transparent; border: 1px solid var(--rule); border-radius: 12px; color: var(--paper-dim); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+/* Red-flag screener chips — selecting one means "yes, this applies", so it reads as a warning (same
+   lighter-red-fill + dark-text technique as .chip.no.active for 4.5:1 contrast), not the neutral gold "active". */
+.chip.screen-chip.active { background: var(--red-text); border-color: var(--red-text); color: var(--ink); font-weight: 600; }
 /* "scroll for more" cue — nested down-chevron that bobs; shown only on scrollable screens, hidden at bottom */
 #scroll-cue { position: fixed; right: 12px; z-index: 45; pointer-events: none;
   bottom: calc(clamp(66px, 9.5vh, 96px) + env(safe-area-inset-bottom) + 10px);
@@ -120,7 +130,7 @@
 /* ---------- TOUCH / MOBILE ---------- */
 /* Selection/drag/callout are globally off in base.css; here just kill tap delay + double-tap zoom
    on everything interactive (including the SVG body-map regions and exercise cards). */
-button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .icon, .bm-seg, .ex-card {
+button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .icon, .bm-seg, .ex-card, .foot-back {
   touch-action: manipulation;
 }
 html, body { overscroll-behavior-y: none; }   /* no pull-to-refresh, no rubber-band glow */
@@ -143,14 +153,14 @@ html, body { overscroll-behavior-y: none; }   /* no pull-to-refresh, no rubber-b
 .why-btn-row { width: auto; background: none; border: 1px solid var(--rule); border-radius: 12px; color: var(--paper-dim); display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 14px; }
 
 /* ---------- INTERACTION FEEDBACK: hover (pointer) + press (all) ---------- */
-button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .ex-check, .hd-journey, .hd-gear, .hd-back {
+button, .chip, .feel, .lib-row, .today-block, .radio-card, .nav .tab, .seg button, .more, .hurt-toggle, .ex-check, .hd-journey, .hd-gear, .hd-back, .foot-back {
   transition: transform 90ms ease, filter 140ms ease, background 140ms ease, border-color 140ms ease;
 }
 @media (hover: hover) {
-  button:hover, .chip:hover, .feel:hover, .lib-row:hover, .today-block:hover, .radio-card:hover, .seg button:hover, .more:hover, .hurt-toggle:hover, .nav .tab:hover, .ex-check:hover, .hd-journey:hover, .hd-gear:hover, .hd-back:hover { filter: brightness(1.14); cursor: pointer; }
+  button:hover, .chip:hover, .feel:hover, .lib-row:hover, .today-block:hover, .radio-card:hover, .seg button:hover, .more:hover, .hurt-toggle:hover, .nav .tab:hover, .ex-check:hover, .hd-journey:hover, .hd-gear:hover, .hd-back:hover, .foot-back:hover { filter: brightness(1.14); cursor: pointer; }
   .bm-seg:hover { fill-opacity: 0.82; cursor: pointer; }
 }
-button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active, .radio-card:active, .seg button:active, .more:active, .hurt-toggle:active, .nav .tab:active, .ex-check:active { transform: scale(0.97); filter: brightness(0.93); }
+button:active, .chip:active, .feel:active, .lib-row:active, .today-block:active, .radio-card:active, .seg button:active, .more:active, .hurt-toggle:active, .nav .tab:active, .ex-check:active, .foot-back:active { transform: scale(0.97); filter: brightness(0.93); }
 .bm-seg:active { fill-opacity: 0.65; }
 /* Whole exercise card is tappable → full steps (the check button stops propagation). */
 .ex-card { cursor: pointer; transition: filter 140ms ease, transform 90ms ease; }

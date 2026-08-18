@@ -68,6 +68,106 @@ const FIG_POSES = {
       }
     }
   },
+  "pf_heel_raise": {
+    "dur": 2600,
+    "f1": {
+      "pelvis": [
+        28.53,
+        29.55
+      ],
+      "torso": 270,
+      "nearArm": [
+        100,
+        95
+      ],
+      "farArm": [
+        100,
+        95
+      ],
+      "nearLeg": [
+        90,
+        98,
+        300
+      ],
+      "farLeg": [
+        40,
+        200,
+        0
+      ],
+      "ground": 57,
+      "propsBehind": [
+        {
+          "type": "bench",
+          "x": 17,
+          "y": 51,
+          "w": 16,
+          "h": 6
+        },
+        {
+          "type": "towelWedge",
+          "x": 29,
+          "y": 49
+        }
+      ],
+      "intensity": {
+        "at": [
+          28,
+          47
+        ],
+        "dir": 90,
+        "r": 2.2
+      }
+    },
+    "f2": {
+      "pelvis": [
+        27.58,
+        22.56
+      ],
+      "torso": 270,
+      "nearArm": [
+        100,
+        95
+      ],
+      "farArm": [
+        100,
+        95
+      ],
+      "nearLeg": [
+        90,
+        93,
+        60
+      ],
+      "farLeg": [
+        40,
+        200,
+        0
+      ],
+      "ground": 57,
+      "propsBehind": [
+        {
+          "type": "bench",
+          "x": 17,
+          "y": 51,
+          "w": 16,
+          "h": 6
+        },
+        {
+          "type": "towelWedge",
+          "x": 29,
+          "y": 49
+        }
+      ],
+      "intensity": {
+        "at": [
+          28,
+          47
+        ],
+        "dir": 90,
+        "r": 2.2
+      }
+    },
+    "frame": "16 24 23 34"
+  },
   "glute_bridge": {
     "dur": 2200,
     "f1": {

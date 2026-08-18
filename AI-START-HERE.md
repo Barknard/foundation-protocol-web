@@ -66,6 +66,9 @@ js/
   program.js      PHASES, EXERCISES, BLOCKS, + layoff/deload/injury helpers
   figure.js       parametric skeleton figure engine: FK joints, side/front poses (FIG_POSES),
                   continuous rAF animator, procedural walk/run gait, solid floor/wall, prop helpers
+  foot.js         foot-pain domain: zone→condition routing (footKind), per-kind injury windows,
+                  recovery gates, guidance cards, tappable foot-map SVG, 2-frame foot close-ups
+                  (loads between figure and engine; engine reads its helpers)
   engine.js       decide(), applyCheck(), advancePointer(), OUTCOMES, injury outcomes
   storage.js      localStorage (per-persona) + Export/Import backup/restore
   util.js         isoToday, escHtml, svgUse, animatedFigure, msUntilTomorrow, fmtCountdown
@@ -149,6 +152,14 @@ BJSM 2025); slow tendon/bone adaptation paces early phases (Bohm/Arampatzis Spor
 - **Check-in:** goal chips + feel grid (+ a 3-way low-feel pain discriminator). Tapping
   **"Something hurts"** *minimizes* goal/feel to a one-line "change" summary and opens an
   enlarged tap-the-body map (no chips/screener clutter); Submit ("See the call") / clear.
+  **Foot taps drill down** (v2.3.0): the map swaps to a 5-zone foot close-up (heel/arch/
+  ball/toes/top) + a ball-only neural question + a 4-chip red-flag screener; heel/arch →
+  plantar-fascia protocol, clean ball → forefoot protocol, toes/top → guidance cards,
+  neural signs or any red flag → clinician routing. Foot conditions get LONGER windows
+  (84d/42d ceilings), a rehab block swapped into the day plan, and a criteria-gated
+  recovery (3 gate chips on the pain-free re-check) followed by a 35-day light "tail".
+  Evidence: `docs/EVIDENCE-FOOT.md` (verified 2026-08-17 — do not overclaim heel-raise
+  superiority; it's complementary to the stretch).
 - **Library:** searchable list of 19 exercises, each an animated figure → full-steps detail
   (whole card is tappable). **Progress:** program position + readiness chart + side-by-side
   stat columns. **Phase:** current phase formula + references + all five phases.
@@ -209,6 +220,10 @@ Logic is validated by **in-browser harnesses** (run via the DevTools/Playwright 
   mixed / oscillating / injury patterns) → no errors, monotonic `sessionsCleared`, phase
   in-bounds, no dup-day rows; long good runs **reach the Target/capstone**.
 - Save/load + backup export/import round-trips.
+- **Sim harnesses (run BOTH before shipping):** `node tools/_daysim.js` (23 scenarios,
+  read the TOTAL line — it always exits 0) + `node tools/_daysim-fixes.js` (15 pinned
+  scenarios, exits nonzero on failure). Foot-rehab scenarios include a non-foot
+  regression pin: generic injuries must behave byte-identically to pre-v2.3.0.
 - **Last full pass: 20/20 + 41/42** (the one "fail" was the `daysSinceLastCheck` sim
   artifact in §5, not an app bug).
 HARD RULE (Eddie): always Playwright-test or set up for user testing after changes; no

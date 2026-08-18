@@ -59,8 +59,10 @@ sandbox.Date = makeFakeDate();
 
 const ctx = vm.createContext(sandbox);
 
-// Load order mirrors index.html (subset needed for logic): config → state → program → engine → util
-for (const f of ['config.js', 'state.js', 'program.js', 'engine.js', 'util.js']) {
+// Load order mirrors index.html (subset needed for logic): config → state → program → foot → engine → util
+// foot.js added 2026-08-17 (foot-pain-rehab plan, Task E) — sits after program.js, before engine.js
+// (engine reads foot.js's helpers; this harness doesn't load figure.js, so foot.js goes right before engine).
+for (const f of ['config.js', 'state.js', 'program.js', 'foot.js', 'engine.js', 'util.js']) {
   vm.runInContext(read(f), ctx, { filename: f });
 }
 
@@ -101,7 +103,11 @@ sandbox.MS_UNTIL_TOMORROW = () => {
 const state = vm.runInContext('state', ctx);
 const PHASES = vm.runInContext('PHASES', ctx);
 sandbox.state = state; sandbox.PHASES = PHASES;
-['applyCheck', 'daysSinceLastCheck', 'injuryInRice', 'injuryActive', 'isDeloadWeek', 'layoffTier']
+// footKind/footGatePassed/footWindow/currentDayPlan/REHAB_TAIL_DAYS added 2026-08-17 (foot-pain-rehab
+// plan, Task E) for the new foot scenarios below. vm.runInContext(name, ctx) works identically for a
+// const binding (REHAB_TAIL_DAYS) as for a function — it just evaluates the identifier expression.
+['applyCheck', 'daysSinceLastCheck', 'injuryInRice', 'injuryActive', 'isDeloadWeek', 'layoffTier',
+ 'footKind', 'footGatePassed', 'footWindow', 'currentDayPlan', 'REHAB_TAIL_DAYS']
   .forEach(n => { sandbox[n] = vm.runInContext(n, ctx); });
 
 // Helpers to access in-sandbox globals
@@ -172,6 +178,14 @@ function checkInvariants(scenario, prevSnap) {
 function doCheck(scenario, goalMet, feel, hurt, parts, redFlag) {
   const prev = { sessionsCleared: S().phase.sessionsCleared };
   call('applyCheck')(goalMet, feel, !!hurt, parts || [], !!redFlag);
+  checkInvariants(scenario, prev);
+}
+// Same, but forwards the 6th `foot` param (pinned contract: foot = null | {zone, neural, gate}) —
+// doCheck() above predates the foot-pain-rehab plan (2026-08-17) and callers that don't need it
+// are left alone.
+function doCheckFoot(scenario, goalMet, feel, hurt, parts, redFlag, foot) {
+  const prev = { sessionsCleared: S().phase.sessionsCleared };
+  call('applyCheck')(goalMet, feel, !!hurt, parts || [], !!redFlag, foot || null);
   checkInvariants(scenario, prev);
 }
 
@@ -473,6 +487,233 @@ function scenarioLayoffRegression() {
 }
 
 // ============================================================
+// FOOT PAIN REHAB (2026-08-17 plan, Task E) — authored from the spec's §3.3 routing table, §5
+// engine behavior, and §9 test plan. Every assertion reads what the UI reads: currentDayPlan()'s
+// returned blocks, state.injury, state.rehabTail, footWindow()/footKind() as the contract defines
+// them — never a private/internal flag.
+// ============================================================
+
+// Full plantar-fasciitis lifecycle: flag -> swap-in (RICE then ease) -> a blocked gate -> a passed
+// gate -> the relapse tail (appended only on program days actually labeled Mon/Thu) -> tail expiry
+// reverting to the exact baseline plan (spec §3.3 row 1, §5.1, §5.2, §5.3, §5.4).
+function scenarioFootPfLifecycle() {
+  const name = 'foot-pf lifecycle (flag -> swap-in -> blocked gate -> passed gate -> tail -> normal)';
+  resetPersona(2);                 // Run Introduction: has BOTH a mobility slot and an impact-cardio (run) slot
+  S().phase.dayInWeek = 2;         // Tue: ptFull (mobility) + rw1 (impact cardio) — needed for the swap-in check
+  const pd = PHASES[2];
+  const flagIso = '2026-01-05';
+  setDay(flagIso);
+  doCheckFoot(name, false, 3, true, ['foot'], false, { zone: 'heel', neural: null, gate: null });
+  const inj = S().injury;
+  assert(!!inj, name, 'no injury recorded on a foot heel flag');
+  assert(inj && inj.kind === 'foot-pf', name, `kind expected foot-pf, got ${inj && inj.kind}`);
+  const win = call('footWindow')('foot-pf');
+  assert(win.ease === 84, name, `foot-pf ease window expected 84d (contract), got ${win.ease}`);
+  assert(inj && Math.round((inj.easeUntil - inj.since) / 86400000) === 84, name,
+    `injury.easeUntil - since != 84d (got ${inj && Math.round((inj.easeUntil - inj.since) / 86400000)})`);
+  assert(inj && Math.round((inj.riceUntil - inj.since) / 86400000) === 3, name,
+    `injury.riceUntil - since != 3d (got ${inj && Math.round((inj.riceUntil - inj.since) / 86400000)})`);
+
+  // 1 day post-flag: still inside the 3-day RICE/protect window -> mobility -> footRehabPF, impact cardio -> rest
+  let iso = addDaysIso(flagIso, 1);
+  setDay(iso);
+  let plan = call('currentDayPlan')();
+  assert(plan.blocks.some(b => b.key === 'footRehabPF'), name,
+    `day1-post-flag plan missing footRehabPF: ${JSON.stringify(plan.blocks.map(b => b.key))}`);
+  assert(plan.blocks.some(b => b.key === 'rest'), name,
+    `day1-post-flag (in RICE) plan should sub impact cardio -> rest, got ${JSON.stringify(plan.blocks.map(b => b.key))}`);
+
+  // 6 days post-flag: past RICE, well inside the 84d ease ceiling -> impact cardio -> lowImpactSub
+  iso = addDaysIso(flagIso, 6);
+  setDay(iso);
+  plan = call('currentDayPlan')();
+  assert(plan.blocks.some(b => b.key === 'footRehabPF'), name, 'ease-window plan missing footRehabPF');
+  assert(plan.blocks.some(b => b.key === 'lowImpactSub'), name,
+    `ease-window plan should sub impact cardio -> lowImpactSub, got ${JSON.stringify(plan.blocks.map(b => b.key))}`);
+
+  // day10: pain-free re-check, gate has one "no" -> stays injured (spec §3.5 "any no -> stays in rehab")
+  setDay(addDaysIso(flagIso, 10));
+  doCheckFoot(name, 'done', 4, false, [], false, { zone: 'heel', neural: null, gate: { walk: true, morning: false, raises: true } });
+  assert(!!S().injury, name, 'a gate with one "no" cleared the injury (should stay injured)');
+  assert(S().injury && S().injury.kind === 'foot-pf', name, 'injury kind changed on a failed gate');
+  assert(!S().rehabTail, name, 'a failed gate must not arm a rehabTail');
+
+  // day24: all-true gate -> cleared, relapse tail armed (spec §3.5/§5.4)
+  const clearIso = addDaysIso(flagIso, 24);
+  setDay(clearIso);
+  doCheckFoot(name, 'done', 4, false, [], false, { zone: 'heel', neural: null, gate: { walk: true, morning: true, raises: true } });
+  assert(!S().injury, name, 'injury did not clear on an all-true gate');
+  assert(!!S().rehabTail, name, 'rehabTail not armed on a gated clear');
+  assert(S().rehabTail && S().rehabTail.kind === 'foot-pf', name, `rehabTail.kind expected foot-pf, got ${S().rehabTail && S().rehabTail.kind}`);
+  const untilDays = S().rehabTail ? Math.round((S().rehabTail.until - isoToMsNoon(clearIso)) / 86400000) : null;
+  // Loose band (34-36d, not exactly 35) because localMidnight() (program.js) uses the HOST machine's
+  // real local timezone while isoToMsNoon() here is a fixed UTC-noon anchor — they can disagree by up
+  // to ~1 day depending on where this harness runs. The contract's REHAB_TAIL_DAYS is 35 exactly.
+  assert(untilDays !== null && Math.abs(untilDays - call('REHAB_TAIL_DAYS')) <= 1, name,
+    `rehabTail.until not ~+${call('REHAB_TAIL_DAYS')}d from clear (got ${untilDays}d)`);
+
+  // Post-clear: walk one full 7-day program cycle. The tail must appear ONLY on days the phase table
+  // itself labels 'Mon'/'Thu' (spec §5.4 "fixed weekdays Mon/Thu") — cross-checked against the phase
+  // table's own label, not a hand-computed index, so a pointer-arithmetic mistake in THIS test can't
+  // fake a pass.
+  let iso2 = addDaysIso(clearIso, 1);
+  let ruleHeld = true; const dayObservations = [];
+  for (let i = 0; i < 7; i++) {
+    setDay(iso2);
+    doCheckFoot(name, 'done', 4, false, [], false, null);
+    const dIdx = S().phase.dayInWeek - 1;
+    const label = pd.week[dIdx] && pd.week[dIdx].day;
+    const shouldHaveTail = (label === 'Mon' || label === 'Thu');
+    plan = call('currentDayPlan')();
+    const hasTail = plan.blocks.some(b => b.key === 'footRehabTail' || b.key === 'footRehabTailMeta');
+    if (hasTail !== shouldHaveTail) ruleHeld = false;
+    dayObservations.push(`${label}:${hasTail}`);
+    iso2 = addDaysIso(iso2, 1);
+  }
+  assert(ruleHeld, name, `rehabTail must appear on (and only on) phase-table Mon/Thu days: ${JSON.stringify(dayObservations)}`);
+
+  // After the tail fully expires (well past +35d from clear, no further check-ins), the plan reverts
+  // to EXACTLY the phase-table baseline for whatever day the pointer currently sits on.
+  const expiredIso = addDaysIso(clearIso, 40);
+  setDay(expiredIso);
+  const finalIdx = S().phase.dayInWeek - 1;
+  const wantKeys = pd.week[finalIdx].blocks.map(b => b.key);
+  const gotKeys = call('currentDayPlan')().blocks.map(b => b.key);
+  assert(JSON.stringify(gotKeys) === JSON.stringify(wantKeys), name,
+    `post-tail-expiry plan != baseline for day ${finalIdx} (${pd.week[finalIdx].day}): got ${JSON.stringify(gotKeys)} want ${JSON.stringify(wantKeys)}`);
+
+  return { name, kind: inj && inj.kind, ease: win.ease, tailKind: S().rehabTail && S().rehabTail.kind, dayObservations, postExpiry: gotKeys };
+}
+
+// Metatarsalgia routing: ball zone + neural=false -> foot-meta, 42d ease ceiling, footRehabMeta swap-in
+// (spec §3.3 row 2, §5.1).
+function scenarioFootMetaWindow() {
+  const name = 'foot-meta window (ball, neural=false)';
+  resetPersona(2);
+  S().phase.dayInWeek = 2;   // Tue: ptFull + rw1
+  setDay('2026-02-01');
+  doCheckFoot(name, false, 3, true, ['foot'], false, { zone: 'ball', neural: false, gate: null });
+  const inj = S().injury;
+  assert(!!inj && inj.kind === 'foot-meta', name, `kind expected foot-meta, got ${inj && inj.kind}`);
+  const win = call('footWindow')('foot-meta');
+  assert(win.ease === 42, name, `foot-meta ease window expected 42d (contract), got ${win.ease}`);
+  assert(inj && Math.round((inj.easeUntil - inj.since) / 86400000) === 42, name,
+    `injury.easeUntil - since != 42d (got ${inj && Math.round((inj.easeUntil - inj.since) / 86400000)})`);
+  setDay('2026-02-02');
+  const plan = call('currentDayPlan')();
+  assert(plan.blocks.some(b => b.key === 'footRehabMeta'), name,
+    `plan missing footRehabMeta block: ${JSON.stringify(plan.blocks.map(b => b.key))}`);
+  return { name, kind: inj && inj.kind, ease: win.ease, blocks: plan.blocks.map(b => b.key) };
+}
+
+// Re-flagging mid-tail must start a completely FRESH injury (extended:0) with fresh windows, and
+// must clear the old relapse tail rather than layering on top of it (spec §5.4 "a new foot-pain
+// flag during the tail behaves as a fresh injury (re-flag, windows restart)").
+function scenarioFootReflagDuringTail() {
+  const name = 'foot re-flag during tail (fresh injury, old tail replaced)';
+  resetPersona(2);
+  S().phase.dayInWeek = 2;
+  const flagIso = '2026-03-01';
+  setDay(flagIso);
+  doCheckFoot(name, false, 3, true, ['foot'], false, { zone: 'heel', neural: null, gate: null });
+  setDay(addDaysIso(flagIso, 24));   // all-gate pass -> clear + arm the tail
+  doCheckFoot(name, 'done', 4, false, [], false, { zone: 'heel', neural: null, gate: { walk: true, morning: true, raises: true } });
+  assert(!S().injury, name, 'setup: injury did not clear ahead of the re-flag');
+  assert(!!S().rehabTail, name, 'setup: tail did not arm ahead of the re-flag');
+  const tailBefore = S().rehabTail;
+
+  setDay(addDaysIso(flagIso, 30));   // 6 days into the tail (well inside the 35d window)
+  doCheckFoot(name, false, 3, true, ['foot'], false, { zone: 'arch', neural: null, gate: null });   // hurts again
+  const inj = S().injury;
+  assert(!!inj, name, 're-flag mid-tail did not record a new injury');
+  assert(inj && inj.kind === 'foot-pf', name, `re-flag (arch) kind expected foot-pf, got ${inj && inj.kind}`);
+  assert(inj && inj.extended === 0, name, `re-flag mid-tail should be a FRESH injury (extended:0), got extended=${inj && inj.extended}`);
+  assert(!S().rehabTail, name, `the old relapse tail must be cleared on re-flag, got ${JSON.stringify(S().rehabTail)}`);
+  const win = call('footWindow')('foot-pf');
+  assert(inj && Math.round((inj.easeUntil - inj.since) / 86400000) === win.ease, name,
+    're-flag did not get the fresh foot-pf windows (windows did not restart)');
+  return { name, kind: inj && inj.kind, extended: inj && inj.extended, oldTailExisted: !!tailBefore, tailClearedAfter: !S().rehabTail };
+}
+
+// Non-foot injury (shoulder) regression pin: kind falls back to 'acute', windows exactly 3d/10d,
+// currentDayPlan() blocks are byte-identical (never swapped) for all 7 program days, and clearing
+// on a bare pain-free re-check needs NO gate (spec Preserved Invariant #1, §3.3 footnote). Per the
+// Task E brief: this one should be GREEN already against current code (it pins EXISTING behavior) —
+// if it's red before Lane B lands, that's a finding about this scenario's authoring, not a Lane B gap.
+function scenarioNonFootRegressionPin() {
+  const name = 'non-foot injury regression pin (shoulder — byte-identical windows/flow)';
+  resetPersona(3);   // Build phase: strength + easy/hard-run cardio + rest + a long run across the week
+  setDay('2026-05-01');
+  doCheckFoot(name, false, 3, true, ['shoulder'], false, null);   // no foot param at all — the common non-foot path
+  const inj = S().injury;
+  assert(!!inj, name, 'no injury recorded on a plain shoulder flag');
+  assert(inj && inj.kind === 'acute', name, `non-foot kind must fall back to 'acute', got ${inj && inj.kind}`);
+  assert(inj && !inj.foot, name, `non-foot injury.foot must be null/falsy, got ${JSON.stringify(inj && inj.foot)}`);
+  const rice = inj ? Math.round((inj.riceUntil - inj.since) / 86400000) : null;
+  const ease = inj ? Math.round((inj.easeUntil - inj.since) / 86400000) : null;
+  assert(rice === 3, name, `non-foot protect window must stay exactly 3d (today's default), got ${rice}`);
+  assert(ease === 10, name, `non-foot ease window must stay exactly 10d (today's default), got ${ease}`);
+
+  // currentDayPlan() must never swap in foot machinery for ANY of the 7 program days while this
+  // injury is active — compared against the phase table's OWN raw block-key list (source data, not
+  // the coder's currentDayPlan implementation), so the swap-in engaging at all is what fails this.
+  const pd = PHASES[3];
+  let allMatch = true; const mismatches = [];
+  for (let d = 1; d <= 7; d++) {
+    S().phase.dayInWeek = d;
+    const plan = call('currentDayPlan')();
+    const gotKeys = plan.blocks.map(b => b.key);
+    const wantKeys = pd.week[d - 1].blocks.map(b => b.key);
+    const same = gotKeys.length === wantKeys.length && gotKeys.every((k, i) => k === wantKeys[i]);
+    if (!same) { allMatch = false; mismatches.push({ day: pd.week[d - 1].day, got: gotKeys, want: wantKeys }); }
+  }
+  assert(allMatch, name, `currentDayPlan() swapped blocks for a non-foot injury: ${JSON.stringify(mismatches)}`);
+
+  // Bare pain-free re-check (no gate at all) clears immediately — the 3-chip gate is a foot-pf/
+  // foot-meta-only requirement (spec §5.2 "a pain-free submit without the gate falls back to today's behavior").
+  S().phase.dayInWeek = 1;
+  setDay('2026-05-03');
+  doCheckFoot(name, 'done', 4, false, [], false, null);
+  assert(!S().injury, name, 'shoulder injury did not clear on a bare pain-free re-check with no gate');
+  assert(!S().rehabTail, name, 'a non-foot clear must never arm a rehabTail');
+
+  return { name, kind: inj && inj.kind, rice, ease, keysMatchAll7Days: allMatch };
+}
+
+// foot-pf window across the Nov 2026 DST fall-back boundary — mirrors scenarioInjuryWindowVsCalendar
+// (the existing generic-injury DST scenario) but for the foot-specific 84d ease ceiling, and additionally
+// proves the criteria-gate survives DST (a bare pain-free re-check must NOT clear a foot-pf injury).
+function scenarioFootDst() {
+  const name = 'foot-pf window vs calendar (DST fall-back)';
+  resetPersona(2);
+  S().phase.dayInWeek = 2;
+  setDay('2026-10-30', 16);
+  doCheckFoot(name, false, 3, true, ['foot'], false, { zone: 'heel', neural: null, gate: null });
+  assert(!!S().injury, name, 'no injury recorded on heel flag ahead of DST fall-back');
+  const win = call('footWindow')('foot-pf');
+  assert(win.ease === 84, name, `expected 84d ease window, got ${win.ease}`);
+  // walk forward across the Nov 1 fall-back boundary, 3 days post-flag (past RICE), well inside the 84d ease window
+  setDay('2026-11-02', 17);
+  const inRice = call('injuryInRice')();
+  const active = call('injuryActive')();
+  assert(active === true, name, `foot-pf injury should still be active 3d post-flag across DST fall-back (active=${active})`);
+  assert(inRice === false, name, `3 elapsed days should be past the 3d RICE window (inRice=${inRice})`);
+  const plan = call('currentDayPlan')();
+  assert(plan.blocks.some(b => b.key === 'footRehabPF'), name, 'foot-pf rehab block missing across the DST boundary');
+  assert(plan.blocks.some(b => b.key === 'lowImpactSub'), name, 'ease-window low-impact sub missing across the DST boundary');
+  // A pain-free re-check with the recovery gate all-true must clear cleanly across the DST boundary too
+  // (mirrors scenarioInjuryWindowVsCalendar's "clears on pain-free recheck" outcome, exercised via the
+  // REAL foot-pf path — the 3-chip gate — spec §3.5/§5.2. NOTE: an earlier draft of this scenario
+  // asserted a bare no-gate recheck must NOT clear; that was wrong against the spec — §5.2 explicitly
+  // documents "a pain-free submit *without* the gate falls back to today's behavior" (clears) as the
+  // deliberate defensive fallback for a state the UI should never produce. Corrected to test the real path.
+  doCheckFoot(name, 'done', 4, false, [], false, { zone: 'heel', neural: null, gate: { walk: true, morning: true, raises: true } });
+  assert(!S().injury, name, 'foot-pf injury with an all-true gate did not clear across a DST boundary');
+  assert(!!S().rehabTail, name, 'gated clear across the DST boundary did not arm the relapse tail');
+  return { name, inRice, active, ease: win.ease };
+}
+
+// ============================================================
 // RUN
 // ============================================================
 const results = [];
@@ -494,6 +735,11 @@ results.push(scenarioTamperBackwardWeek());
 results.push(scenarioTamperForward2Months());
 results.push(scenarioGenuine2MonthLayoff());
 results.push(scenarioLayoffRegression());
+results.push(scenarioFootPfLifecycle());
+results.push(scenarioFootMetaWindow());
+results.push(scenarioFootReflagDuringTail());
+results.push(scenarioNonFootRegressionPin());
+results.push(scenarioFootDst());
 
 console.log('\n==== SCENARIO RESULTS ====');
 for (const r of results) console.log(' ', JSON.stringify(r));

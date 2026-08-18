@@ -9,16 +9,18 @@ function logout() {
   state.profile = null; state.phase = null; state.checks = [];
   state.session = null; state.injury = null; state.log = []; state.lifts = {}; delete state._chk; delete state._onb;
   state.returnRamp = null; state.targetReachedAt = null; state.celebrationSeen = false; state.layoffDismissedOn = null;
+  state.rehabTail = null;
   state.activeUser = null;
   try { localStorage.removeItem(ACTIVE_KEY); } catch (_) {}
 }
 function loadUserState(slug) {
   state.profile = null; state.phase = null; state.checks = []; state.session = null; state.injury = null; state.log = []; state.lifts = {};
   state.returnRamp = null; state.targetReachedAt = null; state.celebrationSeen = false; state.layoffDismissedOn = null;
+  state.rehabTail = null;
   if (!slug) return;
   try {
     const raw = localStorage.getItem(userStateKey(slug));
-    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.session = d.session || null; state.injury = d.injury || null; state.log = d.log || []; state.lifts = d.lifts || {}; state.returnRamp = d.returnRamp || null; state.targetReachedAt = d.targetReachedAt || null; state.celebrationSeen = !!d.celebrationSeen; state.layoffDismissedOn = d.layoffDismissedOn || null; }
+    if (raw) { const d = JSON.parse(raw); state.profile = d.profile || null; state.phase = d.phase || null; state.checks = d.checks || []; state.session = d.session || null; state.injury = d.injury || null; state.log = d.log || []; state.lifts = d.lifts || {}; state.returnRamp = d.returnRamp || null; state.targetReachedAt = d.targetReachedAt || null; state.celebrationSeen = !!d.celebrationSeen; state.layoffDismissedOn = d.layoffDismissedOn || null; state.rehabTail = d.rehabTail || null; }
   } catch (e) { console.error('loadUserState failed', e); }
 }
 function loadLocal() {
@@ -52,7 +54,7 @@ function saveLocal() {
     if (slug) {
       state.activeUser = slug;
       localStorage.setItem(ACTIVE_KEY, slug);
-      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, session: state.session, injury: state.injury, log: state.log, lifts: state.lifts, returnRamp: state.returnRamp, targetReachedAt: state.targetReachedAt, celebrationSeen: state.celebrationSeen, layoffDismissedOn: state.layoffDismissedOn }));
+      localStorage.setItem(userStateKey(slug), JSON.stringify({ profile: state.profile, phase: state.phase, checks: state.checks, session: state.session, injury: state.injury, log: state.log, lifts: state.lifts, returnRamp: state.returnRamp, targetReachedAt: state.targetReachedAt, celebrationSeen: state.celebrationSeen, layoffDismissedOn: state.layoffDismissedOn, rehabTail: state.rehabTail }));
     }
     state._saveError = false;
     return true;
@@ -98,6 +100,7 @@ function fullBackup() {
     session: state.session, injury: state.injury, log: state.log, lifts: state.lifts,
     returnRamp: state.returnRamp, targetReachedAt: state.targetReachedAt,
     celebrationSeen: state.celebrationSeen, layoffDismissedOn: state.layoffDismissedOn,
+    rehabTail: state.rehabTail,
   };
 }
 // HONEST EXPORT: resolves true ONLY when the backup verifiably left (or was handed off by) the app —
@@ -189,6 +192,7 @@ function applyBackup(obj) {
   state.targetReachedAt = obj.targetReachedAt || null;
   state.celebrationSeen = !!obj.celebrationSeen;
   state.layoffDismissedOn = obj.layoffDismissedOn || null;
+  state.rehabTail = obj.rehabTail || null;
   if (obj.units) state.settings.units = obj.units;
   saveLocal();
   logEvent('persona', `Imported backup for "${slug}" (${state.checks.length} check-ins)`);

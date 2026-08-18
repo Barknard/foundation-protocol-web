@@ -61,8 +61,37 @@ function currentDayPlan() {
   const base = pd.week[Math.max(0, Math.min(idx, pd.week.length - 1))];
   // On a deload / return-ramp / injury-ease day, show the prescription LIGHTER (the reduction has teeth, not just a banner).
   const lr = (typeof loadReduction === 'function') ? loadReduction() : null;
-  if (!lr) return base;
-  return { day: base.day, blocks: base.blocks.map(b => lightenBlock(b, lr)) };
+  let blocks = lr ? base.blocks.map(b => lightenBlock(b, lr)) : base.blocks;
+  // --- Foot rehab swap-in (additive; foot-pf/foot-meta only — spec §5.3, plan Task B 2026-08-17). Every other
+  //     kind, including every non-foot injury, never satisfies footRehabKind() so this is a no-op for them —
+  //     the regression pin (scenarioNonFootRegressionPin) depends on that. footRehabKind() lives in foot.js,
+  //     which may not be loaded during Lane A/B parallel development, hence the typeof guard. ---
+  const inj = state.injury;
+  if (injuryActive() && inj && typeof footRehabKind === 'function' && footRehabKind(inj.kind)) {
+    const rehabKey = inj.kind === 'foot-pf' ? 'footRehabPF' : 'footRehabMeta';
+    const rehabBlock = BLOCKS[rehabKey] ? { ...BLOCKS[rehabKey], key: rehabKey } : null;
+    const cardioSubKey = injuryInRice() ? 'rest' : 'lowImpactSub';
+    const cardioSub = BLOCKS[cardioSubKey] ? { ...BLOCKS[cardioSubKey], key: cardioSubKey } : null;
+    blocks = blocks.map(b => {
+      if (b.kind === 'mobility' && rehabBlock) return rehabBlock;                        // PT slot -> rehab block
+      if (RUN_BLOCK_KEYS.includes(b.key) && cardioSub) return cardioSub;                 // impact cardio -> low-impact sub, or rest during protect
+      return b;   // strength keeps its already-lightened pain-rule note (existing loadReduction mechanism, no fork); rest/milestone/walk-only cardio unchanged
+    });
+  }
+  // --- Relapse-prevention tail (spec §5.4): appended (never swapped) on Mon/Thu only (idx is the 0-based
+  //     weekday index into pd.week, which is always Mon..Sun — idx 0 = Mon, idx 3 = Thu, for every phase),
+  //     only while no injury is currently active, and only within its window. Expiry is silent — pruneInjury()
+  //     (program.js) drops it, so no explicit expiry handling is needed here. ---
+  if (!injuryActive() && rehabTailActive() && (idx === 0 || idx === 3)) {
+    // A foot-meta tail substitutes foot_intrinsic for pf_heel_raise as the key exercise (spec §6.2). The visible
+    // block is always the single BLOCKS.footRehabTail entry (the plan names exactly one footRehabTail block) —
+    // only the exercisesForBlock() lookup key differs: footRehabTailMeta is a BLOCK_EX-only alias for the
+    // substituted list, not a second named block (plan Task B: "substitute ... in currentDayPlan, document inline").
+    const tailKind = state.rehabTail && state.rehabTail.kind;
+    const tailLookupKey = tailKind === 'foot-meta' ? 'footRehabTailMeta' : 'footRehabTail';
+    blocks = blocks.concat([{ ...BLOCKS.footRehabTail, key: tailLookupKey }]);
+  }
+  return { day: base.day, blocks };
 }
 function advancePointer() {
   const cur = state.phase || { phase: state.profile?.startingPhase ?? 0, week: 1, dayInWeek: 1, sessionsCleared: 0, lastDecision: null };
@@ -86,7 +115,7 @@ const INJURY_FLAG = { key: 'rest', title: 'See a clinician first', cls: 'strengt
   action: 'Hold off and get this looked at before training it.',
   why: 'You flagged a warning sign — cannot bear weight, bone-point tenderness, numbness, deformity, joint locking/giving way, a "pop", or rapid swelling. Any of these warrants a professional check (GP, physio, urgent care), and it matters more at 40+ where fracture and medication-interaction risk are higher. Resume the plan once cleared.' };
 
-function applyCheck(goalMet, feel, hurt, parts, redFlag) {
+function applyCheck(goalMet, feel, hurt, parts, redFlag, foot) {
   // Single source of truth: hurt → the dedicated injury outcome (clinician on a red flag, else PEACE & LOVE); else decide().
   let outcome = hurt ? (redFlag ? INJURY_FLAG : INJURY_REST) : decide(goalMet, feel, hurt);
   let cur = state.phase || {};
@@ -96,13 +125,47 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   if (hurt) {
     const prev = (state.injury && !state.injury.clearedAt) ? state.injury : null;   // re-flagging extends the window
     const now = Date.now();
+    // Foot drill-down (additive; foot = null | {zone, neural, gate} — pinned contract, foot-pain-rehab plan
+    // 2026-08-17). A foot zone routes to a specific kind via foot.js's footKind(); every other case (no zone,
+    // or foot.js not yet loaded) keeps kind:'acute' and footWindow()'s documented default {rice:3, ease:10} —
+    // identical to today's hardcoded 3d/10d, so non-foot injuries are byte-identical (regression pin).
+    let kind = 'acute';
+    let footInfo = null;
+    if (foot && foot.zone) {
+      kind = (typeof footKind === 'function') ? footKind(foot.zone, foot.neural, redFlag) : 'acute';
+      footInfo = { zone: foot.zone, neural: (foot.neural === true || foot.neural === false) ? foot.neural : null };
+    }
+    const win = (typeof footWindow === 'function') ? footWindow(kind) : { rice: 3, ease: 10 };
     // Preserve the prior location when a re-check flags "still hurts" with no region re-selected,
     // so the recovery banner never degrades to a generic "injury" with the original spot lost.
-    state.injury = { parts: (parts && parts.length) ? parts : (prev ? (prev.parts || []) : []), since: now, riceUntil: now + 3 * 86400000, easeUntil: now + 10 * 86400000, kind: 'acute', redFlag: !!redFlag, extended: prev ? (prev.extended || 0) + 1 : 0, firstSince: prev ? (prev.firstSince || prev.since) : now };
+    state.injury = { parts: (parts && parts.length) ? parts : (prev ? (prev.parts || []) : []), since: now, riceUntil: now + win.rice * 86400000, easeUntil: now + win.ease * 86400000, kind, foot: footInfo, redFlag: !!redFlag, extended: prev ? (prev.extended || 0) + 1 : 0, firstSince: prev ? (prev.firstSince || prev.since) : now };
+    state.rehabTail = null;   // a fresh flag supersedes any relapse-prevention tail — starts clean (spec §5.4 "re-flag during tail")
   } else if (injuryActive()) {
-    // re-checked with no pain: the injury is settling — clear it (with an audit timestamp + log) and resume
-    clearInjury();
-    logEvent('injury', 'Re-checked pain-free — injury cleared, resuming normal training');
+    const inj = state.injury;
+    const gated = (typeof footRehabKind === 'function') && footRehabKind(inj.kind);
+    if (gated && foot && foot.gate) {
+      // Criteria-gated clear for foot-pf/foot-meta (spec §3.5 / §5.2) — a bare pain-free submit does NOT clear these.
+      const passed = (typeof footGatePassed === 'function') ? footGatePassed(inj.kind, foot.gate) : true;
+      if (passed) {
+        const clearedKind = inj.kind;
+        clearInjury();
+        const tailDays = (typeof REHAB_TAIL_DAYS === 'number') ? REHAB_TAIL_DAYS : 35;   // foot.js contract default
+        state.rehabTail = { kind: clearedKind, until: localMidnight(Date.now()) + tailDays * 86400000 };
+        const condName = (typeof FOOT_CONDITION_NAMES !== 'undefined' && FOOT_CONDITION_NAMES[clearedKind]) || 'condition';
+        logEvent('injury', `Recovery gate passed — ${condName} cleared; 5 weeks of light upkeep begins`);
+      } else {
+        const gateDef = (typeof FOOT_GATES !== 'undefined') ? FOOT_GATES[inj.kind] : null;
+        const failedKeys = gateDef ? gateDef.filter(g => !(foot.gate[g.key] === true)).map(g => g.key) : [];
+        logEvent('injury', `Gate not yet met — ${failedKeys.length ? failedKeys.join(', ') : 'criteria'} not yet cleared`);
+        // Stay in the injury; the outcome reads as "keep going", not a fresh injury flag.
+        outcome = { ...INJURY_REST, why: 'Keep going — the recovery gate is not fully clear yet. ' + INJURY_REST.why };
+      }
+    } else {
+      // Non-foot injuries, non-gated foot kinds (foot-refer/foot-toes/foot-top), and a gated kind submitted
+      // without gate answers (shouldn't happen via the UI) all keep today's exact behavior: clear immediately.
+      clearInjury();
+      logEvent('injury', 'Re-checked pain-free — injury cleared, resuming normal training');
+    }
   }
   // --- Ease back: no load jump on the first day back from a layoff (gap measured to the last DIFFERENT day, so a
   //     same-day edit can't collapse it to 0), anywhere inside the injury window, or while under-recovered. ---
@@ -168,7 +231,7 @@ function applyCheck(goalMet, feel, hurt, parts, redFlag) {
   // RIR double-progression operates on the session just completed (the CURRENT, pre-advance day plan).
   const dayPlanNow = (typeof currentDayPlan === 'function') ? currentDayPlan() : null;
   const entry = {
-    ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt, parts: parts || [],
+    ts: Date.now(), date: today, goalMet, feel, hurt: !!hurt, parts: parts || [], footZone: (foot && foot.zone) || null,
     decision: outcome.key, phase: cur.phase ?? 0, week: cur.week ?? 1, dayInWeek: cur.dayInWeek ?? 1,
   };
   // Keep the pointer consistent with TODAY's current decision: advance at most once per local day,

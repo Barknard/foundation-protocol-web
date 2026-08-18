@@ -11,11 +11,14 @@ function svgUse(id, size) { const s = size||24; return `<svg width="${s}" height
 function animatedFigure(ex, size) {
   const s = size || 44;
   // Procedural gait for walk/run; farmer carry reuses the walk gait with a kettlebell in each
-  // hand; parametric skeleton pose for everything else. Every EXERCISES key resolves to one of
-  // these (asserted by tools/_daysim-fixes.js "figure coverage") — the empty box is a safety net.
+  // hand; parametric skeleton pose where one exists; hand-authored foot close-up for the two
+  // exercises whose toes must visibly move (the skeleton has no toe segment). Every EXERCISES
+  // key resolves to one of these (asserted by tools/_daysim-fixes.js "figure coverage") — the
+  // empty box is a safety net.
   if (ex && (ex.key === 'walk' || ex.key === 'run') && typeof gaitFigure === 'function') return gaitFigure(ex.key, s);
   if (ex && ex.key === 'kb_carry' && typeof gaitFigure === 'function') return gaitFigure('walk', s, true);
   if (ex && ex.key && typeof hasFigurePose === 'function' && hasFigurePose(ex.key)) return skeletonFigure(ex.key, s);
+  if (ex && ex.key && typeof footCloseupFigure === 'function') { const f = footCloseupFigure(ex.key, s); if (f) return f; }
   return `<span class="afig" style="width:${s}px;height:${s}px;"></span>`;
 }
 function toast(message, kind) {
