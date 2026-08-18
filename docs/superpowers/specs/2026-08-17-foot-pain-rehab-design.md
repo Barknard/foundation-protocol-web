@@ -102,7 +102,7 @@ The single choke point. When injury is active with kind `foot-pf`/`foot-meta`:
 Some days therefore render 3 blocks; Today's checklist already iterates blocks generically.
 
 ### 5.4 Relapse tail
-On a gated clear: `state.rehabTail = {kind, until: +35d}` (28–42d band from evidence §6c — flagged extrapolated there and in the why-copy). While active: the foot-rehab block (light variant, 2×/week — fixed weekdays Mon/Thu for determinism) is **appended** to the day, nothing else changes. Expiry is silent (pruned like injuries). A new foot-pain flag during the tail behaves as a fresh injury (re-flag, windows restart).
+On a gated clear: `state.rehabTail = {kind, until: +35d}` (28–42d band from evidence §6c — flagged extrapolated there and in the why-copy). While active: the foot-rehab block (light variant, 2×/week — appended on the program's `dayInWeek` ordinals 0 and 3, i.e. the week-structure's "Mon"/"Thu" positions, NOT calendar weekdays; the pointer is what the whole engine keys on) is **appended** to the day, nothing else changes. Expiry is silent (pruned like injuries). A new foot-pain flag during the tail behaves as a fresh injury (re-flag, windows restart).
 
 ### 5.5 Pain-rule + heel-raise cadence (deliberate v1 simplifications)
 - The every-other-day Rathleff cadence is carried in the exercise rx/steps copy ("every other day — the rest day is part of the dose"), not enforced by the checklist.
