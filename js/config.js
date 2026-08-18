@@ -2,7 +2,7 @@
 // ============================================================
 // CONFIG
 // ============================================================
-const APP_VERSION = '2.2.0';   // ONE version for the whole app — sw.js's CACHE name must match it
+const APP_VERSION = '2.3.0';   // ONE version for the whole app — sw.js's CACHE name must match it
 // The storage prefixes below keep the app's original working name ("Foundation Protocol") ON PURPOSE:
 // renaming the keys would orphan every existing install's saved history, and the data covenant outranks
 // branding. Everything user-facing — UI, exports, cache name — says "The Hard Part"; the key prefix is history.

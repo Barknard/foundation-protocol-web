@@ -13,7 +13,7 @@
      3. Go back offline — the freshly-cached new shell now serves.
    If you change ANY shell asset, bump CACHE — keep the version in sync with APP_VERSION
    in js/config.js (one app, one version). */
-const CACHE = 'thp-shell-v2.2.0';
+const CACHE = 'thp-shell-v2.3.0';
 const SHELL = [
   './', './index.html', './manifest.json',
   './icon.png', './logo.png',
@@ -22,7 +22,7 @@ const SHELL = [
   './fonts/ibm-plex-mono-latin-400.woff2', './fonts/ibm-plex-mono-latin-500.woff2',
   './css/base.css', './css/components.css', './css/figures.css', './css/screens.css',
   './js/sprite.js', './js/config.js', './js/state.js', './js/program.js',
-  './js/figure-poses.js', './js/figure.js',
+  './js/figure-poses.js', './js/figure.js', './js/foot.js',
   './js/engine.js', './js/storage.js', './js/util.js', './js/ui.js', './js/screens.js', './js/init.js',
 ];
 
