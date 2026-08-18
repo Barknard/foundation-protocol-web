@@ -49,6 +49,34 @@
 | far-leg shank | 90° ↓D → (25, 55) | 90° ↓D → (25, 52) |
 | far-leg foot | 2° →R → (29, 55.1) | 60° ↘DR → (27, 55.5) |
 
+## Towel Heel Raise — `pf_heel_raise`
+
+- View: **side** · rep ≈ 2600 ms · single-leg (far leg tucked) · low step (bench prop) +
+  towel-wedge prop under the near toes (behind), “feel-it-here” mark at the arch (pinned)
+
+| Body part | Start (f1): angle → pos | End (f2): angle → pos |
+|---|---|---|
+| pelvis (root) | (28.53, 29.55) | (27.58, 22.56) |
+| torso → shoulder | 270° ↑U → (28.53, 12.55) | 270° ↑U → (27.58, 5.56) |
+| head | 270° ↑U → (28.53, 5.55) | 270° ↑U → (27.58, -1.44) |
+| near-arm upper | 100° ↓D → (27.31, 19.44) | 100° ↓D → (26.36, 12.45) |
+| near-arm forearm | 95° ↓D → (26.79, 25.42) | 95° ↓D → (25.84, 18.43) |
+| far-arm upper | 100° ↓D → (27.31, 19.44) | 100° ↓D → (26.36, 12.45) |
+| far-arm forearm | 95° ↓D → (26.79, 25.42) | 95° ↓D → (25.84, 18.43) |
+| near-leg thigh | 90° ↓D → (28.53, 40.55) | 90° ↓D → (27.58, 33.56) |
+| near-leg shank | 98° ↓D → (27, 51.44) | 93° ↓D → (27, 44.54) |
+| near-leg foot | 300° ↗UR → (29, 47.98) | 60° ↘DR → (29, 48.01) |
+| far-leg thigh | 40° ↘DR → (36.96, 36.62) | 40° ↘DR → (36.01, 29.63) |
+| far-leg shank | 200° ←L → (26.62, 32.86) | 200° ←L → (25.67, 25.87) |
+| far-leg foot | 0° →R → (30.62, 32.86) | 0° →R → (29.67, 25.87) |
+
+The near (working) foot is pinned to almost the same spot in both frames (the ball of the
+foot stays on the towel/step throughout the rep) — f1 drops the ankle/heel *below* the step
+edge (dorsiflexed stretch, knee soft), f2 rises the ankle well *above* it (full plantarflexion
+on the forefoot, knee slightly straighter). The far leg reuses `sl_calf_raise`'s tucked
+config verbatim (constant across both frames). `frame: "16 24 23 34"` crops the thumbnail to
+the working leg + step + towel; the torso/head fall outside it by design (lower-body focus).
+
 ## Glute Bridge — `glute_bridge`
 
 - View: **side** · rep ≈ 2200 ms

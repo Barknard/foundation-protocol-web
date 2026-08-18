@@ -130,6 +130,7 @@ function renderProp(spec, J) {
     // side-view free props
     case 'bench': return propBench(spec.x, spec.y, spec.w, spec.h) + (spec.legs ? propBenchLegs(spec.x, spec.y + spec.h, spec.w, spec.legH == null ? 5 : spec.legH) : '');
     case 'wall':  return propWall(spec.x, spec.y1, spec.y2);
+    case 'towelWedge': return propTowelWedge(spec.x, spec.y);
     // side-view anchored props (resolve from J)
     case 'dumbbell':   return spec.anchor === 'farHand' ? propDumbbell(J, 'far') : propDumbbell(J, 'near');
     case 'kettlebell': return spec.anchor === 'farHand' ? propKettlebell(J, 'far') : propKettlebell(J, 'near');
@@ -143,6 +144,9 @@ function renderProp(spec, J) {
 function propBench(x, y, w, h) { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="#3A3431" stroke="#807868" stroke-width="1"/>`; }
 function propBenchLegs(x, y, w, h) { return `<line x1="${x + 2}" y1="${y}" x2="${x + 2}" y2="${y + h}" stroke="#807868" stroke-width="1.5"/><line x1="${x + w - 2}" y1="${y}" x2="${x + w - 2}" y2="${y + h}" stroke="#807868" stroke-width="1.5"/>`; }
 function propWall(x, y1, y2) { return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke-width="2.5" stroke="#807868"/>`; }
+// Small rolled-towel wedge under the toes (towel heel raise) — two overlapping ellipses
+// read as a coiled roll; warm cream/tan cloth palette, distinct from the metal-prop colors.
+function propTowelWedge(x, y) { return `<ellipse cx="${_n(x)}" cy="${_n(y)}" rx="3.2" ry="1.6" fill="#E8D2A0" stroke="#B89158" stroke-width="0.5"/><ellipse cx="${_n(x - 1.6)}" cy="${_n(y - 1)}" rx="1.6" ry="1.6" fill="#E8D2A0" stroke="#B89158" stroke-width="0.5"/>`; }
 function propDumbbell(J, which) { const h = (which === 'near' ? J.nearArm : J.farArm)?.hand; if (!h) return ''; return `<rect x="${_n(h[0] - 3)}" y="${_n(h[1] - 1.6)}" width="6" height="3.2" rx="1" fill="#D9A24E"/>`; }
 function propKbAt(h) { if (!h) return ''; const x = _n(h[0]), y = _n(h[1]); return `<path d="M ${x - 1.8} ${y} a 1.8 1.8 0 0 1 3.6 0" fill="none" stroke="#D9A24E" stroke-width="1.1"/><circle cx="${x}" cy="${y + 2.8}" r="2.8" fill="#D9A24E"/>`; }
 function propKettlebell(J, which) { return propKbAt((which === 'far' ? J.farArm : J.nearArm)?.hand); }
