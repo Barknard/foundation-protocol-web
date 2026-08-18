@@ -160,7 +160,7 @@ state.rehabTail;                                     // {kind, until} | null
 
 ### Task F: Integration + evidence reconcile + docs — OVERSEER (fable), after A–E land
 
-- [ ] Reconcile the verification lane's spec-impact list: any ADJUST → patch the affected rx strings/window values (program.js/foot.js data edits, or delegate a micro-lane), re-run sims.
+- [ ] Reconcile the verification lane's spec-impact list (**verdict landed 2026-08-17**): all numbers KEEP (rx, 84d/42d windows, ≤3/10 rule, 20-raise criterion, tail). **SOFTEN COPY ONLY**, two places: (1) heel raise must NOT be billed "best-evidenced/superior" anywhere user-facing — present as *complementary to the stretch* (Rathleff's 3-month FFI edge did not persist at 1/6/12 months; the 2021 BJSM guide he co-authored left strengthening out of the core tier); (2) the 20-heel-raise gate copy is consensus-based, not trial-derived — phrase as "a common readiness check", never "the proven test". Audit Lane B's exercise cues + Lane C's result/Library framing against EVIDENCE-FOOT.md's verification section before ship.
 - [ ] `AI-START-HERE.md`: §4 file tree += foot.js; §8 check-in flow note; §11 new scenarios. `docs/PROGRESS.md`: dated entry.
 - [ ] Full gate: `node --check` all js; `_daysim.js` (existing 18 + new, 0 failures — read the TOTAL line, it always exits 0); `_daysim-fixes.js` exit 0; Playwright e2e per spec §9 (SW unregister + clean reload first; drill-down full path, non-foot regression, tabs render, zero console errors).
 - [ ] Commit sequence per milestone (overseer, explicit paths). Push branch; PR #1 updates automatically. Pages deploy + APK only on Eddie's word.
